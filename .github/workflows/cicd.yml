@@ -29,11 +29,22 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
+          file: ../apps/auth/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/supacart-gym-api:latest
-            ${{ secrets.DOCKER_USERNAME }}/supacart-gym-api:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/auth:latest
+            ${{ secrets.DOCKER_USERNAME }}/auth:${{ github.sha }}
+    
+      # Build & push supacart-gym-api
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ../apps/user/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/user:latest
+            ${{ secrets.DOCKER_USERNAME }}/user:${{ github.sha }}
 
       # Build & push nginx-proxy
       - name: Build & push Nginx image
