@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  supacart-gym-api:
+    image: ${DOCKER_USER}/supacart-gym-api:${TAG:-latest}
+    container_name: supacart-gym-api
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./.env
+    environment:
+      NODE_ENV: production
+    restart: always
+    networks:
+      - app-network
+
+  nginx:
+    image: ${DOCKER_USER}/nginx-proxy:${TAG:-latest}
+    container_name: nginx_container
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ./.env
+    depends_on:
+      - supacart-gym-api
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    networks:
+      - app-network
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --email oakarkyaw@gmail.com -d supagymbackend.duckdns.org --agree-tos --no-eff-email
+
+networks:
+  app-network:
+    driver: bridge
