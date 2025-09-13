@@ -29,7 +29,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ../apps/auth/Dockerfile
+          file: ./apps/auth/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/auth:latest
@@ -40,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ../apps/user/Dockerfile
+          file: ./apps/user/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/user:latest
