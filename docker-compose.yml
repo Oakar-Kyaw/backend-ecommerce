@@ -1,21 +1,43 @@
 version: '3.8'
 
 services:
-  supacart-gym-api:
-    image: ${DOCKER_USER}/supacart-gym-api:${TAG:-latest}
-    container_name: supacart-gym-api
-    ports:
-      - "5000:5000"
+  auth:
+    image: ${DOCKER_USER}/auth:${TAG:-latest}
+    #image: auth
+    build:
+      context: .
+      dockerfile: apps/auth/Dockerfile
     env_file:
-      - ./.env
-    environment:
-      NODE_ENV: production
+      - .env
+   # container_name: supacart-gym-api
+    ports:
+      - "${AUTH_SERVER_PORT}:${AUTH_SERVER_PORT}"
+      - "${AUTH_SERVER_TCP}:${AUTH_SERVER_TCP}"
+    restart: always
+    networks:
+      - app-network
+  user:
+    image: ${DOCKER_USER}/user:${TAG:-latest}
+    #image: user
+    build:
+      context: .
+      dockerfile: apps/user/Dockerfile
+    env_file:
+      - .env
+   # container_name: supacart-gym-api
+    ports:
+      - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
+      - "${USER_SERVER_TCP}:${USER_SERVER_TCP}"
     restart: always
     networks:
       - app-network
 
   nginx:
     image: ${DOCKER_USER}/nginx-proxy:${TAG:-latest}
+    #image: nginx-proxy
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
     container_name: nginx_container
     ports:
       - "80:80"
@@ -23,20 +45,21 @@ services:
     env_file:
       - ./.env
     depends_on:
-      - supacart-gym-api
+      - auth
+      - user
     restart: always
     volumes:
       - ./nginx/nginx.conf.template:/etc/nginx/nginx.conf.template
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      # - ./certbot/conf:/etc/letsencrypt
+      # - ./certbot/www:/var/www/certbot
     networks:
       - app-network
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --email oakarkyaw@gmail.com -d supagymbackend.duckdns.org --agree-tos --no-eff-email
+  # certbot:
+  #   image: certbot/certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   command: certonly --webroot -w /var/www/certbot --email oakarkyaw@gmail.com -d supagymbackend.duckdns.org --agree-tos --no-eff-email
 
 networks:
   app-network:

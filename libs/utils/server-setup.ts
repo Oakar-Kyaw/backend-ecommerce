@@ -11,7 +11,7 @@ export default function serversetup(app, port){
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,      
-      forbidNonWhitelisted: true,  
+      forbidNonWhitelisted: false,  
       transform: true,
       errorHttpStatusCode: 400,
       exceptionFactory: (validationErrors) => {

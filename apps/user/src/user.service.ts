@@ -3,7 +3,7 @@ import { CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import { PrismaService } from '../schema/prisma/prisma.serverice';
-import { Prisma } from '../schema/generated/prisma';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -104,71 +104,71 @@ export class UsersService {
       //  // console.log("login user", loginuser?.role === "MEMBER")
       // if(loginuser?.id != id && loginuser?.role != "ADMIN") throw new UnauthorizedException("You can't edit other user")
       
-    const userExists = await this.prisma.user.findUnique({
-      where: { id },
-      include: { customerProfile: true, saleProfile: true },
-    }); 
+    // const userExists = await this.prisma.user.findUnique({
+    //   where: { id },
+    //   include: { customerProfile: true, saleProfile: true },
+    // }); 
 
-    if (!userExists) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+    // if (!userExists) {
+    //   throw new NotFoundException(`User with ID ${id} not found`);
+    // }
 
-    const updatedData: any = { ...updateUserDto };
+    // const updatedData: any = { ...updateUserDto };
 
-    if (updateUserDto.password) {
-      updatedData.password = await hashedPassword(updateUserDto.password);
-    }
+    // if (updateUserDto.password) {
+    //   updatedData.password = await hashedPassword(updateUserDto.password);
+    // }
 
-    // Remove nested profile fields from main object to avoid Prisma errors
-    delete updatedData.bio;
-    delete updatedData.dateOfBirth;
-    delete updatedData.interest;
-    delete updatedData.salary;
+    // // Remove nested profile fields from main object to avoid Prisma errors
+    // delete updatedData.bio;
+    // delete updatedData.dateOfBirth;
+    // delete updatedData.interest;
+    // delete updatedData.salary;
 
-    if (updateUserDto.role?.toUpperCase() === 'SALE') {
-      updatedData.saleProfile = {
-        upsert: {
-          create: {
-            bio: updateUserDto?.bio || null,
-            salary: updateUserDto?.salary || 0
-          },
-          update: {
-            bio: updateUserDto?.bio || null,
-            salary: updateUserDto?.salary || 0
-          },
-        },
-      };
+    // if (updateUserDto.role?.toUpperCase() === 'SALE') {
+    //   updatedData.saleProfile = {
+    //     upsert: {
+    //       create: {
+    //         bio: updateUserDto?.bio || null,
+    //         salary: updateUserDto?.salary || 0
+    //       },
+    //       update: {
+    //         bio: updateUserDto?.bio || null,
+    //         salary: updateUserDto?.salary || 0
+    //       },
+    //     },
+    //   };
 
-      // If previously was member, optionally delete memberProfile or keep it?
+    //   // If previously was member, optionally delete memberProfile or keep it?
 
-    } else if (updateUserDto.role?.toUpperCase() === 'CUSTOMER') {
-      updatedData.memberProfile = {
-        upsert: {
-          create: {
-            dateOfBirth: updateUserDto?.dateOfBirth || null,
-            interest: updateUserDto?.interest || null
-          },
-          update: {
-            dateOfBirth: updateUserDto?.dateOfBirth || null,
-            interest: updateUserDto?.interest || null
-          },
-        },
-      };
-    }
+    // } else if (updateUserDto.role?.toUpperCase() === 'CUSTOMER') {
+    //   updatedData.memberProfile = {
+    //     upsert: {
+    //       create: {
+    //         dateOfBirth: updateUserDto?.dateOfBirth || null,
+    //         interest: updateUserDto?.interest || null
+    //       },
+    //       update: {
+    //         dateOfBirth: updateUserDto?.dateOfBirth || null,
+    //         interest: updateUserDto?.interest || null
+    //       },
+    //     },
+    //   };
+    // }
 
-    const updateUser = await this.prisma.user.update({
-      where: { id },
-      data: updatedData,
-      include: {
-        customerProfile: true,
-        saleProfile: true,
-      },
-    });
-    return {
-      success: true,
-      message: "UPDATED_USER",
-      data: updateUser 
-    }
+    // const updateUser = await this.prisma.user.update({
+    //   where: { id },
+    //   data: updatedData,
+    //   include: {
+    //     customerProfile: true,
+    //     saleProfile: true,
+    //   },
+    // });
+    // return {
+    //   success: true,
+    //   message: "UPDATED_USER",
+    //   data: updateUser 
+    // }
   }
 
  async remove(id: number) {

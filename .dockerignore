@@ -3,3 +3,5 @@ dist
 .git
 *.log
     
+certbot/conf/accounts
+certbot/conf/keys
