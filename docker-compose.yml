@@ -59,7 +59,7 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --email oakarkyaw@gmail.com -d megaecommerce.ddns.net --agree-tos --no-eff-email
+    #command: certonly --webroot -w /var/www/certbot --email oakarkyaw@gmail.com -d megaecommerce.ddns.net --agree-tos --no-eff-email
 
 networks:
   app-network:
