@@ -11,8 +11,8 @@ services:
       - .env
    # container_name: supacart-gym-api
     ports:
-      - "${AUTH_SERVER_PORT}:${AUTH_SERVER_PORT}"
-      - "${AUTH_SERVER_TCP}:${AUTH_SERVER_TCP}"
+      - "5003:5003"
+      - "5004:5004"
     restart: always
     networks:
       - app-network
@@ -26,8 +26,8 @@ services:
       - .env
    # container_name: supacart-gym-api
     ports:
-      - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
-      - "${USER_SERVER_TCP}:${USER_SERVER_TCP}"
+      - "5001:5001"
+      - "5002:5002"
     restart: always
     networks:
       - app-network
