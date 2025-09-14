@@ -131,7 +131,6 @@ jobs:
             #   docker rm -f $TEMP_API $TEMP_NGINX
             #   exit 1
             # fi
-
             # echo "✅ Temp containers healthy. Switching live..."
 
             # docker compose down
