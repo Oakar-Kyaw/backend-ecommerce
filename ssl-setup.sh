@@ -17,12 +17,12 @@ if [ -f "certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
     exit 0
 fi
 
-#echo "🔹 Starting containers without SSL..."
-docker compose up -d auth user nginx
+# #echo "🔹 Starting containers without SSL..."
+# docker compose up -d auth user nginx
 
-Wait for nginx to be ready
-echo "🔹 Waiting for nginx to be ready..."
-sleep 10
+# Wait for nginx to be ready
+# echo "🔹 Waiting for nginx to be ready..."
+# sleep 10
 
 # Test if the domain is accessible
 echo "🔹 Testing domain accessibility..."
