@@ -138,6 +138,6 @@ jobs:
 
             # echo "🧹 Cleaning temp..."
             # docker rm -f $TEMP_API $TEMP_NGINX || true
-            # docker image prune -af || true
+            docker image prune -af || true
 
             echo "🎉 Deployment complete!"
