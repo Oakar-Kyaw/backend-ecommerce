@@ -16,7 +16,8 @@ async function bootstrap() {
     transport: Transport.TCP,
     options: {
       port: envConfig().auth_service_tcp, // <- must match what USER service expects
-      host: '0.0.0.0',
+      //host: '0.0.0.0',
+      host: 'user'
     },
   });
 
