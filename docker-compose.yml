@@ -4,9 +4,6 @@ services:
   auth:
     image: ${DOCKER_USER}/auth:${TAG:-latest}
     #image: auth
-    build:
-      context: .
-      dockerfile: apps/auth/Dockerfile
     env_file:
       - .env
    # container_name: supacart-gym-api
@@ -19,9 +16,6 @@ services:
   user:
     image: ${DOCKER_USER}/user:${TAG:-latest}
     #image: user
-    build:
-      context: .
-      dockerfile: apps/user/Dockerfile
     env_file:
       - .env
    # container_name: supacart-gym-api
