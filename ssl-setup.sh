@@ -32,7 +32,7 @@ fi
 
 # Obtain certificate
 echo "🔹 Obtaining SSL certificate..."
-docker-compose run --rm certbot certonly \
+docker compose run --rm certbot certonly \
     --webroot \
     -w /var/www/certbot \
     --email $EMAIL \
