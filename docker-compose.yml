@@ -5,7 +5,7 @@ services:
     image: ${DOCKER_USER}/auth:${TAG:-latest}
     #image: auth
     env_file:
-      - .env
+      - ./.env
    # container_name: supacart-gym-api
     ports:
       - "5003:5003"
@@ -17,7 +17,7 @@ services:
     image: ${DOCKER_USER}/user:${TAG:-latest}
     #image: user
     env_file:
-      - .env
+      - ./.env
    # container_name: supacart-gym-api
     ports:
       - "5001:5001"
