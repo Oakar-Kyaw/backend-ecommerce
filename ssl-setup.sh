@@ -18,7 +18,7 @@ if [ -f "certbot/conf/live/$DOMAIN/fullchain.pem" ]; then
 fi
 
 #echo "🔹 Starting containers without SSL..."
-docker compose up -d auth user nginx-proxy
+docker compose up -d auth user nginx
 
 Wait for nginx to be ready
 echo "🔹 Waiting for nginx to be ready..."
