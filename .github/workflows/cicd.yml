@@ -76,7 +76,12 @@ jobs:
             cd "$APP_DIR"
 
             echo "🔹 Pull latest code from repository..."
-            git pull https://${{ secrets.TOKEN }}@github.com/Oakar-Kyaw/ecommerce-backend.git master
+            git config --global credential.helper store
+            echo "https://${{ secrets.TOKEN }}@github.com" > ~/.git-credentials
+            git pull origin master || {
+                echo "⚠️ Git pull failed, continuing with existing code..."
+                git status
+            }
 
             export DOCKER_USER=${{ secrets.DOCKER_USERNAME }}
             export TAG=${{ github.sha }}
@@ -137,7 +142,7 @@ jobs:
             # echo "✅ Temp containers healthy. Switching live..."
 
             # docker compose down
-            docker compose up -d
+            #docker compose up -d
 
             # echo "🧹 Cleaning temp..."
             # docker rm -f $TEMP_API $TEMP_NGINX || true
