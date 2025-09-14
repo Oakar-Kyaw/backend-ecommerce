@@ -75,6 +75,9 @@ jobs:
             APP_DIR="/home/ubuntu/ecommerce-backend"
             cd "$APP_DIR"
 
+            echo "🔹 Pull latest code from repository..."
+            git pull https://${{ secrets.GITHUB_TOKEN }}@github.com/Oakar-Kyaw/ecommerce-backend.git master
+
             export DOCKER_USER=${{ secrets.DOCKER_USERNAME }}
             export TAG=${{ github.sha }}
 

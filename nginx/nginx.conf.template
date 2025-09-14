@@ -77,7 +77,7 @@ http {
                 return 301 https://$host$request_uri;
             }
             add_header Content-Type application/json;
-            return 200 '{"message": "welcome to ecommerce backend"}';;
+            return 200 '{"message": "welcome to ecommerce backend"}';
         }
     }
 }
