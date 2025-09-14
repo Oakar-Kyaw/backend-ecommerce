@@ -22,7 +22,7 @@ import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, Un
 import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @ApiTags('Users')
-@Controller('api/v1/users')
+@Controller('')
 //@UseGuards(AuthGuard) // Apply AuthGuard to all routes by default
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

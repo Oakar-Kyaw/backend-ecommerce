@@ -8,7 +8,7 @@ import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import { LoginDto } from '../dto/login.dto';
 import { LoginResponseDto, LogOutResponseDto } from '../dto/login-response.dto';
 
-@Controller('api/auth')
+@Controller('')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
@@ -17,7 +17,7 @@ export class AuthController {
     @Post("login") 
     @ApiBody({type: LoginDto})
     @ApiResponse({type: LoginResponseDto})
-    @Serialize(LoginResponseDto)
+    @Serialize(LoginResponseDto)                                                                        
     login(@Body() data: LoginDto) {
         console.log("log",data)
         return this.authService.signIn(data)
