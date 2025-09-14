@@ -11,7 +11,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       {
         name: 'USER',
         transport: Transport.TCP,
-        options: { host: 'localhost', port: envConfig().user_service_tcp }, // user service port
+        //for local
+       // options: { host: 'localhost', port: envConfig().user_service_tcp }, // user service port
+       options: { host: 'user', port: envConfig().user_service_tcp }, 
       },
     ]),
     JwtModule.register({

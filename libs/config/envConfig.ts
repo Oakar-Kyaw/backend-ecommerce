@@ -13,6 +13,8 @@ export const envConfig =  () => ({
     auth_service_port: parseInt(process.env.AUTH_SERVER_PORT ?? '5003', 10),
     auth_service_url: process.env.AUTH_SERVER_URL ?? "http://localhost:5000/api/v1",
     auth_service_tcp: parseInt(process.env.AUTH_SERVER_TCP ?? '5004', 10),
+    noti_service_port: parseInt(process.env.NOTIFICATION_SERVER_PORT ?? '5005', 10),
+    noti_service_tcp: parseInt(process.env.NOTIFICATION_SERVER_TCP ?? '5006', 10),
     JWTRefreshSecret: process.env.JWT_REFRESH_SECRET,
     JWTSecret: process.env.JWT_SECRET,
     database: {
