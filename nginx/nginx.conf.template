@@ -11,6 +11,7 @@ http {
         server user:5001;   # User service
     }
 
+    # HTTP Server
     server {
         listen 80;
         server_name ecommerce-backend.ddns.net;
@@ -20,12 +21,44 @@ http {
             root /var/www/certbot;
         }
 
-        # Redirect HTTP to HTTPS
+        # Check if SSL certificate exists, if yes redirect to HTTPS
         location / {
-            return 301 https://$host$request_uri;
+            if (-f /etc/letsencrypt/live/ecommerce-backend.ddns.net/fullchain.pem) {
+                return 301 https://$host$request_uri;
+            }
+
+            # If no SSL certificate, serve content on HTTP
+            location /api/v1/auth/ {
+                proxy_pass http://auth/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+            }
+
+            location /api/v1/users/ {
+                proxy_pass http://user/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_cache_bypass $http_upgrade;
+            }
+
+            # Default welcome message
+            add_header Content-Type application/json;
+            return 200 '{"message": "welcome to ecommerce backend"}';
         }
     }
 
+    # HTTPS Server (only if certificates exist)
     server {
         listen 443 ssl;
         server_name ecommerce-backend.ddns.net;
@@ -61,7 +94,7 @@ http {
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_Set_header X-Forwarded-Proto $scheme;
             proxy_cache_bypass $http_upgrade;
         }
 
