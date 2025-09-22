@@ -1,11 +1,11 @@
 import { BadRequestException, ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { HttpExceptionFilter } from "libs/exception/http.exception";
+import { AllExceptionFilter } from "libs/exception/http.exception";
 
 export default function serversetup(app, port){
   //for all undefined routes and custom http exception
   app.useGlobalFilters(
-    new HttpExceptionFilter()
+    new AllExceptionFilter()
   );
   // global exception error and non property field error
   app.useGlobalPipes(

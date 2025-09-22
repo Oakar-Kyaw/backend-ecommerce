@@ -3,6 +3,7 @@ import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { envConfig } from 'libs/config/envConfig';
 import { UserModule } from './user.module';
 import serversetup from 'libs/utils/server-setup';
+import { AllExceptionFilter } from 'libs/exception/http.exception';
 
 async function bootstrap() {
   // Create HTTP app
@@ -21,7 +22,6 @@ async function bootstrap() {
      //host: 'auth'
     },
   });
-
   await app.startAllMicroservices();
   console.log(`🚀 USER TCP microservice running on port ${envConfig().user_service_tcp}`);
 }

@@ -2,53 +2,40 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
-import { PrismaService } from '../schema/prisma/prisma.serverice';
-import { Prisma } from '@prisma/client';
+import { Role } from '@prisma/client';
+import { UserPrismaService } from 'apps/prisma/prisma.service';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prisma: UserPrismaService,
   ) {}
 
   async create(createUserDto: CreateUserWithProfileDto) {
-    const { bio, interest, dateOfBirth, salary, ...data } = createUserDto
+    const { email, phone } = createUserDto
      // Check if email already exists
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: createUserDto.email },
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(email ? [{ email }] : []),
+          ...(phone ? [{ phone }] : []),
+        ],
+      },
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already exists');
+      throw new ConflictException('Email or phone already exists');
     }
 
     const hashPassword = await hashedPassword(createUserDto.password);
-    const userData: Prisma.UserCreateInput = { ...data, password: hashPassword}
-    if(createUserDto.role === "CUSTOMER"){
-       userData.customerProfile = {
-         create: {
-            dateOfBirth: dateOfBirth ??  null,
-            interest: interest ?? null
-         }
-       }
-    }
-    if(createUserDto.role === "SALE") {
-        userData.saleProfile = {
-          create: {
-             bio: bio ?? null,
-             salary: salary ?? null
-          }
-        }
-    }
-    console.log("userData", userData)
     const user = await this.prisma.user.create({
-      data: userData,
-      include: {
-        customerProfile: true,
-        saleProfile: true,
-
-      },
-    });
+      data: {
+        ...createUserDto,
+        password: hashPassword
+      }
+    })
+    console.log("user: ",user)
     return {
       success: true,
       message: "CREATED_USER",
@@ -56,18 +43,15 @@ export class UsersService {
    }
   }
 
- async findAll(filters: { email?: string; phone?: string }) {
-  const { email, phone  } = filters
+ async findAll(filters: { email?: string; phone?: string, role?: Role }) {
+  const { email, phone, role  } = filters
+  const filterRole: Role | null = role?.toUpperCase() as Role
   console.log("emila",email, phone)
   const users = await this.prisma.user.findMany({
-    where: { isDeleted: false, ...(email && {email: email}), ...(phone && { phone: phone }) },
+    where: { isDeleted: false, ...(email && {email: email}), ...(phone && { phone: phone }), ...(filterRole && { role: filterRole }) },
     orderBy: {
       id: "asc"
-    },
-    include: {
-      customerProfile: true,
-      saleProfile: true
-    },
+    }
   });
     return {
       success: true,
@@ -76,25 +60,28 @@ export class UsersService {
     };
   }
 
-  async findOne(id: number | undefined) {
-    console.log("user found", id )
-    const user = await this.prisma.user.findUnique({
-      where: { id , isDeleted: false },
-      include: {
-        customerProfile: true,
-        saleProfile: true
-      }
-    });
+  async findOne(id: number, host?: 'http' | 'tcp') {
+    console.log("user found", id);
+
+    const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) {
+      // TCP: return structured object
+      if (host === 'tcp') {
+        return { success: false, error: [`User with ID ${id} does not exist`], data: null };
+      }
+
+      // HTTP: throw proper exception
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+
+    // If found, return success object
     return {
       success: true,
       message: 'USER_BY_ID',
       data: user,
     };
-  }
+ }
 
   async update(id: number, updateUserDto: UpdateUserWithProfileDto, req: Request) {
          //console.log("req", req["user"])
@@ -104,71 +91,36 @@ export class UsersService {
       //  // console.log("login user", loginuser?.role === "MEMBER")
       // if(loginuser?.id != id && loginuser?.role != "ADMIN") throw new UnauthorizedException("You can't edit other user")
       
-    // const userExists = await this.prisma.user.findUnique({
-    //   where: { id },
-    //   include: { customerProfile: true, saleProfile: true },
-    // }); 
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id }
+    }); 
 
-    // if (!userExists) {
-    //   throw new NotFoundException(`User with ID ${id} not found`);
-    // }
+    if (!existingUser) throw new NotFoundException(`User with ID ${id} not found`)
 
-    // const updatedData: any = { ...updateUserDto };
+    const existingOtherUser = await this.prisma.user.findFirst({
+      where: { NOT: { id }, email: updateUserDto.email}
+    })
 
-    // if (updateUserDto.password) {
-    //   updatedData.password = await hashedPassword(updateUserDto.password);
-    // }
+    console.log("existing other user", existingOtherUser)
 
-    // // Remove nested profile fields from main object to avoid Prisma errors
-    // delete updatedData.bio;
-    // delete updatedData.dateOfBirth;
-    // delete updatedData.interest;
-    // delete updatedData.salary;
+    if(existingOtherUser) throw new ConflictException(`User with this ${updateUserDto.email} already exist in other account.`)
 
-    // if (updateUserDto.role?.toUpperCase() === 'SALE') {
-    //   updatedData.saleProfile = {
-    //     upsert: {
-    //       create: {
-    //         bio: updateUserDto?.bio || null,
-    //         salary: updateUserDto?.salary || 0
-    //       },
-    //       update: {
-    //         bio: updateUserDto?.bio || null,
-    //         salary: updateUserDto?.salary || 0
-    //       },
-    //     },
-    //   };
+    if (updateUserDto.password) updateUserDto.password = await hashedPassword(updateUserDto.password);
+    
+    //console.log("update user data: ", updateUserDto)
 
-    //   // If previously was member, optionally delete memberProfile or keep it?
+    const updateUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        ...updateUserDto
+      }
+    })
 
-    // } else if (updateUserDto.role?.toUpperCase() === 'CUSTOMER') {
-    //   updatedData.memberProfile = {
-    //     upsert: {
-    //       create: {
-    //         dateOfBirth: updateUserDto?.dateOfBirth || null,
-    //         interest: updateUserDto?.interest || null
-    //       },
-    //       update: {
-    //         dateOfBirth: updateUserDto?.dateOfBirth || null,
-    //         interest: updateUserDto?.interest || null
-    //       },
-    //     },
-    //   };
-    // }
-
-    // const updateUser = await this.prisma.user.update({
-    //   where: { id },
-    //   data: updatedData,
-    //   include: {
-    //     customerProfile: true,
-    //     saleProfile: true,
-    //   },
-    // });
-    // return {
-    //   success: true,
-    //   message: "UPDATED_USER",
-    //   data: updateUser 
-    // }
+    return {
+      success: true,
+      message: "UPDATED_USER",
+      data: updateUser 
+    }
   }
 
  async remove(id: number) {
@@ -181,17 +133,6 @@ export class UsersService {
   }
 
   return this.prisma.$transaction(async (prisma) => {
-    // Soft-delete related MemberProfile
-    await prisma.customerProfile.updateMany({
-      where: { userId: id, isDeleted: false },
-      data: { isDeleted: true },
-    });
-
-    // Soft-delete related TrainerProfile
-    await prisma.saleProfile.updateMany({
-      where: { userId: id, isDeleted: false },
-      data: { isDeleted: true },
-    });
 
     // Finally, soft-delete the user itself
     const deletedUser = await prisma.user.update({
@@ -211,11 +152,7 @@ export class UsersService {
     const { email } = data
     console.log("email", email)
     const user = await this.prisma.user.findUnique({
-      where: {  email, isDeleted: false },
-      include: {
-        customerProfile: true,
-        saleProfile: true
-      }
+      where: {  email, isDeleted: false }
     });
 
     if (!user) {

@@ -34,7 +34,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
   readonly firstName: string;
 
   // @ApiProperty({
@@ -44,7 +44,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
   readonly middleName?: string;
 
   // @ApiProperty({
@@ -52,9 +52,9 @@ export class CreateUserWithProfileDto {
   //   example: "Doe",
   // })
   @Expose()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
   readonly lastName?: string;
 
   // @ApiProperty({
@@ -64,7 +64,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsNotEmpty()
   @IsEmail()
-  @Transform(({ value }) => (typeof value === "string" ? value.toLowerCase() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
   readonly email: string;
 
   // @ApiProperty({
@@ -74,7 +74,8 @@ export class CreateUserWithProfileDto {
   // })
   @Expose()
   @IsNotEmpty()
-  @IsEnum(RoleEnum)  
+  @IsEnum(RoleEnum)
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toUpperCase(): Number(value): null)) 
   readonly role: RoleEnum;
 
   // @ApiProperty({
@@ -86,11 +87,8 @@ export class CreateUserWithProfileDto {
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
-  @Transform(({ value }) => {
-    console.log("password:", value);
-    return typeof value === "string" ? value.trim() : value;
-  })
-  readonly password: string;
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
+  password: string;
 
   // @ApiProperty({
   //   description: "User phone number",
@@ -99,7 +97,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
   readonly phone: string;
 
   // @ApiProperty({
@@ -118,10 +116,6 @@ export class CreateUserWithProfileDto {
   //   default: false,
   //   example: false,
   // })
-  @Expose()
-  @IsOptional()
-  @IsBoolean()
-  readonly isDeleted?: boolean;
 
 
   // @ApiPropertyOptional({
@@ -132,6 +126,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
   readonly identification?: string;
 
   // -------- Customer-only fields --------
@@ -145,6 +140,15 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsDateString()
+  @Transform(({ value }: { value: unknown }) => {
+    if (typeof value === "string" && value) {
+      const d = new Date(value);
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+        .toISOString()
+        .replace(/\.\d{3}Z$/, "Z"); // strip milliseconds
+    }
+    return null;
+  })
   readonly dateOfBirth?: string;
 
   // @ApiPropertyOptional({
@@ -155,6 +159,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
   readonly interest?: string;
 
   // -------- Sale-only fields --------
@@ -165,7 +170,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
   readonly bio?: string;
 
   // @ApiPropertyOptional({
@@ -176,5 +181,6 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsNumber()
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? Number(value): 0 : null))
   readonly salary?: number;
 }

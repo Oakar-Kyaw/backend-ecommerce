@@ -6,6 +6,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/user" 
 }
 
 datasource db {
@@ -27,26 +28,10 @@ model User {
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
   isDeleted          Boolean                @default(false)
-  customerProfile    CustomerProfile?
-  saleProfile       SaleProfile?
-}
-
-model CustomerProfile {
-  id             Int       @id @default(autoincrement())
-  userId         Int       @unique
-  dateOfBirth    DateTime?
-  interest       String?
-  isDeleted      Boolean   @default(false)
-  user           User      @relation(fields: [userId], references: [id])
-}
-
-model SaleProfile {
-  id             Int      @id @default(autoincrement())
-  userId         Int      @unique
-  salary         Int?
-  bio            String?
-  isDeleted      Boolean  @default(false)
-  user           User     @relation(fields: [userId], references: [id])
+  dateOfBirth        DateTime?
+  interest           String?
+  salary             Int?
+  bio                String?
 }
 
 enum Role {

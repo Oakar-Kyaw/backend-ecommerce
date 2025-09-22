@@ -14,51 +14,16 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 //import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
 import { RoleEnum } from './create-user.dto';
-
-class CustomerProfileResponseDto {
-  
-  //@ApiProperty({ example: '1990-01-01T00:00:00.000Z', required: false })
-  @Expose()
-  readonly dateOfBirth?: string;
-
-  // @ApiProperty({
-  //   description: "user's interest",
-  //   type: String,
-  //   example: "Music, Movie",
-  // })
-  @Expose()
-  readonly interest?: string;                                           
-}
-
-class SaleProfileResponseDto {
-  //@ApiProperty({ example: 'Fitness trainer bio', required: false })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }) => (value ? value.trim() : undefined))
-  readonly bio?: string;
-
-  // @ApiProperty({
-  //   description: "Sale's salary",
-  //   type: Number,
-  //   example: 5000,
-  // })
-  @Expose()
-  readonly salary?: number;
-}
 
 // ===== USER ENTITY RESPONSE =====
 export class UserResponseDto {
 //  @ApiProperty({ example: 'uuid-123' })
   @Expose()
-  @IsString()
   readonly id: string;
 
 //  @ApiProperty({ example: 'xxxxxx' })
   @Expose()
-  @IsString()
   readonly photoUrl: string;
 
 //  @ApiProperty({
@@ -66,9 +31,6 @@ export class UserResponseDto {
   //   example: "Middle",
   // })
   @Expose()
-  @IsNotEmpty()
-  @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly middleName?: string;
 
   // @ApiProperty({
@@ -76,42 +38,30 @@ export class UserResponseDto {
   //   example: "Doe",
   // })
   @Expose()
-  @IsNotEmpty()
-  @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly lastName?: string;
 
   //@ApiProperty({ example: 'john@example.com' })
   @Expose()
-  @IsEmail()
-  @Transform(({ value }) =>  value ? value?.toLowerCase() : undefined)
   readonly email: string;
 
   //@ApiProperty({ example: Role.ADMIN, enum: Role })
   @Expose()
-  @IsEnum(RoleEnum)
   readonly role: RoleEnum;
 
   //@ApiProperty({ example: '555-555-5555' })
   @Expose()
-  @IsString()
-  @Transform(({ value }) => value ? value?.trim() : undefined)
   readonly phone: string;
 
   //@ApiProperty({ example: '1990-01-01T00:00:00.000Z', required: false })
   @Expose()
-  @IsOptional()
-  @IsDateString()
   readonly dateOfBirth?: string;
 
   //@ApiProperty({ example: false, required: false })
   @Expose()
-  @IsOptional()
-  @IsBoolean()
   readonly isDeleted?: boolean;
 
   //@Exclude()
-  @Expose()
+  @Exclude()
   readonly password: string;
 
   // @ApiProperty({
@@ -122,15 +72,26 @@ export class UserResponseDto {
   @Expose()   
   readonly identification?: string;
 
+  // @ApiProperty({
+  //   description: "user's interest",
+  //   type: String,
+  //   example: "Music, Movie",
+  // })
   @Expose()
-  @IsOptional()
-  @Type(()=>  CustomerProfileResponseDto)
-  readonly customerProfile: CustomerProfileResponseDto
+  readonly interest?: string;  
+  
+    //@ApiProperty({ example: 'Fitness trainer bio', required: false })
+  @Expose()
+  readonly bio?: string;
 
+  // @ApiProperty({
+  //   description: "Sale's salary",
+  //   type: Number,
+  //   example: 5000,
+  // })
   @Expose()
-  @IsOptional()
-  @Type(()=>  SaleProfileResponseDto)
-  readonly saleProfile: SaleProfileResponseDto
+  readonly salary?: number;
+
 }
 
 // ===== BASE RESPONSE WRAPPER =====

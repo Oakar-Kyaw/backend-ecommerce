@@ -10,6 +10,7 @@ import {
   UseGuards,
   ParseIntPipe,
   Request,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto } from '../dto/create-user.dto';
@@ -20,6 +21,8 @@ import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import { CreatedUserResponseDto, DeletedUserResponseDto, UpdatedUserResponseDto, UserByIdResponseDto, UserListResponseDto, UserResponseDto } from '../dto/response-user.dto';
 import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, UnauthorizeResponseDto } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Role } from '@prisma/client';
 
 @ApiTags('Users')
 @Controller('')
@@ -29,6 +32,7 @@ export class UsersController {
 
   @Public()
   @Serialize(CreatedUserResponseDto)
+  @UseInterceptors(FileInterceptor('photoUrl'))
   @Post()
   @ApiBody({type: CreateUserWithProfileDto})
   @ApiResponse({ status: 201, description: 'User created successfully', type: CreatedUserResponseDto })
@@ -55,8 +59,9 @@ export class UsersController {
   async findAll(
       @Query('email') email?: string,
       @Query('phone') phone?: string,
+      @Query('role')  role?:  Role
   ) {
-    return this.usersService.findAll({email, phone});
+    return this.usersService.findAll({email, phone, role});
   }
 
   @Serialize(UserByIdResponseDto)
@@ -72,14 +77,12 @@ export class UsersController {
     description: "Internal Server Error",
     type: ServerErrorResponseDto,
   })
-  @MessagePattern({ cmd: 'get_user_by_id' })
-  async findOne(@Param('id') id?: number, @Payload() data?: { id: number }) {
-    console.log("data",data)
-    const userId = data?.id || id;
-    return this.usersService.findOne(userId);
+  async findOne(@Param('id') id) {
+    return this.usersService.findOne(Number(id), "http");
   }
   
   @Serialize(UpdatedUserResponseDto)
+  @UseInterceptors(FileInterceptor('photoUrl'))
   @Patch(':id')
   @ApiResponse({status: 200, description: "UPDATE_USER_BY_ID", type: UpdatedUserResponseDto})
   @ApiResponse({
@@ -126,9 +129,15 @@ export class UsersController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
-
+  //microservice
   @MessagePattern({ cmd: 'users' })
   findUserByEmail(@Payload() data: { email: string }){
     return this.usersService.findUserByEmail(data)
   }
+
+  @MessagePattern({ cmd: 'get_user_by_id' })
+  async getUser(@Payload() data: { id: number }) {
+    return await this.usersService.findOne(Number(data.id), "tcp");
+  }
+
 }
