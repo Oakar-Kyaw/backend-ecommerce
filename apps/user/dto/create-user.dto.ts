@@ -34,18 +34,9 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
-  readonly firstName: string;
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): value: null))
+  readonly firstName?: string;
 
-  // @ApiProperty({
-  //   description: "User's middle name",
-  //   example: "Middle",
-  // })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
-  readonly middleName?: string;
 
   // @ApiProperty({
   //   description: "User's last name",
@@ -54,7 +45,7 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): value: null))
   readonly lastName?: string;
 
   // @ApiProperty({
@@ -110,13 +101,6 @@ export class CreateUserWithProfileDto {
   @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
   readonly photoUrl: string;
 
-  // -------- Soft-delete flag --------
-  // @ApiPropertyOptional({
-  //   description: "Soft delete flag",
-  //   default: false,
-  //   example: false,
-  // })
-
 
   // @ApiPropertyOptional({
   //   description: "USER IDENTIFICATION CARD",
@@ -128,8 +112,6 @@ export class CreateUserWithProfileDto {
   @IsString()
   @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
   readonly identification?: string;
-
-  // -------- Customer-only fields --------
   
   // @ApiPropertyOptional({
   //   description: "Date of birth (for members only)",
@@ -151,36 +133,4 @@ export class CreateUserWithProfileDto {
   })
   readonly dateOfBirth?: string;
 
-  // @ApiPropertyOptional({
-  //   description: "user's interest",
-  //   type: String,
-  //   example: "Music, Movie",
-  // })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
-  readonly interest?: string;
-
-  // -------- Sale-only fields --------
-  // @ApiPropertyOptional({
-  //   description: "Bio (for trainers only)",
-  //   example: "Experienced personal trainer specializing in weightlifting",
-  // })
-  @Expose()
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
-  readonly bio?: string;
-
-  // @ApiPropertyOptional({
-  //   description: "Sale's salary",
-  //   type: Number,
-  //   example: 5000,
-  // })
-  @Expose()
-  @IsOptional()
-  @IsNumber()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? Number(value): 0 : null))
-  readonly salary?: number;
 }

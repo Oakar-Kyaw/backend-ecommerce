@@ -26,12 +26,12 @@ export class UserResponseDto {
   @Expose()
   readonly photoUrl: string;
 
-//  @ApiProperty({
-  //   description: "User's middle name",
-  //   example: "Middle",
+  // @ApiProperty({
+  //   description: "User's last name",
+  //   example: "Doe",
   // })
   @Expose()
-  readonly middleName?: string;
+  readonly firstName?: string;
 
   // @ApiProperty({
   //   description: "User's last name",
@@ -39,6 +39,20 @@ export class UserResponseDto {
   // })
   @Expose()
   readonly lastName?: string;
+
+  // @ApiProperty({
+  //   description: "User's last name",
+  //   example: "Doe",
+  // })
+  @Expose()
+  readonly createdAt?: Date;
+  
+  // @ApiProperty({
+  //   description: "User's last name",
+  //   example: "Doe",
+  // })
+  @Expose()
+  readonly updatedAt?: Date;
 
   //@ApiProperty({ example: 'john@example.com' })
   @Expose()
@@ -71,26 +85,6 @@ export class UserResponseDto {
   // })    
   @Expose()   
   readonly identification?: string;
-
-  // @ApiProperty({
-  //   description: "user's interest",
-  //   type: String,
-  //   example: "Music, Movie",
-  // })
-  @Expose()
-  readonly interest?: string;  
-  
-    //@ApiProperty({ example: 'Fitness trainer bio', required: false })
-  @Expose()
-  readonly bio?: string;
-
-  // @ApiProperty({
-  //   description: "Sale's salary",
-  //   type: Number,
-  //   example: 5000,
-  // })
-  @Expose()
-  readonly salary?: number;
 
 }
 

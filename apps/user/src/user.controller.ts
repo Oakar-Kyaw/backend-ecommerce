@@ -57,11 +57,14 @@ export class UsersController {
     type: ServerErrorResponseDto,
   })
   async findAll(
+      @Query('isDeleted') isDeleted?: boolean,
       @Query('email') email?: string,
       @Query('phone') phone?: string,
-      @Query('role')  role?:  Role
-  ) {
-    return this.usersService.findAll({email, phone, role});
+      @Query('role')  role?:  Role,
+      @Query('startDate') startDate?: Date,
+      @Query('endDate') endDate?: Date
+    ) {
+    return this.usersService.findAll({isDeleted, email, phone, role, startDate, endDate});
   }
 
   @Serialize(UserByIdResponseDto)

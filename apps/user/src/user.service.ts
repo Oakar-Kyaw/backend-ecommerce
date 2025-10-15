@@ -43,12 +43,41 @@ export class UsersService {
    }
   }
 
- async findAll(filters: { email?: string; phone?: string, role?: Role }) {
-  const { email, phone, role  } = filters
-  const filterRole: Role | null = role?.toUpperCase() as Role
-  console.log("emila",email, phone)
+ async findAll(query: { isDeleted?: boolean, email?: string; phone?: string, role?: Role, startDate?: Date, endDate?: Date }) {
+      const where: { isDeleted: boolean, role?: Role, createdAt?: { gte?: Date, lte?: Date }, email?: string, phone?: string } = { isDeleted: false };
+      if (query?.isDeleted) {
+        where.isDeleted = query.isDeleted;
+      }
+      
+      if (query?.role) {
+        const role = query.role.toUpperCase() as Role;
+        where.role = role;
+      }
+      if (query?.email) {
+        where.email = query.email;
+      }
+      if (query?.phone) {
+        where.phone = query.phone;
+      }
+      //query with date
+      if (query?.startDate || query?.endDate) {
+        const createdAt: { gte?: Date, lte?: Date } = {};
+
+        if (query.startDate) {
+          createdAt.gte = new Date(query.startDate);
+        }
+
+        if (query.endDate) {
+          const end = new Date(query.endDate);
+          end.setHours(23, 59, 59, 999); // include full end day
+          createdAt.lte = end;
+        }
+
+        where.createdAt = createdAt;
+      }
+      console.log('where', where);
   const users = await this.prisma.user.findMany({
-    where: { isDeleted: false, ...(email && {email: email}), ...(phone && { phone: phone }), ...(filterRole && { role: filterRole }) },
+    where,
     orderBy: {
       id: "asc"
     }
@@ -92,7 +121,7 @@ export class UsersService {
       // if(loginuser?.id != id && loginuser?.role != "ADMIN") throw new UnauthorizedException("You can't edit other user")
       
     const existingUser = await this.prisma.user.findUnique({
-      where: { id }
+      where: { id,  isDeleted: false }
     }); 
 
     if (!existingUser) throw new NotFoundException(`User with ID ${id} not found`)

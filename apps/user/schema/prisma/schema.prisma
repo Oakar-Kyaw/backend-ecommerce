@@ -19,8 +19,7 @@ model User {
   email              String                 @unique
   photoUrl           String?
   identification     String?
-  firstName          String  
-  middleName         String?
+  firstName          String?  
   lastName           String?            
   password           String
   phone              String                 
@@ -29,9 +28,6 @@ model User {
   updatedAt          DateTime               @updatedAt
   isDeleted          Boolean                @default(false)
   dateOfBirth        DateTime?
-  interest           String?
-  salary             Int?
-  bio                String?
 }
 
 enum Role {
