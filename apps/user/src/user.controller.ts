@@ -134,7 +134,7 @@ export class UsersController {
   }
   //microservice
   @MessagePattern({ cmd: 'users' })
-  findUserByEmail(@Payload() data: { email: string }){
+  findUserByEmail(@Payload() data: { email?: string, phone?: string }) {
     return this.usersService.findUserByEmail(data)
   }
 

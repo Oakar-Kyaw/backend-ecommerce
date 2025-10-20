@@ -18,9 +18,11 @@ export class AllExceptionFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) {
       const res = exception.getResponse();
+      console.log("exception res: ", res, typeof res)
       if (typeof res === 'string') {
         messages = [res];
       } else if (Array.isArray((res as any).message)) {
+        console.log("messge", (res as any).message)
         messages = (res as any).message;
       } else if (typeof (res as any).message === 'string') {
         messages = [(res as any).message];
@@ -32,17 +34,17 @@ export class AllExceptionFilter implements ExceptionFilter {
     } else {
       messages = ['Internal server error'];
     }
-    console.log("excepton", exception, type)
     // Optional: log full error in dev
     if (process.env.NODE_ENV !== 'production') {
       console.error(exception);
     }
 
     if (type === 'http') {
+      console.log("https ecepton", messages)
       // HTTP response
       const ctx = host.switchToHttp();
       const response = ctx.getResponse<Response>();
-      response.status(
+      return response.status(
         exception instanceof HttpException
           ? exception.getStatus()
           : HttpStatus.INTERNAL_SERVER_ERROR,
@@ -53,6 +55,7 @@ export class AllExceptionFilter implements ExceptionFilter {
         timestamp: new Date().toISOString(),
       });
     } else if (type === 'rpc') {
+      console.log("rpc exception")
       // TCP / microservice response
       return throwError(() => ({
         success: false,

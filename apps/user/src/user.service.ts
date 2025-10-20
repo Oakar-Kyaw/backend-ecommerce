@@ -177,21 +177,29 @@ export class UsersService {
   });
  }
 
- async findUserByEmail(data: {email: string}) {
-    const { email } = data
-    console.log("email", email)
-    const user = await this.prisma.user.findUnique({
-      where: {  email, isDeleted: false }
-    });
+ async findUserByEmail(data: {email?: string, phone?: string}) {
+  try{const { email, phone } = data
+  console.log("email", email)
+  const user = await this.prisma.user.findFirst({
+    where: {  ...(email && {email}), ...(phone && {phone}), isDeleted: false }
+  });
 
-    if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
-    }
+  if (!user) {
     return {
-      success: true,
-      message: 'USER_BY_EMAIL',
-      data: user,
-    };
+      success: false,
+      message: `User with this email ${email} not found. `,
+      data: null
+    }
   }
+  console.log("user: ",user)
+  return {
+    success: true,
+    message: 'USER_BY_EMAIL',
+    data: user,
+  };
+}catch(error){
+  console.log('error is', error)
+}
+}
 
 }

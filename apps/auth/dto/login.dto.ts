@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 // ----------- Request DTO -----------
@@ -13,8 +13,8 @@ export class LoginDto {
   @ApiProperty({ example: '555-555-5555', required: false })
   phone?: string;
 
-  @IsString()
-  @MinLength(6)
+  @IsNotEmpty()
+  //@IsString()
   @ApiProperty({ example: 'admin123' })
   password: string;
 }

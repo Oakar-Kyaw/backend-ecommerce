@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 //import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { comparePassword } from '../../../libs/utils/hash';
@@ -21,14 +21,19 @@ export class AuthService {
     async signIn(datas) {
         if( !datas ) throw new BadRequestException('Either email or phone must be provided');
         const { email, password, phone } = datas
-        if( (!email || !password) && !password ) throw new BadRequestException('Either email or phone must be provided');
-        const { success, message, data } = await firstValueFrom(
-            this.userClient.send({cmd: 'users'}, { email: email })
+        console.log("email and password", email, password)
+        if( (!email && !phone)) throw new BadRequestException('Either email or phone must be provided')
+        const { success, message, data, error } = await firstValueFrom(
+            this.userClient.send({cmd: 'users'}, { email, phone })
         );
+        if(!success && message) {
+          console.log("message", message, "success")
+          throw new NotFoundException(`User with this ${email ? 'email' : 'phone'} Not found`)  
+        }
+        
         const user = data
-        console.log("user",user)
-        if(!user) throw new UnauthorizedException()
-
+        const passwordComparison = await comparePassword(password, user.password)
+        if(!passwordComparison) throw new UnauthorizedException(`Password was wrong.`)
         const payload: PayloadInterface = {
             id: user.id,
             name: user.name,

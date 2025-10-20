@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { AllExceptionFilter } from "libs/exception/http.exception";
 
 export default function serversetup(app, port){
+  console.log("app and port: ", port)
   //for all undefined routes and custom http exception
   app.useGlobalFilters(
     new AllExceptionFilter()

@@ -15,19 +15,35 @@ datasource db {
 }
 
 model User {
-  id                 Int                    @id @default(autoincrement())
-  email              String                 @unique
-  photoUrl           String?
-  identification     String?
-  firstName          String?  
-  lastName           String?            
-  password           String
-  phone              String                 
-  role               Role                   @default(CUSTOMER)
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-  isDeleted          Boolean                @default(false)
-  dateOfBirth        DateTime?
+  id                      Int                    @id @default(autoincrement())
+  email                   String                 @unique
+  photoUrl                String?
+  identification          String?
+  firstName               String?  
+  lastName                String?            
+  password                String
+  phone                   String                 
+  role                    Role                   @default(CUSTOMER)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  isDeleted               Boolean                @default(false)
+  dateOfBirth             DateTime?
+  brandUserRelationship   BrandUserRelationship[]
+}
+
+model Brand {
+  id                      Int         @id  @default(autoincrement())
+  name                    String
+  description             String?
+  isDeleted               Boolean
+  brandUserRelationship   BrandUserRelationship[]
+}
+
+model BrandUserRelationship {
+   id             Int      @id  @default(autoincrement())
+   userId         Int 
+   brandId        Int
+   @unique(userId, brandId)
 }
 
 enum Role {
