@@ -1,42 +1,43 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-//import { PrismaService } from '../../../shared/prisma/prisma.service';
 import { comparePassword } from '../../../libs/utils/hash';
-import createAPI from 'libs/utils/axio.instance';
 import { envConfig } from 'libs/config/envConfig';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { AuthPrismaService } from 'apps/prisma/prisma.service';
 
 interface PayloadInterface {
   id: number;
-  name: string;
   email: string | null;
   phone: string | null;
 }
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly jwtService: JwtService, @Inject('USER') private readonly userClient: ClientProxy) {}
+    constructor(
+      private readonly jwtService: JwtService, 
+      private readonly prisma: AuthPrismaService
+    ) {}
     
     async signIn(datas) {
         if( !datas ) throw new BadRequestException('Either email or phone must be provided');
         const { email, password, phone } = datas
         console.log("email and password", email, password)
         if( (!email && !phone)) throw new BadRequestException('Either email or phone must be provided')
-        const { success, message, data, error } = await firstValueFrom(
-            this.userClient.send({cmd: 'users'}, { email, phone })
-        );
-        if(!success && message) {
-          console.log("message", message, "success")
-          throw new NotFoundException(`User with this ${email ? 'email' : 'phone'} Not found`)  
-        }
-        
-        const user = data
+
+        const user = await this.prisma.user.findFirst({
+          where: {
+            isDeleted: false,
+            OR: [
+              (email &&{ email }),
+              (phone && { phone }),
+            ].filter(Boolean),
+          },
+        })
+        if(!user) throw new NotFoundException(`User with this ${email ? 'email' : 'phone'} Not found`)
+        //const user = data
         const passwordComparison = await comparePassword(password, user.password)
         if(!passwordComparison) throw new UnauthorizedException(`Password was wrong.`)
         const payload: PayloadInterface = {
-            id: user.id,
-            name: user.name,
+            id: user.userId,
             email: user.email,
             phone: user.phone
       };
@@ -50,7 +51,7 @@ export class AuthService {
         return {
             success: true,
             message: 'Login Successful',
-            data: user,
+            data: payload,
             access_token,
             refresh_token,
         };
@@ -120,13 +121,13 @@ export class AuthService {
       });
 
       console.log('👤 Looking up user by ID:', payload.id);
-      const { success, message, data } = await firstValueFrom(
-            this.userClient.send({cmd: 'get_user_by_id'}, { id: payload.id })
-        );
-
+      // const { success, message, data } = await firstValueFrom(
+      //       this.userClient.send({cmd: 'get_user_by_id'}, { id: payload.id })
+      //   );
+      const data = await this.prisma.user.findFirst()
       console.log(
         '👤 User found for refresh:',
-        data ? `Yes (${data.name})` : 'No',
+        data ? `Yes (${data.email})` : 'No',
       );
 
       if (!data) {
@@ -135,8 +136,7 @@ export class AuthService {
 
       console.log('🎫 Generating new access token...');
       const newAccessToken = await this.jwtService.signAsync({
-        id: data.id,
-        name: data.name,
+        id: data.userId,
         email: data.email,
         phone: data.phone,
       });

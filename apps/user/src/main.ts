@@ -14,15 +14,14 @@ async function bootstrap() {
   console.log(`🚀 USER HTTP running on ${envConfig().user_service_port}`);
 
   // Also connect TCP microservice (for inter-service calls)
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      port: envConfig().user_service_tcp, // <- must match what USER service expects
-      host: '0.0.0.0',
-     //host: 'auth'
-    },
-  });
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.TCP,
+  //   options: {
+  //     port: envConfig().user_service_tcp, // <- must match what USER service expects
+  //     host: '0.0.0.0',
+  //    //host: 'auth'
+  //   },
+  // });
   await app.startAllMicroservices();
-  console.log(`🚀 USER TCP microservice running on port ${envConfig().user_service_tcp}`);
 }
 bootstrap();

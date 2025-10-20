@@ -22,7 +22,7 @@ import { CreatedUserResponseDto, DeletedUserResponseDto, UpdatedUserResponseDto,
 import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, UnauthorizeResponseDto } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@prisma/client';
+import { Role } from '@prisma/user/client';
 
 @ApiTags('Users')
 @Controller('')

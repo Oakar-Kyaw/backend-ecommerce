@@ -7,12 +7,15 @@ export const GlobalConfigModule = ConfigModule.forRoot({
 });
 
 export const envConfig =  () => ({
+    redis_port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+    redis_host: process.env.REDIS_HOST ?? 'localhost',
     user_service_port: parseInt(process.env.USER_SERVER_PORT ?? '5001', 10),
     user_service_url: process.env.USER_SERVER_URL ?? "http://localhost:4000/api/v1",
     user_service_tcp: parseInt(process.env.USER_SERVER_TCP ?? '5002', 10),
     auth_service_port: parseInt(process.env.AUTH_SERVER_PORT ?? '5003', 10),
     auth_service_url: process.env.AUTH_SERVER_URL ?? "http://localhost:5000/api/v1",
     auth_service_tcp: parseInt(process.env.AUTH_SERVER_TCP ?? '5004', 10),
+    auth_service_db: process.env.AUTH_DB_URL,
     noti_service_port: parseInt(process.env.NOTIFICATION_SERVER_PORT ?? '5005', 10),
     noti_service_tcp: parseInt(process.env.NOTIFICATION_SERVER_TCP ?? '5006', 10),
     chat_service_port: parseInt(process.env.CHAT_SERVER_TCP ?? '5007', 10),

@@ -2,14 +2,17 @@ import { ConflictException, Injectable, NotFoundException, UnauthorizedException
 import { CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
-import { Role } from '@prisma/client';
+import { Role } from '@prisma/user/client';
 import { UserPrismaService } from 'apps/prisma/prisma.service';
-import { RpcException } from '@nestjs/microservices';
+import { InjectQueue } from '@nestjs/bullmq';
+import { CREATED_USER_JOB, CREATED_USER_QUEUE } from 'libs/queue/constant';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: UserPrismaService,
+    @InjectQueue(CREATED_USER_QUEUE) private queue: Queue
   ) {}
 
   async create(createUserDto: CreateUserWithProfileDto) {
@@ -36,6 +39,14 @@ export class UsersService {
       }
     })
     console.log("user: ",user)
+
+    this.queue.add(CREATED_USER_JOB, {
+      userId: Number(user.id),
+      email: user.email,
+      phone: user.phone,
+      password: user.password
+    });
+    
     return {
       success: true,
       message: "CREATED_USER",
