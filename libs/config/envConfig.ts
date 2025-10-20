@@ -7,6 +7,7 @@ export const GlobalConfigModule = ConfigModule.forRoot({
 });
 
 export const envConfig =  () => ({
+    environment: process.env.ENVIRONMENT || 'development',
     redis_port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     redis_host: process.env.REDIS_HOST ?? 'localhost',
     user_service_port: parseInt(process.env.USER_SERVER_PORT ?? '5001', 10),

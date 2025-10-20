@@ -23,9 +23,10 @@ import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, Un
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Role } from '@prisma/user/client';
+import { envConfig } from 'libs/config/envConfig';
 
 @ApiTags('Users')
-@Controller('')
+@Controller(envConfig().environment === 'production' ? '' : 'api/v1/users')
 //@UseGuards(AuthGuard) // Apply AuthGuard to all routes by default
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

@@ -7,8 +7,9 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import { LoginDto } from '../dto/login.dto';
 import { LoginResponseDto, LogOutResponseDto } from '../dto/login-response.dto';
+import { envConfig } from 'libs/config/envConfig';
 
-@Controller('')
+@Controller(envConfig().environment === 'production' ? '' : 'api/auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 

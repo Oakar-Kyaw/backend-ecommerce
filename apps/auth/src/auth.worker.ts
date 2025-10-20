@@ -1,7 +1,7 @@
 import { Processor ,WorkerHost } from "@nestjs/bullmq";
 import { AuthPrismaService } from "apps/prisma/prisma.service";
 import { Job } from "bullmq";
-import { CREATED_USER_JOB, CREATED_USER_QUEUE } from "libs/queue/constant";
+import { CREATED_USER_JOB, CREATED_USER_QUEUE, DELETED_USER_JOB, UPDATED_USER_JOB } from "libs/queue/constant";
 
 interface UserDto { 
     userId: number,  
@@ -23,16 +23,16 @@ class UserService {
         return await this.prisma.user.create({ data });
     }
 
-    async updateUser(id: number, data: UserDto){
+    async updateUser(userId: number, data: UserDto){
         return await this.prisma.user.update({
-            where: {id},
+            where: {userId},
             data: data
         })
     }
 
-    async deleteUser(id: number){
+    async deleteUser(userId: number){
         return await this.prisma.user.update({
-            where: {id},
+            where: {userId},
             data: { isDeleted: true }
         })
     }
@@ -56,6 +56,28 @@ export class AuthWorker extends WorkerHost {
                     // remove sensitive fields before returning/logging
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const { password, ...safeUser } = createdUser as any;
+                    return safeUser;
+                }
+                case UPDATED_USER_JOB: {
+                    const data = job.data as UserDto;
+                    if (!data.userId) {
+                        throw new Error("Missing userId for update");
+                    }
+                    const updatedUser = await userService.updateUser(data.userId, job.data);
+                    // remove sensitive fields before returning/logging
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { password, ...safeUser } = updatedUser as any;
+                    return safeUser;
+                }
+                case DELETED_USER_JOB: {
+                    const { userId } = job.data as UserDto;
+                    if (!userId) {
+                        throw new Error("Missing userId for deletion");
+                    }
+                    const deletedUser = await userService.deleteUser(userId);
+                    // remove sensitive fields before returning/logging
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { password, ...safeUser } = deletedUser as any;
                     return safeUser;
                 }
 

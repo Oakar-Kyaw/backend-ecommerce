@@ -5,7 +5,7 @@ import { hashedPassword } from '../../../libs/utils/hash';
 import { Role } from '@prisma/user/client';
 import { UserPrismaService } from 'apps/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
-import { CREATED_USER_JOB, CREATED_USER_QUEUE } from 'libs/queue/constant';
+import { CREATED_USER_JOB, CREATED_USER_QUEUE, UPDATED_USER_JOB } from 'libs/queue/constant';
 import { Queue } from 'bullmq';
 import { PublishMessage } from 'libs/queue/publish';
 
@@ -51,9 +51,7 @@ export class UsersService {
       phone: user.phone,
       password: user.password
     });
-
-    
-    
+  
     return {
       success: true,
       message: "CREATED_USER",
@@ -163,6 +161,15 @@ export class UsersService {
       }
     })
 
+    this.publishMessage.publish(
+      CREATED_USER_QUEUE,
+      UPDATED_USER_JOB, 
+      {
+      userId: Number(updateUser.id),
+      email: updateUser.email,
+      phone: updateUser.phone,
+      password: updateUser.password
+    });
     return {
       success: true,
       message: "UPDATED_USER",
@@ -186,7 +193,16 @@ export class UsersService {
       where: { id },
       data: { isDeleted: true },
     });
-
+    this.publishMessage.publish(
+      CREATED_USER_QUEUE,
+      UPDATED_USER_JOB, 
+      {
+      userId: Number(deletedUser.id),
+      email: deletedUser.email,
+      phone: deletedUser.phone,
+      password: deletedUser.password
+    });
+    
     return {
       success: true,
       message: "DELETE_USER_BY_ID",

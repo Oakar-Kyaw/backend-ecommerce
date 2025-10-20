@@ -4,11 +4,11 @@ import { comparePassword } from '../../../libs/utils/hash';
 import { envConfig } from 'libs/config/envConfig';
 import { AuthPrismaService } from 'apps/prisma/prisma.service';
 
-interface PayloadInterface {
-  id: number;
-  email: string | null;
-  phone: string | null;
-}
+// interface PayloadInterface {
+//   id: number;
+//   email: string | null;
+//   phone: string | null;
+// }
 
 @Injectable()
 export class AuthService {
@@ -36,7 +36,7 @@ export class AuthService {
         //const user = data
         const passwordComparison = await comparePassword(password, user.password)
         if(!passwordComparison) throw new UnauthorizedException(`Password was wrong.`)
-        const payload: PayloadInterface = {
+        const payload = {
             id: user.userId,
             email: user.email,
             phone: user.phone
@@ -117,7 +117,7 @@ export class AuthService {
       console.log('✅ Token verified successfully');
       console.log('📋 Payload extracted:', {
         id: payload.id,
-        name: payload.name,
+        email: payload.email,
       });
 
       console.log('👤 Looking up user by ID:', payload.id);
