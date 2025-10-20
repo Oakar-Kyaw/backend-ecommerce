@@ -8,18 +8,11 @@ import { BullModule } from '@nestjs/bullmq';
 import { PrismaModule } from 'apps/prisma/prisma.module';
 import { AuthWorker } from './auth.worker';
 import { CREATED_USER_QUEUE } from 'libs/queue/constant';
+import { PublishMessageModule } from 'libs/queue/publish.module';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: envConfig().redis_host,
-        port: envConfig().redis_port,
-      },
-    }),
-    BullModule.registerQueue({
-      name: CREATED_USER_QUEUE
-    }),
+    PublishMessageModule,
     JwtModule.register({
       global: true,
       secret: envConfig().JWTSecret,

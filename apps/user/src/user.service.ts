@@ -7,12 +7,14 @@ import { UserPrismaService } from 'apps/prisma/prisma.service';
 import { InjectQueue } from '@nestjs/bullmq';
 import { CREATED_USER_JOB, CREATED_USER_QUEUE } from 'libs/queue/constant';
 import { Queue } from 'bullmq';
+import { PublishMessage } from 'libs/queue/publish';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: UserPrismaService,
-    @InjectQueue(CREATED_USER_QUEUE) private queue: Queue
+   // @InjectQueue(CREATED_USER_QUEUE) private readonly queue: Queue,
+    private readonly publishMessage: PublishMessage
   ) {}
 
   async create(createUserDto: CreateUserWithProfileDto) {
@@ -40,12 +42,17 @@ export class UsersService {
     })
     console.log("user: ",user)
 
-    this.queue.add(CREATED_USER_JOB, {
+    this.publishMessage.publish(
+      CREATED_USER_QUEUE,
+      CREATED_USER_JOB, 
+      {
       userId: Number(user.id),
       email: user.email,
       phone: user.phone,
       password: user.password
     });
+
+    
     
     return {
       success: true,
