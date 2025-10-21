@@ -1,20 +1,7 @@
 
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import {
-  IsEmail,
-  IsEnum,
-  IsString,
-  IsOptional,
-  IsArray,
-  IsInt,
-  IsNumber,
-  IsDateString,
-  IsBoolean,
-  ValidateNested,
-  IsNotEmpty,
-} from 'class-validator';
 //import { ApiProperty } from '@nestjs/swagger';
-import { RoleEnum } from './create-user.dto';
+import { GenderEnum, RoleEnum } from './create-user.dto';
 
 // ===== USER ENTITY RESPONSE =====
 export class UserResponseDto {
@@ -61,6 +48,9 @@ export class UserResponseDto {
   //@ApiProperty({ example: Role.ADMIN, enum: Role })
   @Expose()
   readonly role: RoleEnum;
+
+  @Expose()
+  readonly gender: GenderEnum
 
   //@ApiProperty({ example: '555-555-5555' })
   @Expose()

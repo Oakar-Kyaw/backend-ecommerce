@@ -7,12 +7,6 @@ import {
   IsString,
   MinLength,
   IsDateString,
-  IsNumber,
-  IsArray,
-  IsInt,
-  ValidateIf,
-  IsBoolean,
-  ValidateNested,
 } from "class-validator";
 //import { Role } from "@prisma/client";
 //import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
@@ -22,6 +16,11 @@ export enum RoleEnum {
   SALE = "SALE",
   CUSTOMER = "CUSTOMER",
   ADMIN = "ADMIN",
+}
+
+export enum GenderEnum {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE'
 }
 
 
@@ -68,6 +67,12 @@ export class CreateUserWithProfileDto {
   @IsEnum(RoleEnum)
   @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toUpperCase(): Number(value): null)) 
   readonly role: RoleEnum;
+
+  @Expose()
+  @IsOptional()
+  @IsEnum(GenderEnum)
+  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toUpperCase(): Number(value): null)) 
+  readonly gender: GenderEnum;
 
   // @ApiProperty({
   //   description: "User password",

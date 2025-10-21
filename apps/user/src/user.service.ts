@@ -4,10 +4,11 @@ import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import { Role } from '@prisma/user/client';
 import { UserPrismaService } from 'apps/prisma/prisma.service';
-import { InjectQueue } from '@nestjs/bullmq';
 import { CREATED_USER_JOB, CREATED_USER_QUEUE, UPDATED_USER_JOB } from 'libs/queue/constant';
-import { Queue } from 'bullmq';
 import { PublishMessage } from 'libs/queue/publish';
+import { envConfig } from 'libs/config/envConfig';
+import { OAuth2Client } from 'google-auth-library';
+import { google } from 'googleapis';
 
 @Injectable()
 export class UsersService {
@@ -41,7 +42,7 @@ export class UsersService {
       }
     })
     console.log("user: ",user)
-
+    
     this.publishMessage.publish(
       CREATED_USER_QUEUE,
       CREATED_USER_JOB, 
@@ -202,7 +203,7 @@ export class UsersService {
       phone: deletedUser.phone,
       password: deletedUser.password
     });
-    
+
     return {
       success: true,
       message: "DELETE_USER_BY_ID",
@@ -211,29 +212,108 @@ export class UsersService {
   });
  }
 
- async findUserByEmail(data: {email?: string, phone?: string}) {
-  try{const { email, phone } = data
-  console.log("email", email)
-  const user = await this.prisma.user.findFirst({
-    where: {  ...(email && {email}), ...(phone && {phone}), isDeleted: false }
-  });
-
-  if (!user) {
-    return {
-      success: false,
-      message: `User with this email ${email} not found. `,
-      data: null
-    }
+ getAuthClient(){
+    const authClient = new OAuth2Client(
+      envConfig().GOOGLE_CLIENTID,
+      envConfig().GOOGLE_CLIENT_SECRET,
+      envConfig().GOOGLE_USER_CALLBACK_URL
+    )
+    return authClient
   }
-  console.log("user: ",user)
-  return {
-    success: true,
-    message: 'USER_BY_EMAIL',
-    data: user,
-  };
-}catch(error){
-  console.log('error is', error)
-}
-}
 
+  async googleAuthUrl(deviceId?: string){
+    const authClient = this.getAuthClient()
+    console.log("google clien", authClient)
+    const authUrl = authClient.generateAuthUrl({
+      access_type: 'offline',
+      scope:[ 'email', 'profile' ],
+      prompt: 'consent',
+      include_granted_scopes: true
+    })
+    console.log("auth url ", authUrl, deviceId)
+   // const url =  `${authUrl}?deviceId=${deviceId ?? deviceId }`
+   const url = authUrl
+    return { url }
+  }
+
+  async googleAuthClientData(code: string){
+    const authClient = this.getAuthClient()
+    const tokenData = await authClient.getToken(code)
+    const tokens = tokenData.tokens
+    console.log("tokens: ", tokens)
+    
+    authClient.setCredentials(tokens)
+
+    const googleAuth = google.oauth2({
+      version: 'v2',
+      auth: authClient,
+    } as any);
+
+    const userInfo = await googleAuth.userinfo.get()
+    console.log("user info:", userInfo)
+    
+    return { userData: userInfo.data  };
+  }
+
+  async registerGoogleUser(userData, deviceId?: string){
+    const { email, given_name, family_name, picture } = userData
+    console.log("email: ", userData, deviceId )
+    let existingUser = await this.prisma.user.findUnique({ where: { email } })
+    console.log("existingUser: ", existingUser)
+    if(existingUser) throw new ConflictException(`User with this email ${email} already exists.`)
+    const user = await this.prisma.user.create({
+      data: {
+        email: email,
+        firstName: given_name,
+        lastName: family_name,
+        photoUrl: picture
+      }
+    })
+    this.publishMessage.publish(
+      CREATED_USER_QUEUE,
+      CREATED_USER_JOB, 
+      {
+      userId: Number(user.id),
+      email: user.email,
+      phone: user.phone ?? null,
+      password: user.password ?? null
+    });
+    return {
+        success: true,
+        message: 'CREATED_USER',
+        data: user,
+      };
+  }
+
+  async registerFacebookUser(data){
+    console.log("facebook user data: ", data)
+    const existingUser = await this.prisma.user.findUnique({ where: { email: data.email, isDeleted: false } })
+    if(existingUser) throw new ConflictException(`User with this email ${data.email} already exists.`)
+    if(data?.birthday) data.dateOfBirth = new Date(data.birthday).toISOString()
+    const user = await this.prisma.user.create({
+      data: {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        photoUrl: data.photoUrl,
+        dateOfBirth: data.dateOfBirth ?? null,
+        gender: data?.gender?.toUpperCase() ?? null
+      }
+    })
+    console.log("user: ", user)
+    this.publishMessage.publish(
+      CREATED_USER_QUEUE,
+      CREATED_USER_JOB, 
+      {
+      userId: Number(user.id),
+      email: user.email,
+      phone: user.phone ?? null,
+      password: user.password ?? null
+    });
+    return {
+        success: true,
+        message: 'CREATED_USER',
+        data: user,
+      };  
+  }
 }

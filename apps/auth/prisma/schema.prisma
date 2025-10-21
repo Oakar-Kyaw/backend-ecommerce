@@ -18,8 +18,8 @@ model User {
   id                      Int                    @id @default(autoincrement())
   userId                  Int                    @unique
   email                   String                 @unique         
-  password                String
-  phone                   String                 
+  password                String?
+  phone                   String?                 
   isDeleted               Boolean                @default(false)
 }
 

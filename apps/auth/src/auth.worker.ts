@@ -6,8 +6,8 @@ import { CREATED_USER_JOB, CREATED_USER_QUEUE, DELETED_USER_JOB, UPDATED_USER_JO
 interface UserDto { 
     userId: number,  
     email: string;
-    phone: string;
-    password: string;
+    phone?: string;
+    password?: string;
     isDeleted?: boolean
 }
 
@@ -16,8 +16,9 @@ class UserService {
 
     async createUser(data: UserDto){
         // basic validation
-        if (!data?.email || !data?.phone || !data?.password) {
-            throw new Error("Missing required fields: email, phone and password");
+        console.log("user data: ",data)
+        if (!data?.email) {
+            throw new Error("Missing required fields: email");
         }
         // create user via prisma
         return await this.prisma.user.create({ data });

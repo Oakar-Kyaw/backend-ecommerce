@@ -4,14 +4,20 @@ import { UsersService } from './user.service';
 import { GlobalConfigModule } from 'libs/config/envConfig';
 import { PrismaModule } from 'apps/prisma/prisma.module';
 import { PublishMessageModule } from 'libs/queue/publish.module';
+import { PassportModule } from '@nestjs/passport';
+import { FacebookStrategy } from 'libs/strategy/facebook.strategy';
 
 @Module({
   imports: [
     GlobalConfigModule, 
     PrismaModule, 
-    PublishMessageModule
+    PublishMessageModule,
+    PassportModule.register({defaultStrategy: 'facebook'})
   ],
   controllers: [UsersController],
-  providers: [UsersService]
+  providers: [
+    UsersService,
+    FacebookStrategy
+  ]
 })
 export class UserModule {}

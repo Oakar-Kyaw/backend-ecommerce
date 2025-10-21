@@ -7,11 +7,14 @@ import {
   Param,
   Delete,
   Query,
-  UseGuards,
   ParseIntPipe,
   Request,
   UseInterceptors,
+  Redirect,
+  UseGuards,
+  Req
 } from '@nestjs/common';
+ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
@@ -133,15 +136,33 @@ export class UsersController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.remove(id);
   }
-  //microservice
-  @MessagePattern({ cmd: 'users' })
-  findUserByEmail(@Payload() data: { email?: string, phone?: string }) {
-    return this.usersService.findUserByEmail(data)
+  
+  
+  @Get('register/google')
+  @Redirect()
+  googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
+    return this.usersService.googleAuthUrl(deviceId);
   }
 
-  @MessagePattern({ cmd: 'get_user_by_id' })
-  async getUser(@Payload() data: { id: number }) {
-    return await this.usersService.findOne(Number(data.id), "tcp");
+  @Get('register/google/callback')
+  @Serialize(CreatedUserResponseDto)
+  async googleCallback(@Query('code') code: string, @Query('deviceId') deviceId?: string) {
+    console.log("code", code)
+    const { userData } = await this.usersService.googleAuthClientData(code);
+    return this.usersService.registerGoogleUser(userData, deviceId);
   }
 
+   @Get('register/facebook')
+   @UseGuards (AuthGuard('facebook'))
+   async facebookLogin(): Promise<any> {
+        // Initiates the Facebook login process
+    }
+
+   @Get('register/facebook/callback')
+   @UseGuards(AuthGuard('facebook'))
+   @Serialize(CreatedUserResponseDto)
+   async facebookLoginCallback(@Req() req): Promise<any> {
+        console.log("callback", req.user)
+        return this.usersService.registerFacebookUser(req.user);
+    }
 }

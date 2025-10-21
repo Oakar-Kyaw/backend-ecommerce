@@ -30,6 +30,18 @@ export const envConfig =  () => ({
     smtp_user: process.env.SMTP_USER,
     smtp_pass: process.env.SMTP_PASS,
     JWTSecret: process.env.JWT_SECRET,
+    //google auth
+    GOOGLE_CLIENTID: process.env.GOOGLE_CLIENTID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    GOOGLE_USER_CALLBACK_URL: process.env.GOOGLE_USER_CALLBACK_URL,
+    GOOGLE_AUTH_CALLBACK_URL: process.env.GOOGLE_AUTH_CALLBACK_URL,
+    GOOGLE_TOKEN_URL: process.env.GOOGLE_TOKEN_URL,
+    GOOGLE_AUTH_URL: process.env.GOOGLE_AUTH_URL,
+    //facebook auth
+    FACEBOOK_APP_ID: process.env.FACEBOOK_APP_ID,
+    FACEBOOK_CLIENT_SECRET: process.env.FACEBOOK_CLIENT_SECRET,
+    FACEBOOK_USER_CALLBACK_URL: process.env.FACEBOOK_USER_CALLBACK_URL,
+    FACEBOOK_AUTH_CALLBACK_URL: process.env.FACEBOOK_AUTH_CALLBACK_URL,
     database: {
         port: parseInt(process.env.DATABASE_PORT ?? '5432', 10)
     }
