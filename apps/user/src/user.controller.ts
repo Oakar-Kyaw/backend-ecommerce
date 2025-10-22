@@ -154,6 +154,7 @@ export class UsersController {
     // Redirect to Flutter app
     return Redirect(`myapp://auth/callback?token=${token}`);
   }
+  
   // @Get('register/google')
   // @Redirect()
   // googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
