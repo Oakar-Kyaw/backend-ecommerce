@@ -10,10 +10,12 @@ import {
   ParseIntPipe,
   Request,
   UseInterceptors,
-  Redirect,
   UseGuards,
-  Req
+  Req,
+  Redirect,
+  Res
 } from '@nestjs/common';
+import { Response } from 'express';
  import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto } from '../dto/create-user.dto';
@@ -137,20 +139,34 @@ export class UsersController {
     return this.usersService.remove(id);
   }
   
-  
   @Get('register/google')
-  @Redirect()
-  googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
-    return this.usersService.googleAuthUrl(deviceId);
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+    console.log("google")
   }
 
   @Get('register/google/callback')
-  @Serialize(CreatedUserResponseDto)
-  async googleCallback(@Query('code') code: string, @Query('deviceId') deviceId?: string) {
-    console.log("code", code)
-    const { userData } = await this.usersService.googleAuthClientData(code);
-    return this.usersService.registerGoogleUser(userData, deviceId);
+  @UseGuards(AuthGuard('google'))
+  async googleLoginCallback(@Req() req, @Res() res) {
+    // Register or login user in DB
+    const token = await this.usersService.registerGoogleUser(req.user);
+    console.log("token: ",token)
+    // Redirect to Flutter app
+    return Redirect(`myapp://auth/callback?token=${token}`);
   }
+  // @Get('register/google')
+  // @Redirect()
+  // googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
+  //   return this.usersService.googleAuthUrl(deviceId);
+  // }
+
+  // @Get('register/google/callback')
+  // @Serialize(CreatedUserResponseDto)
+  // async googleCallback(@Query('code') code: string, @Query('deviceId') deviceId?: string) {
+  //   console.log("code", code)
+  //   const { userData } = await this.usersService.googleAuthClientData(code);
+  //   return this.usersService.registerGoogleUser(userData, deviceId);
+  // }
 
    @Get('register/facebook')
    @UseGuards (AuthGuard('facebook'))

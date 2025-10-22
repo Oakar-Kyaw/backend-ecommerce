@@ -6,6 +6,7 @@ import { PrismaModule } from 'apps/prisma/prisma.module';
 import { PublishMessageModule } from 'libs/queue/publish.module';
 import { PassportModule } from '@nestjs/passport';
 import { FacebookStrategy } from 'libs/strategy/facebook.strategy';
+import { GoogleStrategy } from 'libs/strategy/google.strategy';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { FacebookStrategy } from 'libs/strategy/facebook.strategy';
   controllers: [UsersController],
   providers: [
     UsersService,
-    FacebookStrategy
+    FacebookStrategy,
+    GoogleStrategy
   ]
 })
 export class UserModule {}
