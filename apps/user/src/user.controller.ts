@@ -31,7 +31,7 @@ import { Role } from '@prisma/user/client';
 import { envConfig } from 'libs/config/envConfig';
 
 @ApiTags('Users')
-@Controller(envConfig().environment === 'production' ? '' : 'api/v1/users')
+@Controller('api/v1/users')
 //@UseGuards(AuthGuard) // Apply AuthGuard to all routes by default
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -154,7 +154,7 @@ export class UsersController {
     // Redirect to Flutter app
     return Redirect(`myapp://auth/callback?token=${token}`);
   }
-  
+
   // @Get('register/google')
   // @Redirect()
   // googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
