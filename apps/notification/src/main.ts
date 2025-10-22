@@ -14,14 +14,14 @@ async function bootstrap() {
   console.log(`🚀 Noti HTTP running on ${envConfig().noti_service_port}`);
 
   // Also connect TCP microservice (for inter-service calls)
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      port: envConfig().noti_service_tcp, // <- must match what USER service expects
-      host: '0.0.0.0',
-      //host: 'user'
-    },
-  });
+  // app.connectMicroservice<MicroserviceOptions>({
+  //   transport: Transport.TCP,
+  //   options: {
+  //     port: envConfig().noti_service_tcp, // <- must match what USER service expects
+  //     host: '0.0.0.0',
+  //     //host: 'user'
+  //   },
+  // });
 
   await app.startAllMicroservices();
   console.log(`🚀 Noti TCP microservice running on port ${envConfig().noti_service_tcp}`);
