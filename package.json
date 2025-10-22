@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "concurrently \"node dist/apps/ecommerce-backend/main\" \"node dist/apps/auth/main\" \"node dist/apps/user/main\"",
+    "start:prod": "concurrently  \"node dist/apps/auth/main\" \"node dist/apps/user/main\"",
     "start:all": "concurrently \"nest start ecommerce-backend --watch\" \"nest start auth --watch\" \"nest start user --watch\"",
     "prisma:auth": "prisma generate --schema=./apps/auth/prisma/schema.prisma",
     "prisma:noti": "prisma generate --schema=./apps/notification/prisma/schema.prisma",
