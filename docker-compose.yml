@@ -17,24 +17,24 @@ services:
       - ecom-network
 
   # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: ecom-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
-    environment:
-      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
-      - AUTH_SERVICE_HOST=app
-      - AUTH_SERVICE_PORT=5003
-      - USER_SERVICE_HOST=app
-      - USER_SERVICE_PORT=5001
-    depends_on:
-      - app
-    networks:
-      - ecom-network
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: ecom-nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
+  #   environment:
+  #     - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx
+  #     - AUTH_SERVICE_HOST=app
+  #     - AUTH_SERVICE_PORT=5003
+  #     - USER_SERVICE_HOST=app
+  #     - USER_SERVICE_PORT=5001
+  #   depends_on:
+  #     - app
+  #   networks:
+  #     - ecom-network
 
 networks:
   ecom-network:
