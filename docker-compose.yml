@@ -10,8 +10,8 @@ services:
         APP_PORT: 5001
     container_name: user
     restart: unless-stopped
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     ports:
       - "5001:5001"
     networks:
@@ -26,8 +26,8 @@ services:
         APP_PORT: 5003
     container_name: auth
     restart: unless-stopped
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     ports:
       - "5003:5003"
     networks:
