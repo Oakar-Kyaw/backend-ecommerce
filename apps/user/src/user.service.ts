@@ -259,7 +259,12 @@ export class UsersService {
     console.log("email: ", userData, deviceId )
     let existingUser = await this.prisma.user.findUnique({ where: { email } })
     console.log("existingUser: ", existingUser)
-    if(existingUser) throw new ConflictException(`User with this email ${email} already exists.`)
+    if(existingUser) return {
+        success: false,
+        message: 'FAIL_TO_CREATE_USER',
+        url: "myapp://auth/callback",
+       // data: user,
+      };
     const user = await this.prisma.user.create({
       data: {
         email: email,
