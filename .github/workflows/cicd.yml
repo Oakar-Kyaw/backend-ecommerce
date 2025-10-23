@@ -14,8 +14,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
@@ -24,8 +25,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build & push supacart-gym-api
-      - name: Build & push API image
+      - name: Build & push Auth service
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -34,9 +34,8 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/auth:latest
             ${{ secrets.DOCKER_USERNAME }}/auth:${{ github.sha }}
-    
-      # Build & push supacart-gym-api
-      - name: Build & push API image
+
+      - name: Build & push User service
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -46,25 +45,13 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/user:latest
             ${{ secrets.DOCKER_USERNAME }}/user:${{ github.sha }}
 
-      # Build & push nginx-proxy
-      - name: Build & push Nginx image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./nginx
-          file: ./nginx/Dockerfile
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/nginx-proxy:latest
-            ${{ secrets.DOCKER_USERNAME }}/nginx-proxy:${{ github.sha }}
   deploy:
     needs: build
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) }}
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+    steps:
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.AWS_HOST }}
@@ -72,77 +59,29 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             set -euo pipefail
-            APP_DIR="/home/ubuntu/ecommerce-backend"
-            cd "$APP_DIR"
-
-            echo "🔹 Pull latest code from repository..., https://${{ secrets.TOKEN }}@github.com/Oakar-Kyaw/ecommerce-backend.git"
-            git pull https://${{ secrets.TOKEN }}@github.com/Oakar-Kyaw/ecommerce-backend.git master || {
-                echo "⚠️ Git pull failed, continuing with existing code..."
-                git status
-            }
-            export DOCKER_USER=${{ secrets.DOCKER_USERNAME }}
-            export TAG=${{ github.sha }}
-
-            # Temporary container names
-            # TEMP_API="supacart-gym-api-temp"
-            # TEMP_NGINX="nginx-temp"
-
-            # echo "🔹 Ensure Docker network exists..."
-            # docker network create gym-net || true
 
             echo "🔹 Pull latest images..."
-            docker pull $DOCKER_USER/user:$TAG
-            docker pull $DOCKER_USER/auth:$TAG
-            docker pull $DOCKER_USER/nginx-proxy:$TAG
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/user:latest
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/auth:latest
 
-            # echo "🔹 Remove old temp containers..."
-            # for c in $TEMP_API $TEMP_NGINX; do
-            #   if [ "$(docker ps -aq -f name=^$c$)" ]; then
-            #     docker rm -f $c
-            #   fi
-            # done
+            echo "🔹 Stop old containers if running..."
+            sudo docker rm -f user_service auth_service || true
 
-            # echo "🔹 Run temp API..."
-            # docker run -d \
-            #   --name $TEMP_API \
-            #   --network gym-net \
-            #   --network-alias supacart-gym-api \
-            #   -p 5001:5000 \
-            #   --env-file .env \
-            #   $DOCKER_USER/supacart-gym-api:$TAG
+            echo "🔹 Run User service..."
+            sudo sudo docker run -d \
+              --name user_service \
+              -p 5001:5001 \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              ${{ secrets.DOCKER_USERNAME }}/user:latest
 
-            # echo "🔹 Run temp Nginx..."
-            # docker run -d \
-            #   --name $TEMP_NGINX \
-            #   --network gym-net \
-            #   -p 8081:80 \
-            #   -p 8443:443 \
-            #   --env-file .env \
-            #   $DOCKER_USER/nginx-proxy:$TAG
+            echo "🔹 Run Auth service..."
+            sudo docker run -d \
+              --name auth_service \
+              -p 5003:5003 \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              ${{ secrets.DOCKER_USERNAME }}/auth:latest
 
-            # echo "🔹 Health check temp Nginx..."
-            # HEALTHY=false
-            # for i in $(seq 1 10); do
-            #   if curl -fsS http://supagymbackend.duckdns.org:8081 >/dev/null 2>&1; then
-            #     HEALTHY=true
-            #     break
-            #   fi
-            #   echo "❌ Not healthy yet (try $i/10)..."
-            #   sleep 3
-            # done                                                                                                                                                                                                                                                                      
-
-            # if [ "$HEALTHY" != true ]; then
-            #   echo "🚨 Health check failed. Rolling back..."
-            #   docker rm -f $TEMP_API $TEMP_NGINX
-            #   exit 1
-            # fi
-            # echo "✅ Temp containers healthy. Switching live..."
-
-            # docker compose down
-            docker compose up -d
-
-            # echo "🧹 Cleaning temp..."
-            # docker rm -f $TEMP_API $TEMP_NGINX || true
+            echo "🧹 Clean up old images..."
             docker image prune -af || true
 
             echo "🎉 Deployment complete!"
