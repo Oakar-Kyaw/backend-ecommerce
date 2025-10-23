@@ -1,19 +1,34 @@
-FROM node:20-alpine
+# Stage 1: Build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy the entire monorepo workspace
+# Copy everything and debug
 COPY . .
 
-# Install all dependencies
-RUN npm ci
+# Debug: List what was copied
+RUN echo "=== Listing /app directory ===" && ls -la
+RUN echo "=== Checking for package.json ===" && ls -la package*.json || echo "No package.json found!"
+RUN echo "=== Listing subdirectories ===" && ls -la */
 
-# Build the specific NestJS application
-RUN npm run build auth
+# Install and build
+RUN npm install
+RUN npx prisma generate --schema=apps/auth/prisma/schema.prisma
+RUN npm run build user
 
-# Expose the ports your NestJS app listens on
+# Stage 2: Production
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+COPY --from=build /app/package*.json ./
+RUN npm install --production
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/apps/auth/prisma ./apps/auth/prisma
+
 EXPOSE 5003
-EXPOSE 5004
 
-# Define the command to run your application
 CMD ["node", "dist/apps/auth/main.js"]

@@ -1,65 +1,34 @@
-# # Stage 1: Builder
-# FROM node:20-alpine AS builder
-
-# WORKDIR /app
-
-# # Copy the entire monorepo workspace
-# COPY . .
-
-# # Install dependencies (from root package.json)
-# # Using 'npm ci' for clean installs based on package-lock.json
-# RUN npm ci
-
-# RUN npx prisma generate --schema=apps/user/schema/prisma/schema.prisma
-
-# # Build the specific NestJS application
-# # Replace 'your-app-name' with the actual name of your NestJS app in the monorepo
-# RUN npm run build user
-
-# # Stage 2: Production
-# FROM node:20-alpine
-
-# WORKDIR /app
-
-# # Copy only the built application from the builder stage
-# # Adjust the path based on your monorepo's build output structure (e.g., dist/apps/your-app-name)
-# COPY --from=builder /app/dist/apps/user ./dist
-
-# # Copy package.json and package-lock.json for production dependencies
-# COPY --from=builder /app/package.json ./
-# COPY --from=builder /app/package-lock.json ./
-
-# # Install production dependencies only
-# RUN npm ci --omit=dev
-
-# # Expose the port your NestJS app listens on
-# EXPOSE 5001
-
-# EXPOSE 5002
-
-# # Define the command to run your application
-# # Adjust the path to your main.js file within the built app
-# CMD ["node", "dist/main.js"]
-
-FROM node:20-alpine
+# Stage 1: Build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy the entire monorepo workspace
+# Copy everything and debug
 COPY . .
 
-# Install all dependencies
-RUN npm ci
+# Debug: List what was copied
+RUN echo "=== Listing /app directory ===" && ls -la
+RUN echo "=== Checking for package.json ===" && ls -la package*.json || echo "No package.json found!"
+RUN echo "=== Listing subdirectories ===" && ls -la */
 
-# Generate Prisma client
-RUN npx prisma generate --schema=apps/user/schema/prisma/schema.prisma
-
-# Build the specific NestJS application
+# Install and build
+RUN npm install
+RUN npx prisma generate --schema=apps/user/prisma/schema.prisma
 RUN npm run build user
 
-# Expose the ports your NestJS app listens on
-EXPOSE 5001
-EXPOSE 5002
+# Stage 2: Production
+FROM node:20-alpine AS production
 
-# Define the command to run your application
+WORKDIR /app
+
+COPY --from=build /app/package*.json ./
+RUN npm install --production
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/apps/user/prisma ./apps/user/prisma
+
+EXPOSE 5001
+
 CMD ["node", "dist/apps/user/main.js"]

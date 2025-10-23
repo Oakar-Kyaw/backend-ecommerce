@@ -18,7 +18,7 @@ import {
 import { Response } from 'express';
  import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
-import { CreateUserWithProfileDto } from '../dto/create-user.dto';
+import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
@@ -27,7 +27,6 @@ import { CreatedUserResponseDto, DeletedUserResponseDto, UpdatedUserResponseDto,
 import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, UnauthorizeResponseDto } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Role } from '@prisma/user/client';
 import { envConfig } from 'libs/config/envConfig';
 
 @ApiTags('Users')
@@ -66,7 +65,7 @@ export class UsersController {
       @Query('isDeleted') isDeleted?: boolean,
       @Query('email') email?: string,
       @Query('phone') phone?: string,
-      @Query('role')  role?:  Role,
+      @Query('role')  role?:  RoleEnum,
       @Query('startDate') startDate?: Date,
       @Query('endDate') endDate?: Date
     ) {

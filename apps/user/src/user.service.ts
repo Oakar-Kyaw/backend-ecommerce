@@ -1,19 +1,18 @@
-import { ConflictException, Injectable, NotFoundException, UnauthorizedException, UseInterceptors } from '@nestjs/common';
-import { CreateUserWithProfileDto } from '../dto/create-user.dto';
+import { ConflictException, Inject, Injectable, NotFoundException, UnauthorizedException, UseInterceptors } from '@nestjs/common';
+import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
-import { Role } from '@prisma/user/client';
-import { UserPrismaService } from 'apps/prisma/prisma.service';
 import { CREATED_USER_JOB, CREATED_USER_QUEUE, UPDATED_USER_JOB } from 'libs/queue/constant';
 import { PublishMessage } from 'libs/queue/publish';
 import { envConfig } from 'libs/config/envConfig';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
+import { USER_PRISMA } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: UserPrismaService,
+    @Inject(USER_PRISMA) private readonly prisma,
    // @InjectQueue(CREATED_USER_QUEUE) private readonly queue: Queue,
     private readonly publishMessage: PublishMessage
   ) {}
@@ -60,14 +59,14 @@ export class UsersService {
    }
   }
 
- async findAll(query: { isDeleted?: boolean, email?: string; phone?: string, role?: Role, startDate?: Date, endDate?: Date }) {
-      const where: { isDeleted: boolean, role?: Role, createdAt?: { gte?: Date, lte?: Date }, email?: string, phone?: string } = { isDeleted: false };
+ async findAll(query: { isDeleted?: boolean, email?: string; phone?: string, role?: RoleEnum, startDate?: Date, endDate?: Date }) {
+      const where: { isDeleted: boolean, role?: RoleEnum, createdAt?: { gte?: Date, lte?: Date }, email?: string, phone?: string } = { isDeleted: false };
       if (query?.isDeleted) {
         where.isDeleted = query.isDeleted;
       }
       
       if (query?.role) {
-        const role = query.role.toUpperCase() as Role;
+        const role = query.role.toUpperCase() as RoleEnum;
         where.role = role;
       }
       if (query?.email) {

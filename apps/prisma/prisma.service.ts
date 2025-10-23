@@ -1,40 +1,22 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient as PrismaNotification} from '@prisma/notification';
-import { PrismaClient as PrismaUser} from '@prisma/user';
-import { PrismaClient as PrismaAuth} from '@prisma/auth';
+import { PrismaFactory } from './prisma.factory';
 
-@Injectable()
-export class NotificationPrismaService extends PrismaNotification implements OnModuleInit{
-    async onModuleInit() {
-    try {
-        await this.$connect();
-        console.log('Database connected successfully');
-    } catch (error) {
-        console.error('Database connection failed:', error);
-    }
-    }
-}
+// Tokens for DI
+export const USER_PRISMA = 'UserPrismaService';
+export const NOTIFICATION_PRISMA = 'NotificationPrismaService';
+export const AUTH_PRISMA = 'AuthPrismaService';
 
-@Injectable()
-export class UserPrismaService extends PrismaUser implements OnModuleInit{
-    async onModuleInit() {
-        try {
-            await this.$connect();
-            console.log('Database connected successfully');
-        } catch (error) {
-            console.error('Database connection failed:', error);
-        }
-    }
-}
+// Providers
+export const UserPrismaProvider = PrismaFactory.create({
+  clientName: 'user',
+  provideName: USER_PRISMA,
+});
 
-@Injectable()
-export class AuthPrismaService extends PrismaAuth implements OnModuleInit{
-    async onModuleInit() {
-        try {
-            await this.$connect();
-            console.log('Database connected successfully');
-        } catch (error) {
-            console.error('Database connection failed:', error);
-        }
-    }
-}
+export const NotificationPrismaProvider = PrismaFactory.create({
+  clientName: 'notification',
+  provideName: NOTIFICATION_PRISMA,
+});
+
+export const AuthPrismaProvider = PrismaFactory.create({
+  clientName: 'auth',
+  provideName: AUTH_PRISMA,
+});

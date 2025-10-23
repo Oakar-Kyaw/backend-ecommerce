@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundEx
 import { JwtService } from '@nestjs/jwt';
 import { comparePassword } from '../../../libs/utils/hash';
 import { envConfig } from 'libs/config/envConfig';
-import { AuthPrismaService } from 'apps/prisma/prisma.service';
+import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
 
 // interface PayloadInterface {
 //   id: number;
@@ -14,7 +14,7 @@ import { AuthPrismaService } from 'apps/prisma/prisma.service';
 export class AuthService {
     constructor(
       private readonly jwtService: JwtService, 
-      private readonly prisma: AuthPrismaService
+      @Inject(AUTH_PRISMA) private readonly prisma
     ) {}
     
     async signIn(datas) {

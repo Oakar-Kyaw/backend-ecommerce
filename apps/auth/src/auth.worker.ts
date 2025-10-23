@@ -1,7 +1,8 @@
 import { Processor ,WorkerHost } from "@nestjs/bullmq";
-import { AuthPrismaService } from "apps/prisma/prisma.service";
+import { Inject } from "@nestjs/common";
 import { Job } from "bullmq";
 import { CREATED_USER_JOB, CREATED_USER_QUEUE, DELETED_USER_JOB, UPDATED_USER_JOB } from "libs/queue/constant";
+import { AUTH_PRISMA } from "../prisma/auth.prisma.service";
 
 interface UserDto { 
     userId: number,  
@@ -12,7 +13,7 @@ interface UserDto {
 }
 
 class UserService {
-    constructor(private readonly prisma: AuthPrismaService) {}
+    constructor(@Inject(AUTH_PRISMA) private readonly prisma) {}
 
     async createUser(data: UserDto){
         // basic validation
@@ -41,7 +42,7 @@ class UserService {
 
 @Processor(CREATED_USER_QUEUE)
 export class AuthWorker extends WorkerHost {
-    constructor(private readonly prisma: AuthPrismaService) {
+    constructor(@Inject(AUTH_PRISMA) private readonly prisma) {
         super();
     }
 
