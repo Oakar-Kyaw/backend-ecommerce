@@ -9,6 +9,7 @@ services:
         APP_NAME: user
         APP_PORT: 5001
     container_name: user
+    image: ${{ secrets.DOCKER_USERNAME }}/user:latest
     restart: unless-stopped
     # env_file:
     #   - .env
@@ -25,6 +26,7 @@ services:
         APP_NAME: auth
         APP_PORT: 5003
     container_name: auth
+    image: ${{ secrets.DOCKER_USERNAME }}/auth:latest
     restart: unless-stopped
     # env_file:
     #   - .env
