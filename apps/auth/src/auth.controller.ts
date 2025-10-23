@@ -9,7 +9,7 @@ import { LoginDto } from '../dto/login.dto';
 import { LoginResponseDto, LogOutResponseDto } from '../dto/login-response.dto';
 import { envConfig } from 'libs/config/envConfig';
 
-@Controller(envConfig().environment === 'production' ? '' : 'api/auth')
+@Controller('api/auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 

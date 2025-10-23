@@ -3,8 +3,11 @@ version: '3.8'
 services:
   user:
     build:
-      context: .                      # Root of monorepo
-      dockerfile: apps/user/Dockerfile  # Path from root
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: user
+        APP_PORT: 5001
     container_name: user
     restart: unless-stopped
     env_file:
@@ -13,10 +16,14 @@ services:
       - "5001:5001"
     networks:
       - ecom
+
   auth:
     build:
-      context: .                      # Root of monorepo
-      dockerfile: apps/auth/Dockerfile  # Path from root
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP_NAME: auth
+        APP_PORT: 5003
     container_name: auth
     restart: unless-stopped
     env_file:
