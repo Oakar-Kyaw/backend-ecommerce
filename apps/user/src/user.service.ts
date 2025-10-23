@@ -280,7 +280,8 @@ export class UsersService {
     return {
         success: true,
         message: 'CREATED_USER',
-        data: user,
+        url: "myapp://auth/callback",
+       // data: user,
       };
   }
 

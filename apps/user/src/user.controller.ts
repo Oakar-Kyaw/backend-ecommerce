@@ -11,9 +11,7 @@ import {
   Request,
   UseInterceptors,
   UseGuards,
-  Req,
-  Redirect,
-  Res
+  Req
 } from '@nestjs/common';
 import { Response } from 'express';
  import { AuthGuard } from '@nestjs/passport';
@@ -146,12 +144,13 @@ export class UsersController {
 
   @Get('register/google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleLoginCallback(@Req() req, @Res() res) {
+  async googleLoginCallback(@Req() req) {
     // Register or login user in DB
-    const token = await this.usersService.registerGoogleUser(req.user);
-    console.log("token: ",token)
-    // Redirect to Flutter app
-    return Redirect(`myapp://auth/callback?token=${token}`);
+    const response = await this.usersService.registerGoogleUser(req.user);
+    console.log("response", response)
+    return {
+      ...response
+    };
   }
 
   // @Get('register/google')
