@@ -5,16 +5,13 @@ import { UserModule } from './user.module';
 import serversetup from 'libs/utils/server-setup';
 import * as fs from 'fs';
 import * as path from 'path';
+import { BrandModule } from './brand.module';
+import { AppModule } from './app.module';
 
 
 async function bootstrap() {
-  // Create HTTP app
-  // const httpsOptions = {
-  //   key: fs.readFileSync(path.join(process.cwd(), 'secrets/private-key.pem')),
-  //   cert: fs.readFileSync(path.join(process.cwd(), 'secrets/public-certificate.pem')),
-  // };
   const httpsOptions ={}
-  const app = await NestFactory.create(UserModule);
+  const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: '*',
     methods: 'GET,POST,PUT,DELETE,OPTIONS',

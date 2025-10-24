@@ -33,11 +33,24 @@ model User {
 }
 
 model Brand {
-  id                      Int         @id  @default(autoincrement())
+  id                      Int                       @id @default(autoincrement())
   name                    String
+  code                    String                    @unique
+  phone                   String?                  
+  email                   String?                  
+  address                 String?                   
   description             String?
-  isDeleted               Boolean
-  brandUserRelationship   BrandUserRelationship[]
+  feedback                String?
+  info                    String?
+
+  isDeleted               Boolean                   @default(false)
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime                  @updatedAt
+
+  brandUserRelationships  BrandUserRelationship[]   
+
+  @@unique([name, isDeleted])  // allows soft delete reuse
+  @@index([isDeleted])          // fast filtering by active/deleted
 }
 
 model BrandUserRelationship {
@@ -46,6 +59,7 @@ model BrandUserRelationship {
    user           User     @relation(fields: [userId], references: [id])
    brandId        Int
    brand          Brand    @relation(fields:[brandId], references: [id])
+   @@unique([userId, brandId])
 }
 
 enum Role {

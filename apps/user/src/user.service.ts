@@ -7,14 +7,18 @@ import { PublishMessage } from 'libs/queue/publish';
 import { envConfig } from 'libs/config/envConfig';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
-import { USER_PRISMA } from '../prisma/prisma.service';
+import { PRISMA } from '../prisma/prisma.service';
+import { BrandUserService } from './brand-user.service';
+import { EventPublisherService } from './event-publisher.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(USER_PRISMA) private readonly prisma,
+    @Inject(PRISMA) private readonly prisma,
    // @InjectQueue(CREATED_USER_QUEUE) private readonly queue: Queue,
-    private readonly publishMessage: PublishMessage
+   private readonly brandUserService: BrandUserService,
+   private readonly eventPublisher: EventPublisherService,
+
   ) {}
 
   async create(createUserDto: CreateUserWithProfileDto) {
@@ -34,23 +38,24 @@ export class UsersService {
     }
 
     const hashPassword = await hashedPassword(createUserDto.password);
+
+    const { brandId , ...dto } = createUserDto
+
     const user = await this.prisma.user.create({
       data: {
-        ...createUserDto,
+        ...dto,
         password: hashPassword
-      }
+      },
+      include: { brandUserRelationship: { include: { brand: true }} }
     })
+
     console.log("user: ",user)
     
-    this.publishMessage.publish(
-      CREATED_USER_QUEUE,
-      CREATED_USER_JOB, 
-      {
-      userId: Number(user.id),
-      email: user.email,
-      phone: user.phone,
-      password: user.password
-    });
+    // 4️link brand if provided
+    if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
+
+    // 5️publish event
+    this.eventPublisher.userCreated(user);
   
     return {
       success: true,
@@ -94,10 +99,12 @@ export class UsersService {
       console.log('where', where);
   const users = await this.prisma.user.findMany({
     where,
+    include: { brandUserRelationship: { include: {  brand: true}} },
     orderBy: {
       id: "asc"
     }
   });
+  console.log("users: ",users)
     return {
       success: true,
       message: 'LIST_OF_ALL_USERS',
@@ -108,17 +115,9 @@ export class UsersService {
   async findOne(id: number, host?: 'http' | 'tcp') {
     console.log("user found", id);
 
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({ where: { id },  include: { brandUserRelationship: { include: { brand: true }} } });
 
-    if (!user) {
-      // TCP: return structured object
-      if (host === 'tcp') {
-        return { success: false, error: [`User with ID ${id} does not exist`], data: null };
-      }
-
-      // HTTP: throw proper exception
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
     // If found, return success object
     return {
@@ -153,23 +152,18 @@ export class UsersService {
     if (updateUserDto.password) updateUserDto.password = await hashedPassword(updateUserDto.password);
     
     //console.log("update user data: ", updateUserDto)
-
+    const { brandId, ...dto } = updateUserDto
+    if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
+    
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: {
-        ...updateUserDto
-      }
+        ...dto
+      },
+      include: { brandUserRelationship: { include: { brand: true }} }
     })
-
-    this.publishMessage.publish(
-      CREATED_USER_QUEUE,
-      UPDATED_USER_JOB, 
-      {
-      userId: Number(updateUser.id),
-      email: updateUser.email,
-      phone: updateUser.phone,
-      password: updateUser.password
-    });
+  
+    this.eventPublisher.userUpdated(updateUser);
     return {
       success: true,
       message: "UPDATED_USER",
@@ -193,15 +187,7 @@ export class UsersService {
       where: { id },
       data: { isDeleted: true },
     });
-    this.publishMessage.publish(
-      CREATED_USER_QUEUE,
-      UPDATED_USER_JOB, 
-      {
-      userId: Number(deletedUser.id),
-      email: deletedUser.email,
-      phone: deletedUser.phone,
-      password: deletedUser.password
-    });
+    this.eventPublisher.userUpdated(deletedUser);
 
     return {
       success: true,
@@ -273,20 +259,12 @@ export class UsersService {
         photoUrl: picture
       }
     })
-    this.publishMessage.publish(
-      CREATED_USER_QUEUE,
-      CREATED_USER_JOB, 
-      {
-      userId: Number(user.id),
-      email: user.email,
-      phone: user.phone ?? null,
-      password: user.password ?? null
-    });
+    this.eventPublisher.userCreated(user);
     return {
         success: true,
         message: 'CREATED_USER',
         url: "myapp://auth/callback",
-       // data: user,
+        data: user,
       };
   }
 
@@ -306,15 +284,7 @@ export class UsersService {
       }
     })
     console.log("user: ", user)
-    this.publishMessage.publish(
-      CREATED_USER_QUEUE,
-      CREATED_USER_JOB, 
-      {
-      userId: Number(user.id),
-      email: user.email,
-      phone: user.phone ?? null,
-      password: user.password ?? null
-    });
+    this.eventPublisher.userCreated(user);
     return {
         success: true,
         message: 'CREATED_USER',

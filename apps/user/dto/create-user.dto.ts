@@ -1,4 +1,4 @@
-import { Transform, Expose, Type, Exclude } from "class-transformer";
+import { Transform, Expose } from "class-transformer";
 import {
   IsEmail,
   IsEnum,
@@ -7,11 +7,9 @@ import {
   IsString,
   MinLength,
   IsDateString,
+  IsInt,
 } from "class-validator";
-//import { Role } from "@prisma/client";
-//import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-// src/enums/role.enum.ts
 export enum RoleEnum {
   SALE = "SALE",
   CUSTOMER = "CUSTOMER",
@@ -19,115 +17,71 @@ export enum RoleEnum {
 }
 
 export enum GenderEnum {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE'
+  MALE = "MALE",
+  FEMALE = "FEMALE",
 }
-
 
 export class CreateUserWithProfileDto {
   // -------- User Base --------
-  // @ApiProperty({
-  //   description: "User's first name",
-  //   example: "John",
-  // })
-  @Expose()
-  @IsNotEmpty()
-  @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): value: null))
-  readonly firstName?: string;
-
-
-  // @ApiProperty({
-  //   description: "User's last name",
-  //   example: "Doe",
-  // })
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): value: null))
+  @Transform(({ value }) => (value ? String(value).trim() : null))
+  readonly firstName?: string;
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (value ? String(value).trim() : null))
   readonly lastName?: string;
 
-  // @ApiProperty({
-  //   description: "User's email address",
-  //   example: "john.doe@example.com",
-  // })
   @Expose()
   @IsNotEmpty()
   @IsEmail()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
+  @Transform(({ value }) => (value ? String(value).trim().toLowerCase() : null))
   readonly email: string;
 
-  // @ApiProperty({
-  //   description: "Role of the user",
-  //   enum: RoleEnum,
-  // //  example: `${Role.SALE} | ${Role.CUSTOMER} | ${Role.ADMIN}`,
-  // })
   @Expose()
   @IsNotEmpty()
   @IsEnum(RoleEnum)
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toUpperCase(): Number(value): null)) 
+  @Transform(({ value }) => (value ? String(value).trim().toUpperCase() : null))
   readonly role: RoleEnum;
 
   @Expose()
   @IsOptional()
   @IsEnum(GenderEnum)
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toUpperCase(): Number(value): null)) 
-  readonly gender: GenderEnum;
+  @Transform(({ value }) => (value ? String(value).trim().toUpperCase() : 'MALE'))
+  readonly gender?: GenderEnum;
 
-  // @ApiProperty({
-  //   description: "User password",
-  //   minLength: 6,
-  //   example: "strongPassword123",
-  // })
   @Expose()
   @IsNotEmpty()
   @IsString()
   @MinLength(6)
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
+  @Transform(({ value }) => (value ? String(value).trim() : null))
   password: string;
 
-  // @ApiProperty({
-  //   description: "User phone number",
-  //   example: "+95-097876877868",
-  // })
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim(): Number(value): null))
-  readonly phone: string;
+  @Transform(({ value }) => (value ? String(value).trim() : null))
+  readonly phone?: string;
 
-  // @ApiProperty({
-  //   description: "photo url",
-  //   example: "xxxxxxx",
-  // })
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim() : value))
-  readonly photoUrl: string;
+  @Transform(({ value }) => (value ? String(value).trim() : null))
+  readonly photoUrl?: string;
 
-
-  // @ApiPropertyOptional({
-  //   description: "USER IDENTIFICATION CARD",
-  //   type: String,
-  //   example: "7/pkn",
-  // })
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }: {value: unknown}) => (value ? typeof value === "string" ? value.trim().toLowerCase(): Number(value): null))
+  @Transform(({ value }) => (value ? String(value).trim().toLowerCase() : null))
   readonly identification?: string;
-  
-  // @ApiPropertyOptional({
-  //   description: "Date of birth (for members only)",
-  //   type: String,
-  //   format: "date-time",
-  //   example: "1990-01-01T00:00:00.000Z",
-  // })
+
   @Expose()
   @IsOptional()
   @IsDateString()
-  @Transform(({ value }: { value: unknown }) => {
+  @Transform(({ value }) => {
     if (typeof value === "string" && value) {
       const d = new Date(value);
       return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
@@ -138,4 +92,10 @@ export class CreateUserWithProfileDto {
   })
   readonly dateOfBirth?: string;
 
+  // -------- Brand Assignment --------
+  @Expose()
+  @IsOptional()
+  @IsInt()
+  @Transform(({ value }) => (value ? Number(value) : null))
+  readonly brandId?: number; // assign user to a brand
 }

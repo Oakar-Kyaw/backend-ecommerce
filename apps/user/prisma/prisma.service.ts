@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, INestApplication } from '@ne
 import { PrismaClient } from '@prisma/user';
 
 @Injectable()
-export class UserPrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     async onModuleInit() {
           try {
             await this.$connect();
@@ -22,4 +22,4 @@ export class UserPrismaService extends PrismaClient implements OnModuleInit, OnM
         }
 }
 
-export const USER_PRISMA = UserPrismaService
+export const PRISMA = PrismaService

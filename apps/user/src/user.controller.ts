@@ -11,7 +11,8 @@ import {
   Request,
   UseInterceptors,
   UseGuards,
-  Req
+  Req,
+  Res,
 } from '@nestjs/common';
 import { Response } from 'express';
  import { AuthGuard } from '@nestjs/passport';
@@ -21,7 +22,7 @@ import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBody } from '@nestjs/swagger';
 import { Serialize } from '../../../libs/interceptor/response.interceptor';
-import { CreatedUserResponseDto, DeletedUserResponseDto, UpdatedUserResponseDto, UserByIdResponseDto, UserListResponseDto, UserResponseDto } from '../dto/response-user.dto';
+import { CreatedUserResponseDto, DeletedUserResponseDto, UpdatedUserResponseDto, UserByIdResponseDto, UserListResponseDto, UserResponseDto } from '../dto/user-response.dto';
 import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, UnauthorizeResponseDto } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -142,16 +143,39 @@ export class UsersController {
     console.log("google")
   }
 
-  @Get('register/google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleLoginCallback(@Req() req) {
+@Get('register/google/callback')
+@UseGuards(AuthGuard('google'))
+async googleLoginCallback(@Req() req, @Res() res) {
+  try {
     // Register or login user in DB
     const response = await this.usersService.registerGoogleUser(req.user);
-    console.log("response", response)
-    return {
-      ...response
-    };
+    console.log("response", response);
+    
+    if (response.success) {
+      // Encode email to handle special characters
+      const encodedEmail = encodeURIComponent(response?.data?.email ?? '');
+      
+      // Generate token (you should create a JWT token here)
+      const token = response?.data?.token ?? ''; // Adjust based on your response structure
+      
+      return res.redirect(
+        `myapp://auth/callback?success=true&email=${encodedEmail}&token=${token}`
+      );
+    } else {
+      // Handle failure case
+      const errorMessage = encodeURIComponent(response?.message ?? 'Registration failed');
+      return res.redirect(
+        `myapp://auth/callback?success=false&error=${errorMessage}`
+      );
+    }
+  } catch (error) {
+    console.error('Google registration error:', error);
+    const errorMessage = encodeURIComponent('An unexpected error occurred');
+    return res.redirect(
+      `myapp://auth/callback?success=false&error=${errorMessage}`
+    );
   }
+}
 
   // @Get('register/google')
   // @Redirect()

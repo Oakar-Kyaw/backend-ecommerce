@@ -2,6 +2,7 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 //import { ApiProperty } from '@nestjs/swagger';
 import { GenderEnum, RoleEnum } from './create-user.dto';
+import { IBrandInfoDto } from './brand-response.dto';
 
 // ===== USER ENTITY RESPONSE =====
 export class UserResponseDto {
@@ -75,6 +76,10 @@ export class UserResponseDto {
   // })    
   @Expose()   
   readonly identification?: string;
+
+  @Expose()
+  @Type(() => IBrandUserRelationship)
+  brandUserRelationship: IBrandUserRelationship[];
 
 }
 
@@ -170,4 +175,13 @@ export class IUserInfoDto {
 //  @ApiProperty({ example: 'ADMIN', nullable: true })
   @Expose()
   role?: string;
+}
+
+class IBrandUserRelationship {
+   @Expose()
+   id: number
+
+   @Expose()
+   @Type(()=> IBrandInfoDto)
+   brand: IBrandInfoDto
 }

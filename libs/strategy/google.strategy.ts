@@ -12,6 +12,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: envConfig().GOOGLE_CLIENT_SECRET,
       callbackURL: envConfig().GOOGLE_USER_CALLBACK_URL,
       scope: ['email', 'profile'],
+      prompt: 'consent',
+      accessType: 'offline',
     });
   }
 
