@@ -199,7 +199,7 @@ export class UsersService {
 
  getAuthClient(){
     const authClient = new OAuth2Client(
-      envConfig().GOOGLE_CLIENTID,
+      envConfig().GOOGLE_ANDROID_CLIENTID,
       envConfig().GOOGLE_CLIENT_SECRET,
       envConfig().GOOGLE_USER_CALLBACK_URL
     )
@@ -241,12 +241,13 @@ export class UsersService {
   }
 
   async googleRegister(idToken: string){
-    const client = new OAuth2Client(envConfig().GOOGLE_CLIENTID);
-    console.log(envConfig().GOOGLE_CLIENTID, "client")
+    const client = new OAuth2Client(envConfig().GOOGLE_ANDROID_CLIENTID);
+    console.log(envConfig().GOOGLE_ANDROID_CLIENTID, "client")
     const ticket = await client.verifyIdToken({
       idToken: idToken,
       audience: [
-        envConfig().GOOGLE_CLIENTID as string
+        envConfig().GOOGLE_ANDROID_CLIENTID as string,
+        envConfig().GOOGLE_IOS_CLIENTID as string
       ]
     });
     const payload = ticket?.getPayload();
@@ -261,8 +262,7 @@ export class UsersService {
     console.log("existingUser: ", existingUser)
     if(existingUser) return {
         success: false,
-        message: 'FAIL_TO_CREATE_USER',
-        url: "myapp://auth/callback",
+        message: 'User already existed.',
        // data: user,
       };
     const user = await this.prisma.user.create({
@@ -276,8 +276,7 @@ export class UsersService {
     this.eventPublisher.userCreated(user);
     return {
         success: true,
-        message: 'CREATED_USER',
-        url: "myapp://auth/callback",
+        message: 'User has been created successfully.',
         data: user,
       };
   }

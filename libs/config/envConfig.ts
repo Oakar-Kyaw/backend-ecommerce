@@ -32,7 +32,8 @@ export const envConfig =  () => ({
     smtp_pass: process.env.SMTP_PASS,
     JWTSecret: process.env.JWT_SECRET,
     //google auth
-    GOOGLE_CLIENTID: process.env.GOOGLE_CLIENTID,
+    GOOGLE_ANDROID_CLIENTID: process.env.GOOGLE_ANDROID_CLIENTID,
+    GOOGLE_IOS_CLIENTID: process.env.GOOGLE_IOS_CLIENTID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GOOGLE_USER_CALLBACK_URL: process.env.GOOGLE_USER_CALLBACK_URL,
     GOOGLE_AUTH_CALLBACK_URL: process.env.GOOGLE_AUTH_CALLBACK_URL,

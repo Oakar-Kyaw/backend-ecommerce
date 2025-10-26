@@ -8,7 +8,7 @@ import { envConfig } from 'libs/config/envConfig';
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
     super({
-      clientID: envConfig().GOOGLE_CLIENTID,
+      clientID: envConfig().GOOGLE_ANDROID_CLIENTID,
       clientSecret: envConfig().GOOGLE_CLIENT_SECRET,
       callbackURL: envConfig().GOOGLE_USER_CALLBACK_URL,
       scope: ['email', 'profile'],
