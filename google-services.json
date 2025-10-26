@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "566223411513",
+    "project_id": "megasmartcart-771d3",
+    "storage_bucket": "megasmartcart-771d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:566223411513:android:5a5412fea0a1ecde4cb0e8",
+        "android_client_info": {
+          "package_name": "com.example.ecommerce_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "566223411513-bd5vm93lv3mp7c991ejl1hjd9slf08qd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ecommerce_mobile",
+            "certificate_hash": "81c21f4d366481b89e43421cb56d3146e66430c3"
+          }
+        },
+        {
+          "client_id": "566223411513-968i6vh14olp2eev1atptkio78mf1bg2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASfbzwMvS8_12u5ViMpiAm2xga-wkE5tM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "566223411513-968i6vh14olp2eev1atptkio78mf1bg2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

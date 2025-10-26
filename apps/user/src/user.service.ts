@@ -240,7 +240,21 @@ export class UsersService {
     return { userData: userInfo.data  };
   }
 
-  async registerGoogleUser(userData, deviceId?: string){
+  async googleRegister(idToken: string){
+    const client = new OAuth2Client(envConfig().GOOGLE_CLIENTID);
+    console.log(envConfig().GOOGLE_CLIENTID, "client")
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: [
+        envConfig().GOOGLE_CLIENTID as string
+      ]
+    });
+    const payload = ticket?.getPayload();
+    console.log("payload",ticket, payload, payload?.picture)
+    return this.saveGoogleUser(payload)
+  }
+
+  async saveGoogleUser(userData, deviceId?: string){
     const { email, given_name, family_name, picture } = userData
     console.log("email: ", userData, deviceId )
     let existingUser = await this.prisma.user.findUnique({ where: { email } })
@@ -291,4 +305,5 @@ export class UsersService {
         data: user,
       };  
   }
+  
 }

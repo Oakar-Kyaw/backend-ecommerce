@@ -142,54 +142,24 @@ export class UsersController {
   async googleLogin() {
     console.log("google")
   }
-
-@Get('register/google/callback')
-@UseGuards(AuthGuard('google'))
-async googleLoginCallback(@Req() req, @Res() res) {
-  try {
-    // Register or login user in DB
-    const response = await this.usersService.registerGoogleUser(req.user);
-    console.log("response", response);
-    
-    if (response.success) {
-      // Encode email to handle special characters
-      const encodedEmail = encodeURIComponent(response?.data?.email ?? '');
-      
-      // Generate token (you should create a JWT token here)
-      const token = response?.data?.token ?? ''; // Adjust based on your response structure
-      
-      return res.redirect(
-        `myapp://auth/callback?success=true&email=${encodedEmail}&token=${token}`
-      );
-    } else {
-      // Handle failure case
-      const errorMessage = encodeURIComponent(response?.message ?? 'Registration failed');
-      return res.redirect(
-        `myapp://auth/callback?success=false&error=${errorMessage}`
-      );
-    }
-  } catch (error) {
-    console.error('Google registration error:', error);
-    const errorMessage = encodeURIComponent('An unexpected error occurred');
-    return res.redirect(
-      `myapp://auth/callback?success=false&error=${errorMessage}`
-    );
+  
+  @Get('register/google/mobile')
+  async googleRegister(@Query('code') code: string){
+    console.log("code",code)
+      return this.usersService.googleRegister(code);
   }
-}
 
-  // @Get('register/google')
-  // @Redirect()
-  // googleAuth(@Query() deviceId?: string): Promise<{ url: string }> {
-  //   return this.usersService.googleAuthUrl(deviceId);
-  // }
-
-  // @Get('register/google/callback')
-  // @Serialize(CreatedUserResponseDto)
-  // async googleCallback(@Query('code') code: string, @Query('deviceId') deviceId?: string) {
-  //   console.log("code", code)
-  //   const { userData } = await this.usersService.googleAuthClientData(code);
-  //   return this.usersService.registerGoogleUser(userData, deviceId);
-  // }
+  @Get('register/google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleLoginCallback(@Req() req, @Res() res) {
+      // Register or login user in DB
+      const response = await this.usersService.saveGoogleUser(req.user);
+      console.log("response", response);
+      return {
+        ...response
+      }
+      
+  }
 
    @Get('register/facebook')
    @UseGuards (AuthGuard('facebook'))
