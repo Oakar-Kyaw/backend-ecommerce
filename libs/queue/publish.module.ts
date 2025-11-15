@@ -8,14 +8,10 @@ import { envConfig } from 'libs/config/envConfig';
 @Module({
   imports: [
     BullModule.forRoot({
-        connection: 
-        // envConfig().environment === 'deployment' ? {
-        //     host: envConfig().redis_host,
-        //     port: envConfig().redis_port,
-        // } : 
-        {
-        url: envConfig().redis_url, // your rediss://... URL
-        tls: {}, // important for rediss://
+      connection: {
+        host: envConfig().redis_host,
+        port: envConfig().redis_port,
+        password: envConfig().redis_password,
       },
     }),
     BullModule.registerQueue({ name: CREATED_USER_QUEUE }),

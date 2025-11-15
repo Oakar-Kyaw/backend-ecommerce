@@ -11,6 +11,7 @@ export const envConfig =  () => ({
     redis_url: process.env.REDIS_URL,
     redis_port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     redis_host: process.env.REDIS_HOST ?? 'localhost',
+    redis_password: process.env.REDIS_PASSWORD ?? '',
     user_service_port: parseInt(process.env.USER_SERVER_PORT ?? '5001', 10),
     user_service_url: process.env.USER_SERVER_URL ?? "http://localhost:4000/api/v1",
     user_service_tcp: parseInt(process.env.USER_SERVER_TCP ?? '5002', 10),
