@@ -1,37 +1,54 @@
 version: '3.8'
 
 services:
+  # Nginx
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - user
+      - auth
+    networks:
+      - ecom
+
+  # User Service
   user:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         APP_NAME: user
-        APP_PORT: 5001
+        APP_PORT: ${USER_SERVER_PORT}
     container_name: user
     image: ${DOCKER_USERNAME}/user:latest
     restart: unless-stopped
-    # env_file:
-    #   - .env
+    env_file:
+      - .env
     ports:
-      - "5001:5001"
+      - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
     networks:
       - ecom
 
+  # Auth Service
   auth:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         APP_NAME: auth
-        APP_PORT: 5003
+        APP_PORT: ${AUTH_SERVER_PORT}
     container_name: auth
     image: ${DOCKER_USERNAME}/auth:latest
     restart: unless-stopped
-    # env_file:
-    #   - .env
+    env_file:
+      - .env
     ports:
-      - "5003:5003"
+      - "${AUTH_SEVER_PORT}:${AUTH_SERVER_PORT}"
     networks:
       - ecom
 
