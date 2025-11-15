@@ -23,14 +23,14 @@ services:
       dockerfile: Dockerfile
       args:
         APP_NAME: user
-        APP_PORT: ${USER_SERVER_PORT}
+        APP_PORT: 5001
     container_name: user
     image: ${DOCKER_USERNAME}/user:latest
     restart: unless-stopped
-    env_file:
-      - ./.env
+    # env_file:
+    #   - ./.env
     ports:
-      - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
+      - "5001:5001"
     networks:
       - ecom
 
@@ -41,14 +41,14 @@ services:
       dockerfile: Dockerfile
       args:
         APP_NAME: auth
-        APP_PORT: ${AUTH_SERVER_PORT}
+        APP_PORT: 5003
     container_name: auth
     image: ${DOCKER_USERNAME}/auth:latest
     restart: unless-stopped
-    env_file:
-      - ./.env
+    # env_file:
+    #   - ./.env
     ports:
-      - "${AUTH_SEVER_PORT}:${AUTH_SERVER_PORT}"
+      - "5003:5003"
     networks:
       - ecom
 
