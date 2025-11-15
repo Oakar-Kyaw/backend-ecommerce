@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Nginx
   nginx:
@@ -27,12 +25,16 @@ services:
     container_name: user
     image: oakarkyaw/user:latest
     restart: unless-stopped
-    # env_file:
-    #   - ./.env
+    env_file:
+      - .env
     ports:
       - "5001:5001"
+    depends_on:
+      - user_db
+      - redis
     networks:
       - ecom
+      - pgnet
 
   # Auth Service
   auth:
@@ -45,13 +47,86 @@ services:
     container_name: auth
     image: oakarkyaw/auth:latest
     restart: unless-stopped
-    # env_file:
-    #   - ./.env
+    env_file:
+      - .env
     ports:
       - "5003:5003"
+    depends_on:
+      - auth_db
+      - redis
     networks:
       - ecom
+      - pgnet
+
+  # User Database
+  user_db:
+    image: postgres:18
+    container_name: user_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: megasmart_user
+      POSTGRES_PASSWORD: 'megasmart246824@24'
+      POSTGRES_DB: megasmart_user
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - pgnet
+
+  # Product Database
+  product_db:
+    image: postgres:18
+    container_name: product_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: megasmart_product
+      POSTGRES_PASSWORD: 'product246824@24'
+      POSTGRES_DB: megasmart_product
+    volumes:
+      - product_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - pgnet
+
+  # Auth Database
+  auth_db:
+    image: postgres:18
+    container_name: auth_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: megasmart_auth
+      POSTGRES_PASSWORD: 'auth246824@24'
+      POSTGRES_DB: megasmart_auth
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+    networks:
+      - pgnet
+
+  # Redis
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--requirepass", "megasmart123"]
+    networks:
+      - pgnet
+
+volumes:
+  user_data:
+  product_data:
+  auth_data:
+  redis_data:
 
 networks:
   ecom:
+    driver: bridge
+  pgnet:
     driver: bridge
