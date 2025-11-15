@@ -32,6 +32,7 @@ jobs:
         run: |
           docker --version
           docker compose build
+          docker compose push
 
   deploy:
     needs: build
@@ -45,6 +46,9 @@ jobs:
           host: ${{ secrets.AWS_HOST }}
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 10m
           script: |
             set -euo pipefail
 
@@ -52,10 +56,19 @@ jobs:
             cd /home/ubuntu/megasmart-backend
 
             echo "🔹 Pull latest code from private repo using PAT"
-            git pull https://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@github.com/megasmartcart/megasmart-backend.git
+            git config --global credential.helper store
+            echo "https://${{ secrets.GH_PAT }}@github.com" > ~/.git-credentials
+            git pull origin ${{ github.ref_name }}
+            rm ~/.git-credentials
+
+            echo "🔹 Login to Docker Hub"
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             echo "🔹 Stop old containers if running"
             docker compose down || true
+
+            echo "🔹 Pull latest images"
+            docker compose pull
 
             echo "🔹 Start containers with Docker Compose"
             docker compose up -d
