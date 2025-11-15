@@ -28,7 +28,7 @@ services:
     image: ${DOCKER_USERNAME}/user:latest
     restart: unless-stopped
     env_file:
-      - .env
+      - ./.env
     ports:
       - "${USER_SERVER_PORT}:${USER_SERVER_PORT}"
     networks:
@@ -46,7 +46,7 @@ services:
     image: ${DOCKER_USERNAME}/auth:latest
     restart: unless-stopped
     env_file:
-      - .env
+      - ./.env
     ports:
       - "${AUTH_SEVER_PORT}:${AUTH_SERVER_PORT}"
     networks:
