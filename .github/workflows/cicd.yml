@@ -32,6 +32,7 @@ jobs:
           cat <<EOF > .env
           ENVIRONMENT=${{ vars.ENVIRONMENT }}
           USER_DB_URL=${{ vars.USER_DB_URL }}
+          USER_DB_PASSWORD=${{vars.USER_DB_PASSWORD}}        
           USER_SERVER_PORT=${{ vars.USER_SERVER_PORT }}
           USER_SERVER_TCP=${{ vars.USER_SERVER_TCP }}
           USER_SERVER_URL=${{ vars.USER_SERVER_URL }}
@@ -39,6 +40,8 @@ jobs:
           AUTH_SERVER_PORT=${{ vars.AUTH_SERVER_PORT }}
           AUTH_SERVER_TCP=${{ vars.AUTH_SERVER_TCP }}
           AUTH_SERVER_URL=${{ vars.AUTH_SERVER_URL }}
+          AUTH_DB_PASSWORD=${{vars.AUTH_DB_PASSWORD}}
+          PRODUCT_DB_PASSWORD=${{vars.PRODUCT_DB_PASSWORD}}
           PRODUCT_DB_URL=${{ vars.PRODUCT_DB_URL }}
           NOTIFICATION_DB_URL=${{ vars.NOTIFICATION_DB_URL }}
           NOTIFICATION_SERVER_PORT=${{ vars.NOTIFICATION_SERVER_PORT }}
