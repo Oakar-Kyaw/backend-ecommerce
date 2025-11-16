@@ -98,37 +98,50 @@ jobs:
             sudo git pull https://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@github.com/megasmartcart/megasmart-backend.git
             # Generate .env
             cat <<EOF > .env
-            USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD }}
-            AUTH_DB_PASSWORD=${{ secrets.AUTH_DB_PASSWORD }}
-            PRODUCT_DB_PASSWORD=${{ vars.PRODUCT_DB_PASSWORD }}
-            REDIS_PASSWORD=${{ vars.REDIS_PASSWORD }}
             ENVIRONMENT=${{ vars.ENVIRONMENT }}
             USER_DB_URL=${{ vars.USER_DB_URL }}
-            AUTH_DB_URL=${{ vars.AUTH_DB_URL }}
-            PRODUCT_DB_URL=${{ vars.PRODUCT_DB_URL }}
-            REDIS_HOST=${{ vars.REDIS_HOST }}
-            REDIS_PORT=${{ vars.REDIS_PORT }}
+            USER_DB_PASSWORD=${{vars.USER_DB_PASSWORD}}        
             USER_SERVER_PORT=${{ vars.USER_SERVER_PORT }}
+            USER_SERVER_TCP=${{ vars.USER_SERVER_TCP }}
+            USER_SERVER_URL=${{ vars.USER_SERVER_URL }}
+            AUTH_DB_URL=${{ vars.AUTH_DB_URL }}
             AUTH_SERVER_PORT=${{ vars.AUTH_SERVER_PORT }}
             AUTH_SERVER_TCP=${{ vars.AUTH_SERVER_TCP }}
-            USER_SERVER_URL=${{ vars.USER_SERVER_URL }}
             AUTH_SERVER_URL=${{ vars.AUTH_SERVER_URL }}
-            CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
-            CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
-            CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
+            AUTH_DB_PASSWORD=${{vars.AUTH_DB_PASSWORD}}
+            PRODUCT_DB_PASSWORD=${{vars.PRODUCT_DB_PASSWORD}}
+            PRODUCT_DB_URL=${{ vars.PRODUCT_DB_URL }}
             NOTIFICATION_DB_URL=${{ vars.NOTIFICATION_DB_URL }}
             NOTIFICATION_SERVER_PORT=${{ vars.NOTIFICATION_SERVER_PORT }}
             NOTIFICATION_SERVER_TCP=${{ vars.NOTIFICATION_SERVER_TCP }}
-            JWT_SECRET=${{ vars.JWT_SECRET }}
-            JWT_REFRESH_SECRET=${{ vars.JWT_REFRESH_SECRET }}
-            PORT=${{ vars.PORT }}
+            CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
+            CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
+            CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            API_GATEWAY_PORT=${{ vars.API_GATEWAY_PORT }}
             FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
             FIREBASE_CLIENT_EMAIL=${{ vars.FIREBASE_CLIENT_EMAIL }}
-            FIREBASE_PRIVATE_KEY="${{ vars.FIREBASE_PRIVATE_KEY }}"
+            FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
             SMTP_HOST=${{ vars.SMTP_HOST }}
             SMTP_PORT=${{ vars.SMTP_PORT }}
             SMTP_USER=${{ vars.SMTP_USER }}
-            SMTP_PASS=${{ vars.SMTP_PASS }}
+            SMTP_PASS=${{ secrets.SMTP_PASS }}
+            REDIS_HOST=${{ vars.REDIS_HOST }}
+            REDIS_PORT=${{ vars.REDIS_PORT }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            PORT=${{ vars.PORT }}
+            GOOGLE_ANDROID_CLIENTID=${{ vars.GOOGLE_ANDROID_CLIENTID }}
+            GOOGLE_IOS_CLIENTID=${{ vars.GOOGLE_IOS_CLIENTID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_AUTH_CALLBACK_URL=${{ vars.GOOGLE_AUTH_CALLBACK_URL }}
+            GOOGLE_USER_CALLBACK_URL=${{ vars.GOOGLE_USER_CALLBACK_URL }}
+            GOOGLE_TOKEN_URL=${{ vars.GOOGLE_TOKEN_URL }}
+            GOOGLE_AUTH_URL=${{ vars.GOOGLE_AUTH_URL }}
+            FACEBOOK_APP_ID=${{ vars.FACEBOOK_APP_ID }}
+            FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}
+            FACEBOOK_AUTH_CALLBACK_URL=${{ vars.FACEBOOK_AUTH_CALLBACK_URL }}
+            FACEBOOK_USER_CALLBACK_URL=${{ vars.FACEBOOK_USER_CALLBACK_URL }}
             EOF
             sudo docker compose down || true
             sudo docker compose pull || true
