@@ -44,8 +44,8 @@ services:
       args:
         APP_NAME: product
         APP_PORT: 5004
-    container_name: auth
-    image: oakarkyaw/auth:latest
+    container_name: product
+    image: oakarkyaw/product:latest
     restart: unless-stopped
     ports:
       - "5004:5004"
