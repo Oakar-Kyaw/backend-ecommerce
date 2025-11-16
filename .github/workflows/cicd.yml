@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and push Docker Compose images
         run: |
-          docker compose build
+          docker compose ----env-file .env build
           docker compose push
 
       - name: Deploy to EC2 via SSH
@@ -100,8 +100,8 @@ jobs:
             cat <<EOF > .env
             USER_DB_PASSWORD=${{ secrets.USER_DB_PASSWORD }}
             AUTH_DB_PASSWORD=${{ secrets.AUTH_DB_PASSWORD }}
-            PRODUCT_DB_PASSWORD=${{ secrets.PRODUCT_DB_PASSWORD }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            PRODUCT_DB_PASSWORD=${{ vars.PRODUCT_DB_PASSWORD }}
+            REDIS_PASSWORD=${{ vars.REDIS_PASSWORD }}
             ENVIRONMENT=${{ vars.ENVIRONMENT }}
             USER_DB_URL=${{ vars.USER_DB_URL }}
             AUTH_DB_URL=${{ vars.AUTH_DB_URL }}
