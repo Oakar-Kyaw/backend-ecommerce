@@ -31,8 +31,8 @@ jobs:
       - name: Build & push Docker Compose services
         run: |
           docker --version
-          docker compose  build
-          docker compose  push
+          docker compose --env-file /dev/null build
+          docker compose --env-file /dev/null push
 
 
   deploy:
