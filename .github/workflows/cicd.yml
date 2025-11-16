@@ -13,6 +13,47 @@ jobs:
     env:
       REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
       REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ENVIRONMENT: ${{ env.ENVIRONMENT }}
+      USER_DB_URL: ${{ env.USER_DB_URL }}
+      USER_SERVER_PORT: ${{ env.USER_SERVER_PORT }}
+      USER_SERVER_TCP: ${{ env.USER_SERVER_TCP }}
+      USER_SERVER_URL: ${{ env.USER_SERVER_URL }}
+      AUTH_DB_URL: ${{ env.AUTH_DB_URL }}
+      AUTH_SERVER_PORT: ${{ env.AUTH_SERVER_PORT }}
+      AUTH_SERVER_TCP: ${{ env.AUTH_SERVER_TCP }}
+      AUTH_SERVER_URL: ${{ env.AUTH_SERVER_URL }}
+      PRODUCT_DB_URL: ${{ env.PRODUCT_DB_URL }}
+      NOTIFICATION_DB_URL: ${{ env.NOTIFICATION_DB_URL }}
+      NOTIFICATION_SERVER_PORT: ${{ env.NOTIFICATION_SERVER_PORT }}
+      NOTIFICATION_SERVER_TCP: ${{ env.NOTIFICATION_SERVER_TCP }}
+      CHAT_DB_URL: ${{ env.CHAT_DB_URL }}
+      CHAT_SERVER_PORT: ${{ env.CHAT_SERVER_PORT }}
+      CHAT_GATEWAY_PORT: ${{ env.CHAT_GATEWAY_PORT }}
+      JWT_SECRET: ${{ env.JWT_SECRET }}
+      JWT_REFRESH_SECRET: ${{ env.JWT_REFRESH_SECRET }}
+      API_GATEWAY_PORT: ${{ env.API_GATEWAY_PORT }}
+      FIREBASE_PROJECT_ID: ${{ env.FIREBASE_PROJECT_ID }}
+      FIREBASE_CLIENT_EMAIL: ${{ env.FIREBASE_CLIENT_EMAIL }}
+      FIREBASE_PRIVATE_KEY: ${{ env.FIREBASE_PRIVATE_KEY }}
+      SMTP_HOST: ${{ env.SMTP_HOST }}
+      SMTP_PORT: ${{ env.SMTP_PORT }}
+      SMTP_USER: ${{ env.SMTP_USER }}
+      SMTP_PASS: ${{ env.SMTP_PASS }}
+      REDIS_HOST: ${{ env.REDIS_HOST }}
+      REDIS_PORT: ${{ env.REDIS_PORT }}
+      REDIS_PASSWORD: ${{ env.REDIS_PASSWORD }}
+      PORT: ${{ env.PORT }}
+      GOOGLE_ANDROID_CLIENTID: ${{ env.GOOGLE_ANDROID_CLIENTID }}
+      GOOGLE_IOS_CLIENTID: ${{ env.GOOGLE_IOS_CLIENTID }}
+      GOOGLE_CLIENT_SECRET: ${{ env.GOOGLE_CLIENT_SECRET }}
+      GOOGLE_AUTH_CALLBACK_URL: ${{ env.GOOGLE_AUTH_CALLBACK_URL }}
+      GOOGLE_USER_CALLBACK_URL: ${{ env.GOOGLE_USER_CALLBACK_URL }}
+      GOOGLE_TOKEN_URL: ${{ env.GOOGLE_TOKEN_URL }}
+      GOOGLE_AUTH_URL: ${{ env.GOOGLE_AUTH_URL }}
+      FACEBOOK_APP_ID: ${{ env.FACEBOOK_APP_ID }}
+      FACEBOOK_CLIENT_SECRET: ${{ env.FACEBOOK_CLIENT_SECRET }}
+      FACEBOOK_AUTH_CALLBACK_URL: ${{ env.FACEBOOK_AUTH_CALLBACK_URL }}
+      FACEBOOK_USER_CALLBACK_URL: ${{ env.FACEBOOK_USER_CALLBACK_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,50 +67,50 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Create .env file from repo environment variables
+      - name: Create .env file from environment variables
         run: |
           cat <<EOF > .env
-          ENVIRONMENT=${{ vars.ENVIRONMENT }}
-          USER_DB_URL=${{ vars.USER_DB_URL }}
-          USER_SERVER_PORT=${{ vars.USER_SERVER_PORT }}
-          USER_SERVER_TCP=${{ vars.USER_SERVER_TCP }}
-          USER_SERVER_URL=${{ vars.USER_SERVER_URL }}
-          AUTH_DB_URL=${{ vars.AUTH_DB_URL }}
-          AUTH_SERVER_PORT=${{ vars.AUTH_SERVER_PORT }}
-          AUTH_SERVER_TCP=${{ vars.AUTH_SERVER_TCP }}
-          AUTH_SERVER_URL=${{ vars.AUTH_SERVER_URL }}
-          PRODUCT_DB_URL=${{ vars.PRODUCT_DB_URL }}
-          NOTIFICATION_DB_URL=${{ vars.NOTIFICATION_DB_URL }}
-          NOTIFICATION_SERVER_PORT=${{ vars.NOTIFICATION_SERVER_PORT }}
-          NOTIFICATION_SERVER_TCP=${{ vars.NOTIFICATION_SERVER_TCP }}
-          CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
-          CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
-          CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
-          JWT_SECRET=${{ vars.JWT_SECRET }}
-          JWT_REFRESH_SECRET=${{ vars.JWT_REFRESH_SECRET }}
-          API_GATEWAY_PORT=${{ vars.API_GATEWAY_PORT }}
-          FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
-          FIREBASE_CLIENT_EMAIL=${{ vars.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY="${{ vars.FIREBASE_PRIVATE_KEY }}"
-          SMTP_HOST=${{ vars.SMTP_HOST }}
-          SMTP_PORT=${{ vars.SMTP_PORT }}
-          SMTP_USER=${{ vars.SMTP_USER }}
-          SMTP_PASS=${{ vars.SMTP_PASS }}
-          REDIS_HOST=${{ vars.REDIS_HOST }}
-          REDIS_PORT=${{ vars.REDIS_PORT }}
-          REDIS_PASSWORD=${{ vars.REDIS_PASSWORD }}
-          PORT=${{ vars.PORT }}
-          GOOGLE_ANDROID_CLIENTID=${{ vars.GOOGLE_ANDROID_CLIENTID }}
-          GOOGLE_IOS_CLIENTID=${{ vars.GOOGLE_IOS_CLIENTID }}
-          GOOGLE_CLIENT_SECRET=${{ vars.GOOGLE_CLIENT_SECRET }}
-          GOOGLE_AUTH_CALLBACK_URL=${{ vars.GOOGLE_AUTH_CALLBACK_URL }}
-          GOOGLE_USER_CALLBACK_URL=${{ vars.GOOGLE_USER_CALLBACK_URL }}
-          GOOGLE_TOKEN_URL=${{ vars.GOOGLE_TOKEN_URL }}
-          GOOGLE_AUTH_URL=${{ vars.GOOGLE_AUTH_URL }}
-          FACEBOOK_APP_ID=${{ vars.FACEBOOK_APP_ID }}
-          FACEBOOK_CLIENT_SECRET=${{ vars.FACEBOOK_CLIENT_SECRET }}
-          FACEBOOK_AUTH_CALLBACK_URL=${{ vars.FACEBOOK_AUTH_CALLBACK_URL }}
-          FACEBOOK_USER_CALLBACK_URL=${{ vars.FACEBOOK_USER_CALLBACK_URL }}
+          ENVIRONMENT=$ENVIRONMENT
+          USER_DB_URL=$USER_DB_URL
+          USER_SERVER_PORT=$USER_SERVER_PORT
+          USER_SERVER_TCP=$USER_SERVER_TCP
+          USER_SERVER_URL=$USER_SERVER_URL
+          AUTH_DB_URL=$AUTH_DB_URL
+          AUTH_SERVER_PORT=$AUTH_SERVER_PORT
+          AUTH_SERVER_TCP=$AUTH_SERVER_TCP
+          AUTH_SERVER_URL=$AUTH_SERVER_URL
+          PRODUCT_DB_URL=$PRODUCT_DB_URL
+          NOTIFICATION_DB_URL=$NOTIFICATION_DB_URL
+          NOTIFICATION_SERVER_PORT=$NOTIFICATION_SERVER_PORT
+          NOTIFICATION_SERVER_TCP=$NOTIFICATION_SERVER_TCP
+          CHAT_DB_URL=$CHAT_DB_URL
+          CHAT_SERVER_PORT=$CHAT_SERVER_PORT
+          CHAT_GATEWAY_PORT=$CHAT_GATEWAY_PORT
+          JWT_SECRET=$JWT_SECRET
+          JWT_REFRESH_SECRET=$JWT_REFRESH_SECRET
+          API_GATEWAY_PORT=$API_GATEWAY_PORT
+          FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID
+          FIREBASE_CLIENT_EMAIL=$FIREBASE_CLIENT_EMAIL
+          FIREBASE_PRIVATE_KEY="$FIREBASE_PRIVATE_KEY"
+          SMTP_HOST=$SMTP_HOST
+          SMTP_PORT=$SMTP_PORT
+          SMTP_USER=$SMTP_USER
+          SMTP_PASS=$SMTP_PASS
+          REDIS_HOST=$REDIS_HOST
+          REDIS_PORT=$REDIS_PORT
+          REDIS_PASSWORD=$REDIS_PASSWORD
+          PORT=$PORT
+          GOOGLE_ANDROID_CLIENTID=$GOOGLE_ANDROID_CLIENTID
+          GOOGLE_IOS_CLIENTID=$GOOGLE_IOS_CLIENTID
+          GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+          GOOGLE_AUTH_CALLBACK_URL=$GOOGLE_AUTH_CALLBACK_URL
+          GOOGLE_USER_CALLBACK_URL=$GOOGLE_USER_CALLBACK_URL
+          GOOGLE_TOKEN_URL=$GOOGLE_TOKEN_URL
+          GOOGLE_AUTH_URL=$GOOGLE_AUTH_URL
+          FACEBOOK_APP_ID=$FACEBOOK_APP_ID
+          FACEBOOK_CLIENT_SECRET=$FACEBOOK_CLIENT_SECRET
+          FACEBOOK_AUTH_CALLBACK_URL=$FACEBOOK_AUTH_CALLBACK_URL
+          FACEBOOK_USER_CALLBACK_URL=$FACEBOOK_USER_CALLBACK_URL
           EOF
 
       - name: Build and push Docker Compose images
@@ -86,6 +127,7 @@ jobs:
           script: |
             set -euo pipefail
             cd /home/ubuntu/megasmart-backend
+            sudo git pull https://github.com/megasmartcart/megasmart-backend.git
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             sudo docker compose down || true
             sudo docker compose --env-file .env up -d --build
