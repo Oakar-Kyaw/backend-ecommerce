@@ -28,11 +28,11 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & push Docker Compose services
-        run: |
-          docker --version
-          docker compose --env-file /dev/null build
-          docker compose --env-file /dev/null push
+      # - name: Build & push Docker Compose services
+      #   run: |
+      #     docker --version
+      #     docker compose --env-file /dev/null build
+      #     docker compose --env-file /dev/null push
 
 
   deploy:
@@ -57,7 +57,8 @@ jobs:
 
             echo "🔹 Login to Docker Hub"
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
+            sudo docker compose build
+            sudo docker compose push
             echo "🔹 Stop old containers if running"
             sudo docker compose down || true
 
