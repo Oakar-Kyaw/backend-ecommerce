@@ -28,18 +28,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # - name: Build & push Docker Compose services
-      #   run: |
-      #     docker --version
-      #     docker compose --env-file /dev/null build
-      #     docker compose --env-file /dev/null push
-
+      - name: Build & push Docker Compose images
+        run: |
+          docker --version
+          docker compose build
+          docker compose push
 
   deploy:
     needs: build
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
@@ -53,12 +51,18 @@ jobs:
             echo "🔹 Navigate to project folder"
             cd /home/ubuntu/megasmart-backend
 
-            sudo git pull https://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@github.com/megasmartcart/megasmart-backend.git
+            echo "🔹 Pull latest code"
+            sudo git pull https://github.com/megasmartcart/megasmart-backend.git
 
             echo "🔹 Login to Docker Hub"
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            echo "🔹 Build Docker Compose images"
             sudo docker compose build
+
+            echo "🔹 Push Docker Compose images"
             sudo docker compose push
+
             echo "🔹 Stop old containers if running"
             sudo docker compose down || true
 

@@ -33,8 +33,6 @@ services:
     networks:
       - ecom
       - pgnet
-    env_file:
-      - .env
 
   auth:
     build:
@@ -54,8 +52,6 @@ services:
     networks:
       - ecom
       - pgnet
-    env_file:
-      - .env
 
   user_db:
     image: postgres:17
