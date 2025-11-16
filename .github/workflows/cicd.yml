@@ -2,44 +2,79 @@ name: CICD
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ master ]
-    types: [closed]
-
-env:
-  REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
-  REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    branches: [ master, develop ]
+    types: [ closed ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
+      REGISTRY_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Docker Images
+      - name: Create .env file
         run: |
-          docker --version
+          echo "ENVIRONMENT=${{ secrets.ENVIRONMENT }}" >> .env
+          echo "USER_DB_URL=${{ secrets.USER_DB_URL }}" >> .env
+          echo "USER_SERVER_PORT=${{ secrets.USER_SERVER_PORT }}" >> .env
+          echo "USER_SERVER_TCP=${{ secrets.USER_SERVER_TCP }}" >> .env
+          echo "USER_SERVER_URL=${{ secrets.USER_SERVER_URL }}" >> .env
+          echo "AUTH_DB_URL=${{ secrets.AUTH_DB_URL }}" >> .env
+          echo "AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}" >> .env
+          echo "AUTH_SERVER_TCP=${{ secrets.AUTH_SERVER_TCP }}" >> .env
+          echo "AUTH_SERVER_URL=${{ secrets.AUTH_SERVER_URL }}" >> .env
+          echo "PRODUCT_DB_URL=${{ secrets.PRODUCT_DB_URL }}" >> .env
+          echo "NOTIFICATION_DB_URL=${{ secrets.NOTIFICATION_DB_URL }}" >> .env
+          echo "NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}" >> .env
+          echo "NOTIFICATION_SERVER_TCP=${{ secrets.NOTIFICATION_SERVER_TCP }}" >> .env
+          echo "CHAT_DB_URL=${{ secrets.CHAT_DB_URL }}" >> .env
+          echo "CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}" >> .env
+          echo "CHAT_GATEWAY_PORT=${{ secrets.CHAT_GATEWAY_PORT }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}" >> .env
+          echo "API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}" >> .env
+          echo "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}" >> .env
+          echo "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}" >> .env
+          echo "FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}" >> .env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
+          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "GOOGLE_ANDROID_CLIENTID=${{ secrets.GOOGLE_ANDROID_CLIENTID }}" >> .env
+          echo "GOOGLE_IOS_CLIENTID=${{ secrets.GOOGLE_IOS_CLIENTID }}" >> .env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          echo "GOOGLE_AUTH_CALLBACK_URL=${{ secrets.GOOGLE_AUTH_CALLBACK_URL }}" >> .env
+          echo "GOOGLE_USER_CALLBACK_URL=${{ secrets.GOOGLE_USER_CALLBACK_URL }}" >> .env
+          echo "GOOGLE_TOKEN_URL=${{ secrets.GOOGLE_TOKEN_URL }}" >> .env
+          echo "GOOGLE_AUTH_URL=${{ secrets.GOOGLE_AUTH_URL }}" >> .env
+          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
+          echo "FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}" >> .env
+          echo "FACEBOOK_AUTH_CALLBACK_URL=${{ secrets.FACEBOOK_AUTH_CALLBACK_URL }}" >> .env
+          echo "FACEBOOK_USER_CALLBACK_URL=${{ secrets.FACEBOOK_USER_CALLBACK_URL }}" >> .env
+
+      - name: Build and push Docker Compose images
+        run: |
           docker compose build
           docker compose push
 
-  deploy:
-    needs: build
-    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) }}
-    runs-on: ubuntu-latest
-
-    steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -48,85 +83,10 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             set -euo pipefail
-            echo "🚀 Starting Deployment..."
-
-            echo "🔹 Navigate to project folder"
             cd /home/ubuntu/megasmart-backend
-
-            echo "🔹 Pull latest code"
-            sudo git pull
-
-            echo "🔹 Create .env file from GitHub Secrets"
-            cat > .env <<EOF
-            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
-
-            USER_DB_URL=${{ secrets.USER_DB_URL }}
-            USER_SERVER_PORT=${{ secrets.USER_SERVER_PORT }}
-            USER_SERVER_TCP=${{ secrets.USER_SERVER_TCP }}
-            USER_SERVER_URL=${{ secrets.USER_SERVER_URL }}
-
-            AUTH_DB_URL=${{ secrets.AUTH_DB_URL }}
-            AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}
-            AUTH_SERVER_TCP=${{ secrets.AUTH_SERVER_TCP }}
-            AUTH_SERVER_URL=${{ secrets.AUTH_SERVER_URL }}
-
-            PRODUCT_DB_URL=${{ secrets.PRODUCT_DB_URL }}
-
-            NOTIFICATION_DB_URL=${{ secrets.NOTIFICATION_DB_URL }}
-            NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}
-            NOTIFICATION_SERVER_TCP=${{ secrets.NOTIFICATION_SERVER_TCP }}
-
-            CHAT_DB_URL=${{ secrets.CHAT_DB_URL }}
-            CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}
-            CHAT_GATEWAY_PORT=${{ secrets.CHAT_GATEWAY_PORT }}
-
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-
-            API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}
-
-            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
-            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
-            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
-
-            SMTP_HOST=${{ secrets.SMTP_HOST }}
-            SMTP_PORT=${{ secrets.SMTP_PORT }}
-            SMTP_USER=${{ secrets.SMTP_USER }}
-            SMTP_PASS=${{ secrets.SMTP_PASS }}
-
-            REDIS_HOST=${{ secrets.REDIS_HOST }}
-            REDIS_PORT=${{ secrets.REDIS_PORT }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-
-            PORT=${{ secrets.PORT }}
-
-            GOOGLE_ANDROID_CLIENTID=${{ secrets.GOOGLE_ANDROID_CLIENTID }}
-            GOOGLE_IOS_CLIENTID=${{ secrets.GOOGLE_IOS_CLIENTID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            GOOGLE_AUTH_CALLBACK_URL=${{ secrets.GOOGLE_AUTH_CALLBACK_URL }}
-            GOOGLE_USER_CALLBACK_URL=${{ secrets.GOOGLE_USER_CALLBACK_URL }}
-            GOOGLE_TOKEN_URL=${{ secrets.GOOGLE_TOKEN_URL }}
-            GOOGLE_AUTH_URL=${{ secrets.GOOGLE_AUTH_URL }}
-
-            FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}
-            FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}
-            FACEBOOK_AUTH_CALLBACK_URL=${{ secrets.FACEBOOK_AUTH_CALLBACK_URL }}
-            FACEBOOK_USER_CALLBACK_URL=${{ secrets.FACEBOOK_USER_CALLBACK_URL }}
-            EOF
-
-            echo "🔹 Login to Docker Hub"
+            sudo git pull https://github.com/megasmartcart/megasmart-backend.git
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-            echo "🔹 Stop old containers"
             sudo docker compose down || true
-
-            echo "🔹 Pull updated images"
-            sudo docker compose pull
-
-            echo "🔹 Start containers"
-            sudo docker compose --env-file .env up -d
-
-            echo "🧹 Cleaning unused images"
-            sudo docker image prune -af || true
-
-            echo "🎉 Deployment Completed Successfully!"
+            sudo docker compose --env-file .env up -d --build
+            sudo docker image prune -af
+            echo "🎉 Deployment complete!"
