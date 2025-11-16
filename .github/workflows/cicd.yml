@@ -69,4 +69,4 @@ jobs:
             echo "🧹 Clean up unused images"
             sudo docker image prune -af || true
 
-            echo "🎉 Deployment complete! yay"
+            echo "🎉 Deployment complete! "
