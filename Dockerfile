@@ -19,6 +19,7 @@ RUN npm install
 RUN npx prisma generate --schema=apps/user/prisma/schema.prisma || true
 RUN npx prisma generate --schema=apps/auth/prisma/schema.prisma || true
 RUN npx prisma generate --schema=apps/notification/prisma/schema.prisma || true
+RUN npx prisma generate --schema=apps/product/prisma/schema.prisma || true
 
 # Build the target app
 ARG APP_NAME
