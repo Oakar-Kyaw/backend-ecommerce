@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Create .env file from repo environment variables
+      - name: Create .env file from repo variables and secrets
         run: |
           cat <<EOF > .env
           ENVIRONMENT=${{ vars.ENVIRONMENT }}
@@ -46,36 +46,40 @@ jobs:
           CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
           CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
           CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
-          JWT_SECRET=${{ vars.JWT_SECRET }}
-          JWT_REFRESH_SECRET=${{ vars.JWT_REFRESH_SECRET }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
           API_GATEWAY_PORT=${{ vars.API_GATEWAY_PORT }}
           FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL=${{ vars.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY="${{ vars.FIREBASE_PRIVATE_KEY }}"
+          FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
           SMTP_HOST=${{ vars.SMTP_HOST }}
           SMTP_PORT=${{ vars.SMTP_PORT }}
           SMTP_USER=${{ vars.SMTP_USER }}
-          SMTP_PASS=${{ vars.SMTP_PASS }}
+          SMTP_PASS=${{ secrets.SMTP_PASS }}
           REDIS_HOST=${{ vars.REDIS_HOST }}
           REDIS_PORT=${{ vars.REDIS_PORT }}
-          REDIS_PASSWORD=${{ vars.REDIS_PASSWORD }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
           PORT=${{ vars.PORT }}
           GOOGLE_ANDROID_CLIENTID=${{ vars.GOOGLE_ANDROID_CLIENTID }}
           GOOGLE_IOS_CLIENTID=${{ vars.GOOGLE_IOS_CLIENTID }}
-          GOOGLE_CLIENT_SECRET=${{ vars.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_AUTH_CALLBACK_URL=${{ vars.GOOGLE_AUTH_CALLBACK_URL }}
           GOOGLE_USER_CALLBACK_URL=${{ vars.GOOGLE_USER_CALLBACK_URL }}
           GOOGLE_TOKEN_URL=${{ vars.GOOGLE_TOKEN_URL }}
           GOOGLE_AUTH_URL=${{ vars.GOOGLE_AUTH_URL }}
           FACEBOOK_APP_ID=${{ vars.FACEBOOK_APP_ID }}
-          FACEBOOK_CLIENT_SECRET=${{ vars.FACEBOOK_CLIENT_SECRET }}
+          FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}
           FACEBOOK_AUTH_CALLBACK_URL=${{ vars.FACEBOOK_AUTH_CALLBACK_URL }}
           FACEBOOK_USER_CALLBACK_URL=${{ vars.FACEBOOK_USER_CALLBACK_URL }}
           EOF
 
+      - name: Debug .env content (non-sensitive only)
+        run: |
+          head -n 20 .env
+
       - name: Build and push Docker Compose images
         run: |
-          docker compose build
+          docker compose --env-file .env build
           docker compose push
 
       - name: Deploy to EC2 via SSH
@@ -88,8 +92,9 @@ jobs:
             set -euo pipefail
             cd /home/ubuntu/megasmart-backend
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            sudo git pull https://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@github.com/megasmartcart/megasmart-backend.git
             sudo docker compose down || true
             sudo docker compose pull || true
-            sudo docker compose --env-file .env up -d 
+            sudo docker compose --env-file .env up -d
             sudo docker image prune -af
-            echo "🎉 Deployment complete! yay"
+            echo "🎉 Deployment complete!"
