@@ -57,8 +57,6 @@ services:
     image: postgres:17
     container_name: user_db
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - user_data:/var/lib/postgresql/data
     ports:
@@ -70,8 +68,6 @@ services:
     image: postgres:17
     container_name: product_db
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - product_data:/var/lib/postgresql/data
     ports:
@@ -83,8 +79,6 @@ services:
     image: postgres:17
     container_name: auth_db
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - auth_data:/var/lib/postgresql/data
     ports:
@@ -101,8 +95,6 @@ services:
     volumes:
       - redis_data:/data
     command: ["redis-server", "--requirepass", "megasmart123"]
-    env_file:
-      - .env
     networks:
       - pgnet
 
