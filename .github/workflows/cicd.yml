@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and push Docker Compose images
         run: |
-          docker compose --env-file .env build
+          docker compose build
           docker compose push
 
       - name: Deploy to EC2 via SSH
@@ -100,4 +100,4 @@ jobs:
             sudo docker compose pull || true
             sudo docker compose --env-file .env up -d
             sudo docker image prune -af
-            echo "🎉 Deployment complete! "
+            echo "🎉 Deployment complete! testing"
