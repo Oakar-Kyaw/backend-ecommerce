@@ -2,11 +2,10 @@ name: CICD
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, develop ]
-    types:
-      - closed
+    branches: [ master ]
+    types: [closed]
 
 env:
   REGISTRY_USER: ${{ secrets.DOCKER_USERNAME }}
@@ -16,19 +15,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & push Docker Compose images
+      - name: Build & Push Docker Images
         run: |
           docker --version
           docker compose build
@@ -38,6 +38,7 @@ jobs:
     needs: build
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
@@ -47,26 +48,85 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             set -euo pipefail
+            echo "🚀 Starting Deployment..."
 
             echo "🔹 Navigate to project folder"
             cd /home/ubuntu/megasmart-backend
 
             echo "🔹 Pull latest code"
-            sudo git pull https://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@github.com/megasmartcart/megasmart-backend.git
+            sudo git pull
+
+            echo "🔹 Create .env file from GitHub Secrets"
+            cat > .env <<EOF
+            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+
+            USER_DB_URL=${{ secrets.USER_DB_URL }}
+            USER_SERVER_PORT=${{ secrets.USER_SERVER_PORT }}
+            USER_SERVER_TCP=${{ secrets.USER_SERVER_TCP }}
+            USER_SERVER_URL=${{ secrets.USER_SERVER_URL }}
+
+            AUTH_DB_URL=${{ secrets.AUTH_DB_URL }}
+            AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}
+            AUTH_SERVER_TCP=${{ secrets.AUTH_SERVER_TCP }}
+            AUTH_SERVER_URL=${{ secrets.AUTH_SERVER_URL }}
+
+            PRODUCT_DB_URL=${{ secrets.PRODUCT_DB_URL }}
+
+            NOTIFICATION_DB_URL=${{ secrets.NOTIFICATION_DB_URL }}
+            NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}
+            NOTIFICATION_SERVER_TCP=${{ secrets.NOTIFICATION_SERVER_TCP }}
+
+            CHAT_DB_URL=${{ secrets.CHAT_DB_URL }}
+            CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}
+            CHAT_GATEWAY_PORT=${{ secrets.CHAT_GATEWAY_PORT }}
+
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+
+            API_GATEWAY_PORT=${{ secrets.API_GATEWAY_PORT }}
+
+            FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+            FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+            FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+
+            SMTP_HOST=${{ secrets.SMTP_HOST }}
+            SMTP_PORT=${{ secrets.SMTP_PORT }}
+            SMTP_USER=${{ secrets.SMTP_USER }}
+            SMTP_PASS=${{ secrets.SMTP_PASS }}
+
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            REDIS_PORT=${{ secrets.REDIS_PORT }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+
+            PORT=${{ secrets.PORT }}
+
+            GOOGLE_ANDROID_CLIENTID=${{ secrets.GOOGLE_ANDROID_CLIENTID }}
+            GOOGLE_IOS_CLIENTID=${{ secrets.GOOGLE_IOS_CLIENTID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+            GOOGLE_AUTH_CALLBACK_URL=${{ secrets.GOOGLE_AUTH_CALLBACK_URL }}
+            GOOGLE_USER_CALLBACK_URL=${{ secrets.GOOGLE_USER_CALLBACK_URL }}
+            GOOGLE_TOKEN_URL=${{ secrets.GOOGLE_TOKEN_URL }}
+            GOOGLE_AUTH_URL=${{ secrets.GOOGLE_AUTH_URL }}
+
+            FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}
+            FACEBOOK_CLIENT_SECRET=${{ secrets.FACEBOOK_CLIENT_SECRET }}
+            FACEBOOK_AUTH_CALLBACK_URL=${{ secrets.FACEBOOK_AUTH_CALLBACK_URL }}
+            FACEBOOK_USER_CALLBACK_URL=${{ secrets.FACEBOOK_USER_CALLBACK_URL }}
+            EOF
 
             echo "🔹 Login to Docker Hub"
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-            echo "🔹 Stop old containers if running"
+            echo "🔹 Stop old containers"
             sudo docker compose down || true
 
-            echo "🔹 Pull latest images"
-            sudo docker compose --env-file .env pull
+            echo "🔹 Pull updated images"
+            sudo docker compose pull
 
-            echo "🔹 Start containers with Docker Compose"
+            echo "🔹 Start containers"
             sudo docker compose --env-file .env up -d
 
-            echo "🧹 Clean up unused images"
+            echo "🧹 Cleaning unused images"
             sudo docker image prune -af || true
 
-            echo "🎉 Deployment complete! "
+            echo "🎉 Deployment Completed Successfully!"
