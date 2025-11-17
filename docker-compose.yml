@@ -163,9 +163,9 @@ services:
     networks:
       - pgnet
 
-  deliver_db:
+  delivery_db:
     image: mongo:6
-    container_name: deliver_db
+    container_name: delivery_db
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: megasmart_delivery
@@ -173,7 +173,7 @@ services:
     ports:
       - "27020:27017"
     volumes:
-      - deliver_db_data:/data/db
+      - delivery_db_data:/data/db
     networks:
       - pgnet
 
