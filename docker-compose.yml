@@ -12,8 +12,10 @@ services:
     depends_on:
       - user
       - auth
+      - product
     networks:
       - ecom
+      - pgnet
 
   user:
     build:
