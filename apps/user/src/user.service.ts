@@ -41,6 +41,15 @@ export class UsersService {
 
     const { brandId , ...dto } = createUserDto
 
+    // check if brand exists
+    if(brandId) {
+     // check if brand exists
+      const brand = await this.prisma.brand.findUnique({
+        where: { id: brandId, isDeleted: false },
+      });
+      if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
+    } 
+      
     const user = await this.prisma.user.create({
       data: {
         ...dto,

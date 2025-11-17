@@ -5,11 +5,6 @@ export class BrandUserService {
     constructor(@Inject(PRISMA) private prisma) {}
   
     async linkUserToBrand(userId: number, brandId: number) {
-      // check if brand exists
-      const brand = await this.prisma.brand.findUnique({
-        where: { id: brandId, isDeleted: false },
-      });
-      if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
   
       return this.prisma.brandUserRelationship.upsert({
           where: {
