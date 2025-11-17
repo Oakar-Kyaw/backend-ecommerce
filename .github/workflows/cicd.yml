@@ -54,8 +54,8 @@ jobs:
           CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
           CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
           CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+          JWT_SECRET=${{ vars.JWT_SECRET }}
+          JWT_REFRESH_SECRET=${{ vars.JWT_REFRESH_SECRET }}
           API_GATEWAY_PORT=${{ vars.API_GATEWAY_PORT }}
           FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL=${{ vars.FIREBASE_CLIENT_EMAIL }}
@@ -127,8 +127,8 @@ jobs:
             CHAT_DB_URL=${{ vars.CHAT_DB_URL }}
             CHAT_SERVER_PORT=${{ vars.CHAT_SERVER_PORT }}
             CHAT_GATEWAY_PORT=${{ vars.CHAT_GATEWAY_PORT }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_SECRET=${{ vars.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ vars.JWT_REFRESH_SECRET }}
             API_GATEWAY_PORT=${{ vars.API_GATEWAY_PORT }}
             FIREBASE_PROJECT_ID=${{ vars.FIREBASE_PROJECT_ID }}
             FIREBASE_CLIENT_EMAIL=${{ vars.FIREBASE_CLIENT_EMAIL }}
