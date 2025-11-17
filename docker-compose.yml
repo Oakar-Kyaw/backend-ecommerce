@@ -120,6 +120,62 @@ services:
       - "5431:5432"
     networks:
       - pgnet
+  
+  order_db:
+    image: mongo:6
+    container_name: order_db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: megasmart_order
+      MONGO_INITDB_ROOT_PASSWORD: ${ORDER_DB_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - order_db_data:/data/db
+    networks:
+      - pgnet
+
+  payment_db:
+    image: mongo:6
+    container_name: payment_db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: megasmart_payment
+      MONGO_INITDB_ROOT_PASSWORD: ${PAYMENT_DB_PASSWORD}
+    ports:
+      - "27018:27017"
+    volumes:
+      - payment_db_data:/data/db
+    networks:
+      - pgnet
+
+  social_db:
+    image: mongo:6
+    container_name: social_db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: megasmart_social
+      MONGO_INITDB_ROOT_PASSWORD: ${SOCIAL_DB_PASSWORD}
+    ports:
+      - "27019:27017"
+    volumes:
+      - social_db_data:/data/db
+    networks:
+      - pgnet
+
+  deliver_db:
+    image: mongo:6
+    container_name: deliver_db
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: megasmart_delivery
+      MONGO_INITDB_ROOT_PASSWORD: S{DELIVERY_DB_PASSWORD}
+    ports:
+      - "27020:27017"
+    volumes:
+      - deliver_db_data:/data/db
+    networks:
+      - pgnet
 
   redis:
     image: redis:latest
