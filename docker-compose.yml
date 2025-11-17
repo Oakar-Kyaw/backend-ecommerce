@@ -193,6 +193,10 @@ volumes:
   user_data:
   product_data:
   auth_data:
+  order_db_data:
+  payment_db_data:
+  social_db_data:
+  delivery_db_data:
   redis_data:
 
 networks:
