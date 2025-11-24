@@ -9,6 +9,7 @@ import { GoogleStrategy } from 'libs/strategy/google.strategy';
 import { PrismaService } from '../prisma/prisma.service';
 import { BrandUserService } from './brand-user.service';
 import { EventPublisherService } from './event-publisher.service';
+import { FileUpload } from 'libs/utils/file-upload';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { EventPublisherService } from './event-publisher.service';
     BrandUserService,
     EventPublisherService,
     FacebookStrategy,
-    GoogleStrategy
+    GoogleStrategy,
+    FileUpload
   ]
 })
 export class UserModule {}

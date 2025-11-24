@@ -42,6 +42,7 @@ model Brand {
   description             String?
   feedback                String?
   info                    String?
+  photoUrl                String?
 
   isDeleted               Boolean                   @default(false)
   createdAt               DateTime                  @default(now())

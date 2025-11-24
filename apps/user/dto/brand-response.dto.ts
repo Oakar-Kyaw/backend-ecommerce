@@ -30,6 +30,9 @@ export class BrandResponseDto {
   readonly info?: string;
 
   @Expose()
+  readonly photoUrl?: string;
+
+  @Expose()
   readonly isDeleted?: boolean;
 
   @Expose()

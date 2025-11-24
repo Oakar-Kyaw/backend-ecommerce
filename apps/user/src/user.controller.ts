@@ -13,6 +13,7 @@ import {
   UseGuards,
   Req,
   Res,
+  UploadedFile,
 } from '@nestjs/common';
 import { Response } from 'express';
  import { AuthGuard } from '@nestjs/passport';
@@ -27,12 +28,13 @@ import { ExistedDataResponseDto, NotFoundResponseDto, ServerErrorResponseDto, Un
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { envConfig } from 'libs/config/envConfig';
+import { FileUpload } from 'libs/utils/file-upload';
 
 @ApiTags('Users')
 @Controller('api/v1/users')
 //@UseGuards(AuthGuard) // Apply AuthGuard to all routes by default
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService, private readonly fileUploadService: FileUpload) {}
 
   @Public()
   @Serialize(CreatedUserResponseDto)
@@ -173,5 +175,11 @@ export class UsersController {
    async facebookLoginCallback(@Req() req): Promise<any> {
         console.log("callback", req.user)
         return this.usersService.registerFacebookUser(req.user);
+    }
+
+    @Post('photo')
+    @UseInterceptors(FileInterceptor("file"))
+    async uploadFile(@UploadedFile() file: Express.Multer.File){
+      return this.fileUploadService.uploadSingle({file, folderName: "profile"});
     }
 }

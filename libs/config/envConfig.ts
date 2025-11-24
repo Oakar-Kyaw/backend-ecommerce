@@ -8,6 +8,12 @@ export const GlobalConfigModule = ConfigModule.forRoot({
 
 export const envConfig =  () => ({
     environment: process.env.ENVIRONMENT || 'development',
+    //AWS SERVICE
+    aws_access_key: process.env.AWS_ACCESS_KEY || "",
+    aws_secret_key: process.env.AWS_SECRET_KEY || "",
+    aws_region: process.env.AWS_REGION || "",
+    aws_s3_bucket_name: process.env.AWS_S3_BUCKET_NAME || "",
+    //END
     redis_url: process.env.REDIS_URL,
     redis_port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
     redis_host: process.env.REDIS_HOST ?? 'localhost',

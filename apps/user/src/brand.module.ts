@@ -3,6 +3,7 @@ import { GlobalConfigModule } from 'libs/config/envConfig';
 import { BrandService } from './brand.service';
 import { BrandController } from './brand.controller';
 import { PrismaService } from '../prisma/prisma.service';
+import { FileUpload } from 'libs/utils/file-upload';
 
 @Module({
   imports: [
@@ -11,7 +12,8 @@ import { PrismaService } from '../prisma/prisma.service';
   controllers: [BrandController],
   providers: [
     BrandService,
-    PrismaService
+    PrismaService,
+    FileUpload
   ]
 })
 export class BrandModule {}

@@ -10,6 +10,7 @@ import {
     ParseIntPipe,
     Request,
     UseInterceptors,
+    UploadedFile,
   } from '@nestjs/common';
   import { FileInterceptor } from '@nestjs/platform-express';
   import { BrandService } from './brand.service';
@@ -41,8 +42,8 @@ import {
     @ApiBody({ type: CreateBrandDto })
     @ApiResponse({ status: 201, description: 'Brand created successfully', type: CreatedBrandResponseDto })
     @ApiResponse({ status: 500, description: 'Internal Server Error', type: ServerErrorResponseDto })
-    create(@Body() createBrandDto: CreateBrandDto) {
-      return this.brandService.create(createBrandDto);
+    create(@Body() createBrandDto: CreateBrandDto, @UploadedFile() file: Express.Multer.File) {
+      return this.brandService.create(createBrandDto, file);
     }
   
     // ===== GET ALL BRANDS =====
@@ -79,8 +80,8 @@ import {
     @ApiResponse({ status: 200, description: 'Update brand by ID', type: UpdatedBrandResponseDto })
     @ApiResponse({ status: 404, description: 'Brand not found', type: NotFoundResponseDto })
     @ApiResponse({ status: 500, description: 'Internal Server Error', type: ServerErrorResponseDto })
-    update(@Param('id', ParseIntPipe) id: number, @Body() updateBrandDto: UpdateBrandDto) {
-      return this.brandService.update(id, updateBrandDto);
+    update(@Param('id', ParseIntPipe) id: number, @Body() updateBrandDto: UpdateBrandDto, @UploadedFile() file: Express.Multer.File) {
+      return this.brandService.update(id, updateBrandDto, file);
     }
   
     // ===== DELETE BRAND (SOFT DELETE) =====
