@@ -103,7 +103,7 @@ jobs:
           script: |
             set -euo pipefail
             cd /home/ubuntu/megasmart-backend
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            echo "${{ secrets.DOCKER_PASSWORD }}, ${{ secrets.TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             sudo git pull https://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@github.com/megasmartcart/megasmart-backend.git
             # Generate .env
             cat <<EOF > .env
