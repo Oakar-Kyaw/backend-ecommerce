@@ -12,6 +12,7 @@ export class EventPublisherService {
       email: user.email,
       phone: user.phone ?? null,
       password: user.password ?? null,
+      role: user.role ?? "CUSTOMER",
     });
   }
 
@@ -21,6 +22,7 @@ export class EventPublisherService {
       email: user.email,
       phone: user.phone ?? null,
       password: user.password ?? null,
+      role: user.role ?? "CUSTOMER",
     });
   }
 }

@@ -39,7 +39,8 @@ export class AuthService {
         const payload = {
             id: user.userId,
             email: user.email,
-            phone: user.phone
+            phone: user.phone,
+            role: user.role,
       };
 
       console.log('🎫 Generating tokens for user:', user.id);
