@@ -24,5 +24,6 @@ jobs:
             sudo npm run prisma:all
             sudo npm run production:build
             sudo pm2 stop all || true
+            sudo pm2 delete all || true
             sudo npm run production:start
             echo "Deployed Successfully"
