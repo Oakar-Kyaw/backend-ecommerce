@@ -44,4 +44,4 @@ jobs:
             sudo npm run prisma:all
             sudo npm run production:build
             sudo npm run production:start
-            echo "Deployed Successfully"
+            echo "Deployed Successfully yay"
