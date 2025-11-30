@@ -5,3 +5,10 @@ dist
     
 certbot/conf/accounts
 certbot/conf/keys
+
+.gitignore
+Dockerfile
+docker-compose.yml
+.env
+**/*.log
+**/prisma/*.md

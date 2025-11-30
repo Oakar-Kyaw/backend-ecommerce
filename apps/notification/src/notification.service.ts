@@ -64,7 +64,7 @@ export class NotificationService {
       throw new NotFoundException(`Tokens don't exist.`);
 
     // Remove duplicates
-    const tokens: string[] = [...new Set(messageToken.map((data) => data.token))];
+    const tokens = [...new Set(messageToken.map((data) => data.token))];
     console.log("unique tokens", tokens);
 
     const message = {
