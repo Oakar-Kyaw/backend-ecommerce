@@ -9,12 +9,14 @@ COPY nest-cli.json ./
 COPY apps apps
 COPY libs libs
 
-RUN npm install --omit=dev
+# Install ALL dependencies for building
+RUN npm ci
 
 ARG APP_NAME
 RUN npx prisma generate --schema=apps/${APP_NAME}/prisma/schema.prisma
 
-RUN npm run build ${APP_NAME}
+# Build the app
+RUN npx nest build ${APP_NAME}
 
 # Stage 2 — Production
 FROM node:20-alpine AS production
