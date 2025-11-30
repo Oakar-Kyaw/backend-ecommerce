@@ -33,7 +33,6 @@ ENV NODE_ENV=production
 
 # Copy only runtime dependencies and built files
 COPY package*.json ./
-COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma

@@ -5,11 +5,67 @@ on:
     branches: [ master ]
 
 jobs:
-  docker-build-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # =============================
+      # Build USER service
+      # =============================
+      - name: Build user service
+        run: |
+          docker build \
+            --build-arg APP_NAME=user \
+            --build-arg APP_PORT=5001 \
+            -t oakarkyaw/user:latest .
+
+      - name: Push user service
+        run: docker push oakarkyaw/user:latest
+
+      # =============================
+      # Build PRODUCT service
+      # =============================
+      - name: Build product service
+        run: |
+          docker build \
+            --build-arg APP_NAME=product \
+            --build-arg APP_PORT=5004 \
+            -t oakarkyaw/product:latest .
+
+      - name: Push product service
+        run: docker push oakarkyaw/product:latest
+
+      # =============================
+      # Build AUTH service
+      # =============================
+      - name: Build auth service
+        run: |
+          docker build \
+            --build-arg APP_NAME=auth \
+            --build-arg APP_PORT=5003 \
+            -t oakarkyaw/auth:latest .
+
+      - name: Push auth service
+        run: docker push oakarkyaw/auth:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.AWS_HOST }}
@@ -17,13 +73,51 @@ jobs:
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
             cd /home/ubuntu/megasmart-backend
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # ==================================
+            # Pull latest source (optional)
+            # ==================================
             sudo git pull https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/megasmartcart/megasmart-backend.git
-            sudo npm install -g @nestjs/cli pm2
-            sudo npm ci
-            sudo npm run prisma:all
-            sudo npm run production:build
-            sudo pm2 stop all || true
-            sudo pm2 delete all || true
-            sudo npm run production:start
-            echo "Deployed Successfully"
+
+            # ==================================
+            # Pull newest Docker images
+            # ==================================
+            docker pull oakarkyaw/user:latest
+            docker pull oakarkyaw/product:latest
+            docker pull oakarkyaw/auth:latest
+
+            # ==================================
+            # Stop & remove existing containers
+            # ==================================
+            docker stop user || true
+            docker rm user || true
+
+            docker stop product || true
+            docker rm product || true
+
+            docker stop auth || true
+            docker rm auth || true
+
+            # ==================================
+            # Run updated containers (using existing .env)
+            # ==================================
+
+            docker run -d \
+              --name user \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5001:5001 \
+              oakarkyaw/user:latest
+
+            docker run -d \
+              --name product \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5004:5004 \
+              oakarkyaw/product:latest
+
+            docker run -d \
+              --name auth \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5003:5003 \
+              oakarkyaw/auth:latest
+
+            echo "🔥 Deployment completed successfully (using docker run)!"
