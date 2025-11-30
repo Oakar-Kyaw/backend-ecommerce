@@ -9,7 +9,7 @@ COPY nest-cli.json ./
 COPY apps apps
 COPY libs libs
 
-RUN npm ci
+RUN npm install --omit=dev
 
 ARG APP_NAME
 RUN npx prisma generate --schema=apps/${APP_NAME}/prisma/schema.prisma
