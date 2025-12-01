@@ -6,11 +6,11 @@ import {
 import admin from 'firebase-admin';
 import { firstValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
-import { NotificationPrismaService } from 'apps/prisma/prisma.service';
+import { NOTIFICATION_PRISMA } from 'apps/prisma/prisma.service';
 @Injectable()
 export class NotificationService {
   constructor(
-    private readonly prisma: NotificationPrismaService,
+    @Inject(NOTIFICATION_PRISMA) private readonly prisma,
     @Inject('USER') private readonly userClient: ClientProxy,
   ) {}
   async sendNotification(data: NotificationDto) {
@@ -69,11 +69,13 @@ export class NotificationService {
     if (messageToken.length === 0)
       throw new NotFoundException(`Tokens don't exist.`);
 
-    // Remove duplicates
-    const tokens = [...new Set(messageToken.map((data) => data.token))];
+    // Remove duplicates and ensure proper typing
+    const tokens = Array.from(
+      new Set<string>(messageToken.map((t: any) => String(t.token).trim())),
+    );
     console.log('unique tokens', tokens);
 
-    const message = {
+    const message: admin.messaging.MulticastMessage = {
       data: {
         title,
         body,

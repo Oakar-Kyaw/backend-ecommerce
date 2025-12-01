@@ -19,7 +19,7 @@ import { envConfig } from 'libs/config/envConfig';
         },
       },
       defaults: {
-        from: `"OakarKyaw" <${process.env.SMTP_USER}>`,
+        from: `"Mega Smart Cart" <${process.env.SMTP_USER}>`,
       },
       //   template: {
       //     dir: join(__dirname, 'templates'),

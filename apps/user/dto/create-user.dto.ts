@@ -14,6 +14,7 @@ export enum RoleEnum {
   SALE = 'SALE',
   CUSTOMER = 'CUSTOMER',
   ADMIN = 'ADMIN',
+  USER = 'USER',
 }
 
 export enum GenderEnum {
@@ -102,4 +103,10 @@ export class CreateUserWithProfileDto {
   @IsInt()
   @Transform(({ value }) => (value ? Number(value) : null))
   readonly brandId?: number; // assign user to a brand
+
+  @Expose()
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (value ? String(value).trim() : null))
+  readonly otp?: string;
 }

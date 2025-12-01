@@ -31,7 +31,9 @@ export class BaseCategoryResponseDto<T> {
 }
 
 // ===== LIST RESPONSE =====
-export class CategoryListResponseDto extends BaseCategoryResponseDto<CategoryResponseDto[]> {
+export class CategoryListResponseDto extends BaseCategoryResponseDto<
+  CategoryResponseDto[]
+> {
   @Expose()
   message: string = 'LIST_OF_CATEGORIES';
 

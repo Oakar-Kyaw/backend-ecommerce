@@ -7,7 +7,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
-import { getPagination, buildPaginationResponse } from '../../../libs/utils/pagination';
+import {
+  getPagination,
+  buildPaginationResponse,
+} from '../../../libs/utils/pagination';
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import {
@@ -23,6 +26,8 @@ import { PRISMA } from '../prisma/prisma.service';
 import { BrandUserService } from './brand-user.service';
 import { EventPublisherService } from './event-publisher.service';
 import * as XLSX from 'xlsx';
+import Redis from 'ioredis';
+import createAPI from 'libs/utils/axio.instance';
 
 @Injectable()
 export class UsersService {
@@ -32,6 +37,18 @@ export class UsersService {
     private readonly brandUserService: BrandUserService,
     private readonly eventPublisher: EventPublisherService,
   ) {}
+
+  private redis: Redis = envConfig().redis_url
+    ? new Redis(envConfig().redis_url as string)
+    : new Redis({
+        host: envConfig().redis_host,
+        port: envConfig().redis_port,
+        password: envConfig().redis_password || undefined,
+      });
+
+  private emailApi = createAPI(
+    `http://localhost:${envConfig().noti_service_port}/api/v1/email`,
+  );
 
   async create(createUserDto: CreateUserWithProfileDto) {
     const { email, phone } = createUserDto;
@@ -50,6 +67,16 @@ export class UsersService {
 
     const { brandId, ...dto } = createUserDto;
 
+    if (dto.role && ['USER', 'CUSTOMER'].includes(String(dto.role))) {
+      const otp = (createUserDto as any).otp;
+      if (!otp) throw new UnauthorizedException('OTP_REQUIRED');
+      const key = `otp:signup:${email}`;
+      const stored = await this.redis.get(key);
+      if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
+      if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+      await this.redis.del(key);
+    }
+
     // check if brand exists
     if (brandId) {
       // check if brand exists
@@ -59,9 +86,11 @@ export class UsersService {
       if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
     }
 
+    const roleValue = dto.role === 'USER' ? 'CUSTOMER' : dto.role;
     const user = await this.prisma.user.create({
       data: {
         ...dto,
+        role: roleValue,
         password: hashPassword,
       },
       include: { brandUserRelationship: { include: { brand: true } } },
@@ -98,7 +127,10 @@ export class UsersService {
   }) {
     const where: any = { isDeleted: false };
     if (query?.isDeleted !== undefined) where.isDeleted = query.isDeleted;
-    if (query?.role) where.role = (query.role as RoleEnum)?.toUpperCase();
+    if (query?.role) {
+      const r = query.role?.toUpperCase();
+      where.role = r === 'USER' ? 'CUSTOMER' : r;
+    }
     if (query?.email) where.email = query.email;
     if (query?.phone) where.phone = query.phone;
 
@@ -143,12 +175,26 @@ export class UsersService {
     return buildPaginationResponse(users, meta, total, 'LIST_OF_USERS');
   }
 
-  async exportExcel(query: { isDeleted?: boolean; email?: string; phone?: string; role?: RoleEnum; search?: string; from?: string; to?: string; startDate?: string; endDate?: string; order?: 'asc' | 'desc' }) {
+  async exportExcel(query: {
+    isDeleted?: boolean;
+    email?: string;
+    phone?: string;
+    role?: RoleEnum;
+    search?: string;
+    from?: string;
+    to?: string;
+    startDate?: string;
+    endDate?: string;
+    order?: 'asc' | 'desc';
+  }) {
     const where: any = {};
     if (query?.isDeleted !== undefined) where.isDeleted = query.isDeleted;
     if (query?.email) where.email = query.email;
     if (query?.phone) where.phone = query.phone;
-    if (query?.role) where.role = (query.role as RoleEnum)?.toUpperCase();
+    if (query?.role) {
+      const r = query.role?.toUpperCase();
+      where.role = r === 'USER' ? 'CUSTOMER' : r;
+    }
     if (query?.search) {
       where.OR = [
         { email: { contains: query.search, mode: 'insensitive' } },
@@ -162,7 +208,11 @@ export class UsersService {
     if (exFrom || exTo) {
       const createdAt: { gte?: Date; lte?: Date } = {};
       if (exFrom) createdAt.gte = new Date(exFrom);
-      if (exTo) { const end = new Date(exTo); end.setHours(23,59,59,999); createdAt.lte = end; }
+      if (exTo) {
+        const end = new Date(exTo);
+        end.setHours(23, 59, 59, 999);
+        createdAt.lte = end;
+      }
       where.createdAt = createdAt;
     }
 
@@ -184,17 +234,70 @@ export class UsersService {
       createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : '',
       updatedAt: u.updatedAt ? new Date(u.updatedAt).toISOString() : '',
       brands: Array.isArray(u.brandUserRelationship)
-        ? u.brandUserRelationship.map((r: any) => r.brand?.name ?? '').filter(Boolean).join(', ')
+        ? u.brandUserRelationship
+            .map((r: any) => r.brand?.name ?? '')
+            .filter(Boolean)
+            .join(', ')
         : '',
     }));
 
-    const headers = ['id','email','firstName','lastName','phone','role','isDeleted','createdAt','updatedAt','brands'];
+    const headers = [
+      'id',
+      'email',
+      'firstName',
+      'lastName',
+      'phone',
+      'role',
+      'isDeleted',
+      'createdAt',
+      'updatedAt',
+      'brands',
+    ];
     const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Users');
-    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' }) as Buffer;
+    const buffer = XLSX.write(wb, {
+      type: 'buffer',
+      bookType: 'xlsx',
+    }) as Buffer;
     const filename = 'users_export.xlsx';
     return { buffer, filename };
+  }
+
+  async sendOtp({ email, mode }: { email: string; mode?: string }) {
+    if (!email) throw new NotFoundException('EMAIL_REQUIRED');
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const key = `otp:${mode || 'signup'}:${email}`;
+    await this.redis.set(key, otp, 'EX', 300);
+    try {
+      await this.emailApi.post('/send', {
+        to: email,
+        subject: 'Your verification code',
+        html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
+    } catch (err) {
+      console.error('OTP email send failed', err);
+      // Continue returning success so the user can verify with the stored OTP
+    }
+    return { success: true, message: 'OTP_SENT' };
+  }
+
+  async verifyOtp({
+    email,
+    mode,
+    otp,
+  }: {
+    email: string;
+    mode?: string;
+    otp: string;
+  }) {
+    if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
+    const key = `otp:${mode || 'signup'}:${email}`;
+    const stored = await this.redis.get(key);
+    if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
+    if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+    await this.redis.del(key);
+    return { success: true, message: 'OTP_VERIFIED' };
   }
 
   async findOne(id: number, host?: 'http' | 'tcp') {
@@ -256,10 +359,12 @@ export class UsersService {
     const { brandId, ...dto } = updateUserDto;
     if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
 
+    const updateRole = dto['role'] === 'USER' ? 'CUSTOMER' : dto['role'];
     const updateUser = await this.prisma.user.update({
       where: { id },
       data: {
         ...dto,
+        ...(dto['role'] ? { role: updateRole } : {}),
       },
       include: { brandUserRelationship: { include: { brand: true } } },
     });

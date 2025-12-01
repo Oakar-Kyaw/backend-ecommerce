@@ -37,6 +37,11 @@ export class EmailController {
     return this.emailService.sendEmail(emailData);
   }
 
+  @Post('verify')
+  async verifyTransport() {
+    return this.emailService.verifyTransport();
+  }
+
   @Post('welcome')
   async sendWelcomeEmail(@Body() { to, name }: SendWelcomeEmailDto) {
     return await this.emailService.sendWelcomeEmail(to, name);

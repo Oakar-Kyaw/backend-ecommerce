@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { envConfig } from 'libs/config/envConfig';
 import { MailerService } from '@nestjs-modules/mailer';
 import { SendEmailDto } from './dto/create-notification.dto';
 
@@ -9,15 +10,55 @@ export class EmailService {
   async sendEmail(emailData: SendEmailDto) {
     const { to, subject, text, html, template, context } = emailData;
     console.log('emailData', emailData);
-    await this.mailerService.sendMail({
-      to,
-      subject,
-      text,
-      html,
-      template,
-      context,
-    });
-    return { success: true, message: 'Email sent successfully' };
+    try {
+      const content = html ?? (text ? `<p>${text}</p>` : '');
+      const brandedHtml = `
+        <div style="font-family: Inter, Arial, sans-serif; background:#f6f8fb; padding:24px">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden">
+            <tr>
+              <td style="background:#0b6fff;color:#ffffff;padding:16px 24px;font-size:18px;font-weight:600">
+                Mega Smart Cart
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;font-size:14px;color:#333333;line-height:1.6">
+                ${content}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;color:#667085;font-size:12px;border-top:1px solid #eef2f7">
+                This message was sent by Mega Smart Cart. Do not reply to this email.
+              </td>
+            </tr>
+          </table>
+        </div>`;
+      await this.mailerService.sendMail({
+        to,
+        subject,
+        html: brandedHtml,
+        template,
+        context,
+      });
+      return { success: true, message: 'Email sent successfully' };
+    } catch (error) {
+      console.error('sendMail error', error);
+      throw error;
+    }
+  }
+
+  async verifyTransport() {
+    try {
+      const to = envConfig().smtp_user as string;
+      await this.mailerService.sendMail({
+        to,
+        subject: 'SMTP Transport Verify',
+        html: '<p>Transport OK</p>',
+      });
+      return { success: true, message: 'SMTP transport is ready' };
+    } catch (error) {
+      console.error('SMTP verify error', error);
+      return { success: false, message: 'SMTP transport error', error: String(error) };
+    }
   }
 
   async sendWelcomeEmail(to: string, name: string): Promise<void> {

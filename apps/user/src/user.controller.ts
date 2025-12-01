@@ -80,12 +80,28 @@ export class UsersController {
   @Get()
   @Serialize(UserListResponseDto)
   @ApiOperation({ summary: 'Get list of users, optionally filtered by role' })
-  @ApiQuery({ name: 'search', required: false, description: 'Search in email, phone, firstName, lastName' })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search in email, phone, firstName, lastName',
+  })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'pageSize', required: false, description: 'Page size' })
-  @ApiQuery({ name: 'from', required: false, description: 'Start date (ISO or yyyy-mm-dd)' })
-  @ApiQuery({ name: 'to', required: false, description: 'End date (ISO or yyyy-mm-dd)' })
-  @ApiQuery({ name: 'order', required: false, description: 'Sort order asc | desc' })
+  @ApiQuery({
+    name: 'from',
+    required: false,
+    description: 'Start date (ISO or yyyy-mm-dd)',
+  })
+  @ApiQuery({
+    name: 'to',
+    required: false,
+    description: 'End date (ISO or yyyy-mm-dd)',
+  })
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    description: 'Sort order asc | desc',
+  })
   //  @ApiQuery({ name: 'role', required: false, description: 'Role to filter users by', example: 'ADMIN' })
   @ApiResponse({
     status: 200,
@@ -124,12 +140,14 @@ export class UsersController {
   }
 
   @Get('export')
-  async exportExcel(
-    @Query() query?: any,
-    @Res() res?: any,
-  ) {
-    const { buffer, filename } = await this.usersService.exportExcel(query || {});
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  async exportExcel(@Query() query?: any, @Res() res?: any) {
+    const { buffer, filename } = await this.usersService.exportExcel(
+      query || {},
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(buffer);
   }
@@ -255,4 +273,16 @@ export class UsersController {
     return this.fileUploadService.uploadSingle({ file, folderName: 'profile' });
   }
 
+  @Public()
+  @Get('forgot/otp')
+  async sendOtp(@Query('email') email: string, @Query('mode') mode?: string) {
+    return this.usersService.sendOtp({ email, mode });
+  }
+
+  @Public()
+  @Post('forgot/otp/verify')
+  async verifyOtp(@Body() body: any) {
+    const { email, mode, otp } = body || {};
+    return this.usersService.verifyOtp({ email, mode, otp });
+  }
 }

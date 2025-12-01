@@ -59,13 +59,33 @@ export class CategoryController {
   @Serialize(CategoryListResponseDto)
   @Get()
   @ApiOperation({ summary: 'Get list of categories, optionally filtered' })
-  @ApiQuery({ name: 'title', required: false, description: 'Filter by category title' })
-  @ApiQuery({ name: 'description', required: false, description: 'Filter by category description' })
-  @ApiQuery({ name: 'search', required: false, description: 'Search in title and description' })
+  @ApiQuery({
+    name: 'title',
+    required: false,
+    description: 'Filter by category title',
+  })
+  @ApiQuery({
+    name: 'description',
+    required: false,
+    description: 'Filter by category description',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Search in title and description',
+  })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'pageSize', required: false, description: 'Page size' })
-  @ApiResponse({ status: 200, description: 'List of categories', type: CategoryListResponseDto })
-  @ApiResponse({ status: 500, description: 'Internal Server Error', type: ServerErrorResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'List of categories',
+    type: CategoryListResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal Server Error',
+    type: ServerErrorResponseDto,
+  })
   findAll(
     @Query('title') title?: string,
     @Query('description') description?: string,
@@ -73,7 +93,13 @@ export class CategoryController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    return this.categoryService.findAll({ title, description, search, page, pageSize });
+    return this.categoryService.findAll({
+      title,
+      description,
+      search,
+      page,
+      pageSize,
+    });
   }
 
   // ===== GET CATEGORY BY ID =====

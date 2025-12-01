@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { Role } from '@prisma/client';
+import { Role } from '@prisma/notification';
 import { Expose, Transform } from 'class-transformer';
 import {
   IsEmail,

@@ -7,7 +7,10 @@ import {
 import { CreateCategoryDto } from 'apps/product/dto/create-category.dto';
 import { UpdateCategoryDto } from 'apps/product/dto/update-category.dto';
 import { PRISMA } from 'apps/product/prisma/prisma.service';
-import { getPagination, buildPaginationResponse } from '../../../../libs/utils/pagination';
+import {
+  getPagination,
+  buildPaginationResponse,
+} from '../../../../libs/utils/pagination';
 
 @Injectable()
 export class CategoryService {
@@ -38,16 +41,29 @@ export class CategoryService {
   }
 
   // ===== FIND ALL CATEGORIES =====
-  async findAll(query: { title?: string; description?: string; search?: string; page?: string; pageSize?: string }) {
+  async findAll(query: {
+    title?: string;
+    description?: string;
+    search?: string;
+    page?: string;
+    pageSize?: string;
+  }) {
     const where: any = { isDeleted: false };
     const and: any[] = [];
 
-    if (query?.title) and.push({ title: { contains: query.title, mode: 'insensitive' } });
-    if (query?.description) and.push({ description: { contains: query.description, mode: 'insensitive' } });
-    if (query?.search) and.push({ OR: [
-      { title: { contains: query.search, mode: 'insensitive' } },
-      { description: { contains: query.search, mode: 'insensitive' } },
-    ]});
+    if (query?.title)
+      and.push({ title: { contains: query.title, mode: 'insensitive' } });
+    if (query?.description)
+      and.push({
+        description: { contains: query.description, mode: 'insensitive' },
+      });
+    if (query?.search)
+      and.push({
+        OR: [
+          { title: { contains: query.search, mode: 'insensitive' } },
+          { description: { contains: query.search, mode: 'insensitive' } },
+        ],
+      });
 
     if (and.length) where.AND = and;
 
@@ -66,7 +82,12 @@ export class CategoryService {
       this.prisma.category.count({ where }),
     ]);
 
-    return buildPaginationResponse(categories, meta, total, 'LIST_OF_CATEGORIES');
+    return buildPaginationResponse(
+      categories,
+      meta,
+      total,
+      'LIST_OF_CATEGORIES',
+    );
   }
 
   // ===== FIND CATEGORY BY ID =====

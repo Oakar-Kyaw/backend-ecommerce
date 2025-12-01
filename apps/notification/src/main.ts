@@ -26,8 +26,6 @@ async function bootstrap() {
   // });
 
   await app.startAllMicroservices();
-  console.log(
-    `🚀 Noti TCP microservice running on port ${envConfig().noti_service_tcp}`,
-  );
+  console.log(`🚀 Noti HTTP running on ${envConfig().noti_service_port}`);
 }
 bootstrap();
