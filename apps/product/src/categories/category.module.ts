@@ -5,13 +5,8 @@ import { CategoryService } from './category.service';
 import { PrismaService } from 'apps/product/prisma/prisma.service';
 
 @Module({
-  imports: [
-    GlobalConfigModule,  
-  ],
+  imports: [GlobalConfigModule],
   controllers: [CategoryController],
-  providers: [
-    CategoryService,
-    PrismaService
-  ]
+  providers: [CategoryService, PrismaService],
 })
 export class CategoryModule {}

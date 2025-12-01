@@ -20,4 +20,8 @@ model Category {
   description             String
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
+  isDeleted               Boolean                @default(false)
+
+  @@unique([title, isDeleted])
+  @@index([isDeleted])
 }

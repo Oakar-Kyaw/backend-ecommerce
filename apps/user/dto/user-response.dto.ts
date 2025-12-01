@@ -1,4 +1,3 @@
-
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 //import { ApiProperty } from '@nestjs/swagger';
 import { GenderEnum, RoleEnum } from './create-user.dto';
@@ -6,11 +5,11 @@ import { IBrandInfoDto } from './brand-response.dto';
 
 // ===== USER ENTITY RESPONSE =====
 export class UserResponseDto {
-//  @ApiProperty({ example: 'uuid-123' })
+  //  @ApiProperty({ example: 'uuid-123' })
   @Expose()
   readonly id: string;
 
-//  @ApiProperty({ example: 'xxxxxx' })
+  //  @ApiProperty({ example: 'xxxxxx' })
   @Expose()
   readonly photoUrl: string;
 
@@ -34,7 +33,7 @@ export class UserResponseDto {
   // })
   @Expose()
   readonly createdAt?: Date;
-  
+
   // @ApiProperty({
   //   description: "User's last name",
   //   example: "Doe",
@@ -51,7 +50,7 @@ export class UserResponseDto {
   readonly role: RoleEnum;
 
   @Expose()
-  readonly gender: GenderEnum
+  readonly gender: GenderEnum;
 
   //@ApiProperty({ example: '555-555-5555' })
   @Expose()
@@ -73,14 +72,13 @@ export class UserResponseDto {
   //     description: "USER IDENTIFICATION CARD",
   //     type: String,
   //     example: "7/pkn",
-  // })    
-  @Expose()   
+  // })
+  @Expose()
   readonly identification?: string;
 
   @Expose()
   @Type(() => IBrandUserRelationship)
   brandUserRelationship: IBrandUserRelationship[];
-
 }
 
 // ===== BASE RESPONSE WRAPPER =====
@@ -93,95 +91,115 @@ export class BaseUserResponseDto<T> {
   @Expose()
   message: string;
 
- // @ApiProperty({ type: () => Object })
+  // @ApiProperty({ type: () => Object })
   @Expose()
   data: T;
 }
 
 // ===== LIST RESPONSE =====
-export class UserListResponseDto extends BaseUserResponseDto<UserResponseDto[]> {
- // @ApiProperty({ example: 'LIST_OF_USERS' })
+export class UserListResponseDto extends BaseUserResponseDto<
+  UserResponseDto[]
+> {
+  // @ApiProperty({ example: 'LIST_OF_USERS' })
   @Expose()
   message: string = 'LIST_OF_USERS';
 
-//  @ApiProperty({ type: () => [UserResponseDto] })
+  //  @ApiProperty({ type: () => [UserResponseDto] })
   @Expose()
   @Type(() => UserResponseDto)
   declare data: UserResponseDto[];
+
+  @Expose()
+  part: number;
+
+  @Expose()
+  page: number;
+
+  @Expose()
+  pageSize: number;
+
+  @Expose()
+  limit: number;
+
+  @Expose()
+  skip: number;
+
+  @Expose()
+  totalPages: number;
 }
 
 // ===== SINGLE RESPONSE =====
 export class UserByIdResponseDto extends BaseUserResponseDto<UserResponseDto> {
- // @ApiProperty({ example: 'USER_BY_ID' })
+  // @ApiProperty({ example: 'USER_BY_ID' })
   @Expose()
   message: string = 'USER_BY_ID';
 
-//  @ApiProperty({ type: () => UserResponseDto })
+  //  @ApiProperty({ type: () => UserResponseDto })
   @Expose()
   declare data: UserResponseDto;
 }
 
 // ===== CREATED RESPONSE =====
 export class CreatedUserResponseDto extends BaseUserResponseDto<UserResponseDto> {
-//  @ApiProperty({ example: 'CREATED_USER' })
+  //  @ApiProperty({ example: 'CREATED_USER' })
   @Expose()
   message: string = 'CREATED_USER';
 
-//  @ApiProperty({ type: () => UserResponseDto })
+  //  @ApiProperty({ type: () => UserResponseDto })
   @Expose()
   declare data: UserResponseDto;
 }
 
 // ===== UPDATED RESPONSE =====
 export class UpdatedUserResponseDto extends BaseUserResponseDto<UserResponseDto> {
-//  @ApiProperty({ example: 'UPDATED_USER' })
+  //  @ApiProperty({ example: 'UPDATED_USER' })
   @Expose()
   message: string = 'UPDATED_USER';
 
-//  @ApiProperty({ type: () => UserResponseDto })
+  //  @ApiProperty({ type: () => UserResponseDto })
   @Expose()
   declare data: UserResponseDto;
 }
 
 // ===== DELETED RESPONSE =====
 export class DeletedUserResponseDto extends BaseUserResponseDto<UserResponseDto> {
-//  @ApiProperty({ example: 'DELETED_USER' })
+  //  @ApiProperty({ example: 'DELETED_USER' })
   @Expose()
   message: string = 'DELETED_USER';
 
- // @ApiProperty({ type: () => UserResponseDto })
+  // @ApiProperty({ type: () => UserResponseDto })
   @Expose()
   declare data: UserResponseDto;
 }
 
 // ===== Expose User Data =====
 export class IUserInfoDto {
-//  @ApiProperty({ example: 4 })
+  //  @ApiProperty({ example: 4 })
   @Expose()
   id: number;
 
-//  @ApiProperty({ example: 'admin@gmail.com' })
+  //  @ApiProperty({ example: 'admin@gmail.com' })
   @Expose()
   email: string;
 
-//  @ApiProperty({ example: 'Admin' })
+  //  @ApiProperty({ example: 'Admin' })
   @Expose()
   name: string;
 
-//  @ApiProperty({ example: '555-555-5555' })
+  //  @ApiProperty({ example: '555-555-5555' })
   @Expose()
   phone: string;
 
-//  @ApiProperty({ example: 'ADMIN', nullable: true })
+  //  @ApiProperty({ example: 'ADMIN', nullable: true })
   @Expose()
   role?: string;
 }
 
 class IBrandUserRelationship {
-   @Expose()
-   id: number
+  @Expose()
+  id: number;
 
-   @Expose()
-   @Type(()=> IBrandInfoDto)
-   brand: IBrandInfoDto
+  @Expose()
+  @Type(() => IBrandInfoDto)
+  brand: IBrandInfoDto;
 }

@@ -1,23 +1,21 @@
-import { BadRequestException, ValidationPipe } from "@nestjs/common";
-import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { AllExceptionFilter } from "libs/exception/http.exception";
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionFilter } from 'libs/exception/http.exception';
 
-export default function serversetup(app, port){
-  console.log("app and port: ", port)
+export default function serversetup(app, port) {
+  console.log('app and port: ', port);
   //for all undefined routes and custom http exception
-  app.useGlobalFilters(
-    new AllExceptionFilter()
-  );
+  app.useGlobalFilters(new AllExceptionFilter());
   // global exception error and non property field error
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,      
-      forbidNonWhitelisted: false,  
+      whitelist: true,
+      forbidNonWhitelisted: false,
       transform: true,
       errorHttpStatusCode: 400,
       exceptionFactory: (validationErrors) => {
-        const messages = validationErrors.flatMap(error =>
-          Object.values(error.constraints ?? {})
+        const messages = validationErrors.flatMap((error) =>
+          Object.values(error.constraints ?? {}),
         );
         return new BadRequestException(messages);
       },
@@ -27,17 +25,17 @@ export default function serversetup(app, port){
     .setTitle('Ecommerce Backend API')
     .setDescription('API For Ecommerce Backend')
     .setVersion('1.0')
-     .addBearerAuth(
-        {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          name: 'Authorization',
-          description: 'Enter JWT token',
-          in: 'header',
-        },
-        'access-token', 
-      )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'access-token',
+    )
     .addServer(`http://localhost:${port}/`, 'Local environment')
     .addServer('https://xxxxx.com/', 'Staging')
     .addServer('https://xxxxx.com/', 'Production')

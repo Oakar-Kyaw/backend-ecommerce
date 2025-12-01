@@ -1,6 +1,10 @@
-import { Injectable } from "@nestjs/common";
-import { CREATED_USER_JOB, CREATED_USER_QUEUE, UPDATED_USER_JOB } from "libs/queue/constant";
-import { PublishMessage } from "libs/queue/publish";
+import { Injectable } from '@nestjs/common';
+import {
+  CREATED_USER_JOB,
+  CREATED_USER_QUEUE,
+  UPDATED_USER_JOB,
+} from 'libs/queue/constant';
+import { PublishMessage } from 'libs/queue/publish';
 
 @Injectable()
 export class EventPublisherService {
@@ -12,7 +16,7 @@ export class EventPublisherService {
       email: user.email,
       phone: user.phone ?? null,
       password: user.password ?? null,
-      role: user.role ?? "CUSTOMER",
+      role: user.role ?? 'CUSTOMER',
     });
   }
 
@@ -22,7 +26,7 @@ export class EventPublisherService {
       email: user.email,
       phone: user.phone ?? null,
       password: user.password ?? null,
-      role: user.role ?? "CUSTOMER",
+      role: user.role ?? 'CUSTOMER',
     });
   }
 }

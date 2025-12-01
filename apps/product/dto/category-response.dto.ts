@@ -38,6 +38,24 @@ export class CategoryListResponseDto extends BaseCategoryResponseDto<CategoryRes
   @Expose()
   @Type(() => CategoryResponseDto)
   declare data: CategoryResponseDto[];
+
+  @Expose()
+  part: number;
+
+  @Expose()
+  page: number;
+
+  @Expose()
+  pageSize: number;
+
+  @Expose()
+  limit: number;
+
+  @Expose()
+  skip: number;
+
+  @Expose()
+  totalPages: number;
 }
 
 // ===== SINGLE RESPONSE =====

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 //import { LoginDto } from './dto/login.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
@@ -11,33 +19,32 @@ import { envConfig } from 'libs/config/envConfig';
 
 @Controller('api/auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-    @HttpCode(HttpStatus.OK)
-    @Public()
-    @Post("login") 
-    @ApiBody({type: LoginDto})
-    @ApiResponse({type: LoginResponseDto})
-    @Serialize(LoginResponseDto)                                                                        
-    login(@Body() data: LoginDto) {
-        console.log("log",data)
-        return this.authService.signIn(data)
-    }
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('login')
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ type: LoginResponseDto })
+  @Serialize(LoginResponseDto)
+  login(@Body() data: LoginDto) {
+    console.log('log', data);
+    return this.authService.signIn(data);
+  }
 
-    @Post('logout')
-    @ApiResponse({ type: LogOutResponseDto })
-    @Serialize(LogOutResponseDto)
-    loginout(@Headers('Authorization') authorizationHeader: string) {
-        return this.authService.signOut(authorizationHeader);
-    }
+  @Post('logout')
+  @ApiResponse({ type: LogOutResponseDto })
+  @Serialize(LogOutResponseDto)
+  loginout(@Headers('Authorization') authorizationHeader: string) {
+    return this.authService.signOut(authorizationHeader);
+  }
 
-    @Public()
-    @Get('refresh')
-    @ApiResponse({ type: LoginResponseDto })
-    @Serialize(LoginResponseDto)
-    refreshToken(@Headers('Authorization') authorizationHeader: string) {
-        const token = authorizationHeader.split(' ')[1];
-        return this.authService.refreshToken(token);
-    }
+  @Public()
+  @Get('refresh')
+  @ApiResponse({ type: LoginResponseDto })
+  @Serialize(LoginResponseDto)
+  refreshToken(@Headers('Authorization') authorizationHeader: string) {
+    const token = authorizationHeader.split(' ')[1];
+    return this.authService.refreshToken(token);
+  }
 }
-                                                                                                                                        

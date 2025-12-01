@@ -15,7 +15,8 @@ import { AuthPrismaService } from '../prisma/auth.prisma.service';
       secret: envConfig().JWTSecret,
       //for production
       signOptions: { expiresIn: '900s' },
-    })],
+    }),
+  ],
   controllers: [AuthController],
   providers: [AuthService, AuthWorker, AuthPrismaService],
 })

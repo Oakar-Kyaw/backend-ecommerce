@@ -1,4 +1,4 @@
-import { Transform, Expose } from "class-transformer";
+import { Transform, Expose } from 'class-transformer';
 import {
   IsEmail,
   IsEnum,
@@ -8,17 +8,17 @@ import {
   MinLength,
   IsDateString,
   IsInt,
-} from "class-validator";
+} from 'class-validator';
 
 export enum RoleEnum {
-  SALE = "SALE",
-  CUSTOMER = "CUSTOMER",
-  ADMIN = "ADMIN",
+  SALE = 'SALE',
+  CUSTOMER = 'CUSTOMER',
+  ADMIN = 'ADMIN',
 }
 
 export enum GenderEnum {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
 }
 
 export class CreateUserWithProfileDto {
@@ -50,7 +50,9 @@ export class CreateUserWithProfileDto {
   @Expose()
   @IsOptional()
   @IsEnum(GenderEnum)
-  @Transform(({ value }) => (value ? String(value).trim().toUpperCase() : 'MALE'))
+  @Transform(({ value }) =>
+    value ? String(value).trim().toUpperCase() : 'MALE',
+  )
   readonly gender?: GenderEnum;
 
   @Expose()
@@ -82,11 +84,13 @@ export class CreateUserWithProfileDto {
   @IsOptional()
   @IsDateString()
   @Transform(({ value }) => {
-    if (typeof value === "string" && value) {
+    if (typeof value === 'string' && value) {
       const d = new Date(value);
-      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+      return new Date(
+        Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
+      )
         .toISOString()
-        .replace(/\.\d{3}Z$/, "Z"); // strip milliseconds
+        .replace(/\.\d{3}Z$/, 'Z'); // strip milliseconds
     }
     return null;
   })

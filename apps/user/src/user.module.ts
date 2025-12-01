@@ -13,9 +13,9 @@ import { FileUpload } from 'libs/utils/file-upload';
 
 @Module({
   imports: [
-    GlobalConfigModule,  
+    GlobalConfigModule,
     PublishMessageModule,
-    PassportModule.register({defaultStrategy: 'facebook'})
+    PassportModule.register({ defaultStrategy: 'facebook' }),
   ],
   controllers: [UsersController],
   providers: [
@@ -25,7 +25,7 @@ import { FileUpload } from 'libs/utils/file-upload';
     EventPublisherService,
     FacebookStrategy,
     GoogleStrategy,
-    FileUpload
-  ]
+    FileUpload,
+  ],
 })
 export class UserModule {}

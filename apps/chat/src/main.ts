@@ -35,6 +35,8 @@ async function bootstrap() {
   const app = await NestFactory.create(ChatModule);
   serversetup(app, envConfig().chat_service_port);
   await app.listen(envConfig().chat_service_port); // HTTP REST (optional)
-  console.log(`🚀 HTTP on ${envConfig().chat_service_port}, WS on ${envConfig().chat_gateway_port}`);
+  console.log(
+    `🚀 HTTP on ${envConfig().chat_service_port}, WS on ${envConfig().chat_gateway_port}`,
+  );
 }
 bootstrap();

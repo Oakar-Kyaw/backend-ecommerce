@@ -23,7 +23,7 @@ import { envConfig } from 'libs/config/envConfig';
           port: envConfig().user_service_port,
         },
       },
-  ])
+    ]),
   ],
   controllers: [AppController],
   providers: [AppService],

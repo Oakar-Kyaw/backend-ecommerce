@@ -4,9 +4,6 @@ import { ProductModule } from './product.module';
 import { CategoryModule } from './categories/category.module';
 
 @Module({
-  imports: [
-    ProductModule,
-    CategoryModule
-  ],
+  imports: [ProductModule, CategoryModule],
 })
 export class AppModule {}

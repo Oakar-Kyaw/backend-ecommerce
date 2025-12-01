@@ -9,22 +9,28 @@ import { ClientProxy } from '@nestjs/microservices';
 import { NotificationPrismaService } from 'apps/prisma/prisma.service';
 @Injectable()
 export class NotificationService {
-  constructor(private readonly prisma: NotificationPrismaService, @Inject('USER') private readonly userClient: ClientProxy) {}
+  constructor(
+    private readonly prisma: NotificationPrismaService,
+    @Inject('USER') private readonly userClient: ClientProxy,
+  ) {}
   async sendNotification(data: NotificationDto) {
     const { userId, brandId, branchId, role, title, body, icon } = data;
-    console.log("data",data);
-    const notificationTokenData = await this.prisma.notificationToken.findFirst({
-      where: {
-        userId,
-        ...(branchId && { branchId }),
-        ...(brandId && { brandId }),
-        ...(role && { role }),
+    console.log('data', data);
+    const notificationTokenData = await this.prisma.notificationToken.findFirst(
+      {
+        where: {
+          userId,
+          ...(branchId && { branchId }),
+          ...(brandId && { brandId }),
+          ...(role && { role }),
+        },
+        orderBy: {
+          id: 'desc',
+        },
       },
-      orderBy: {
-        id: 'desc',
-      },
-    });
-    if (!notificationTokenData) throw new NotFoundException(`User Id ${userId} doesn't subscribe noti`);
+    );
+    if (!notificationTokenData)
+      throw new NotFoundException(`User Id ${userId} doesn't subscribe noti`);
     console.log('notification data: ', notificationTokenData);
     const token = notificationTokenData.token.trim();
     const response = await admin.messaging().send({
@@ -40,18 +46,18 @@ export class NotificationService {
         },
       },
       data: {
-          title: title,
-          body: body,
-          icon: icon || '',
+        title: title,
+        body: body,
+        icon: icon || '',
       },
     });
-    console.log("response",response);
-    return { success: true, message: 'Notification sent successfully'};
+    console.log('response', response);
+    return { success: true, message: 'Notification sent successfully' };
   }
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
     const { brandId, branchId, role, title, body, icon } = data;
-    
+
     const messageToken = await this.prisma.notificationToken.findMany({
       where: {
         ...(brandId && { brandId }),
@@ -59,13 +65,13 @@ export class NotificationService {
         ...(role && { role }),
       },
     });
-    
+
     if (messageToken.length === 0)
       throw new NotFoundException(`Tokens don't exist.`);
 
     // Remove duplicates
     const tokens = [...new Set(messageToken.map((data) => data.token))];
-    console.log("unique tokens", tokens);
+    console.log('unique tokens', tokens);
 
     const message = {
       data: {
@@ -113,16 +119,17 @@ export class NotificationService {
     //   if (!existingBrand)
     //     throw new NotFoundException(`Brand Id ${brandId} not found`);
     // }
-    console.log("userId", userId);
+    console.log('userId', userId);
     if (userId) {
       const existingUser = await firstValueFrom(
         this.userClient.send({ cmd: 'get_user_by_id' }, { id: userId }),
-      )
-      console.log("exist", existingUser)
-      if (!existingUser.success) throw new NotFoundException(`User Id ${userId} not found`);
+      );
+      console.log('exist', existingUser);
+      if (!existingUser.success)
+        throw new NotFoundException(`User Id ${userId} not found`);
       data.role = existingUser.data.role;
     }
-    console.log("data to save", data);
+    console.log('data to save', data);
     const token = await this.prisma.notificationToken.create({ data });
     return {
       success: true,

@@ -55,13 +55,33 @@ export class BaseBrandResponseDto<T> {
 }
 
 // ===== LIST RESPONSE =====
-export class BrandListResponseDto extends BaseBrandResponseDto<BrandResponseDto[]> {
+export class BrandListResponseDto extends BaseBrandResponseDto<
+  BrandResponseDto[]
+> {
   @Expose()
   message: string = 'LIST_OF_BRANDS';
 
   @Expose()
   @Type(() => BrandResponseDto)
   declare data: BrandResponseDto[];
+
+  @Expose()
+  part: number;
+
+  @Expose()
+  page: number;
+
+  @Expose()
+  pageSize: number;
+
+  @Expose()
+  limit: number;
+
+  @Expose()
+  skip: number;
+
+  @Expose()
+  totalPages: number;
 }
 
 // ===== SINGLE RESPONSE =====

@@ -6,8 +6,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   // Create HTTP app
-  const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'debug', 'log'] });
-  serversetup(app, envConfig().noti_service_port)
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'debug', 'log'],
+  });
+  serversetup(app, envConfig().noti_service_port);
   // Enable REST API on port 3000 (or any you want)
   await app.listen(envConfig().noti_service_port);
   //serversetup(app, envConfig().noti_service_port)
@@ -24,6 +26,8 @@ async function bootstrap() {
   // });
 
   await app.startAllMicroservices();
-  console.log(`🚀 Noti TCP microservice running on port ${envConfig().noti_service_tcp}`);
+  console.log(
+    `🚀 Noti TCP microservice running on port ${envConfig().noti_service_tcp}`,
+  );
 }
 bootstrap();

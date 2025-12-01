@@ -24,7 +24,7 @@ export class PrismaFactory {
       }
 
       const Client = ClientLoader();
-      
+
       if (!Client) {
         throw new Error(`Prisma Client not found for ${clientName}`);
       }
@@ -52,7 +52,10 @@ export class PrismaFactory {
 
       PrismaClass = GeneratedPrismaService;
     } catch (e) {
-      console.warn(`Prisma client '${clientName}' not found. Using NullPrismaService`, e);
+      console.warn(
+        `Prisma client '${clientName}' not found. Using NullPrismaService`,
+        e,
+      );
 
       @Injectable()
       class NullPrismaService implements OnModuleInit {

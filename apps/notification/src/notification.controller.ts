@@ -8,12 +8,10 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('api/v1')
 export class NotificationController {
-  constructor(
-    private readonly pushNotificationService: NotificationService,
-  ) {}
+  constructor(private readonly pushNotificationService: NotificationService) {}
   @ApiOperation({ summary: 'Send a push notification to a single device' })
   @ApiResponse({ status: 200, description: 'Notification sent successfully' })
-  @Post("send-notification")
+  @Post('send-notification')
   async sendNotification(@Body() body: NotificationDto) {
     return this.pushNotificationService.sendNotification(body);
   }
@@ -25,7 +23,6 @@ export class NotificationController {
     return this.pushNotificationService.sendNotificationToMultipleTokens(body);
   }
 
-  
   @Post('token/create')
   @ApiOperation({ summary: 'Save a push notification token.' })
   @ApiResponse({

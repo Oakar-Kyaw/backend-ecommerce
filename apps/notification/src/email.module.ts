@@ -21,13 +21,13 @@ import { envConfig } from 'libs/config/envConfig';
       defaults: {
         from: `"OakarKyaw" <${process.env.SMTP_USER}>`,
       },
-    //   template: {
-    //     dir: join(__dirname, 'templates'),
-    //     adapter: new HandlebarsAdapter(),
-    //     options: {
-    //       strict: true,
-    //     },
-    //   },
+      //   template: {
+      //     dir: join(__dirname, 'templates'),
+      //     adapter: new HandlebarsAdapter(),
+      //     options: {
+      //       strict: true,
+      //     },
+      //   },
     }),
   ],
   providers: [EmailService],

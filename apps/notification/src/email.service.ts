@@ -8,16 +8,16 @@ export class EmailService {
 
   async sendEmail(emailData: SendEmailDto) {
     const { to, subject, text, html, template, context } = emailData;
-    console.log("emailData",emailData);
+    console.log('emailData', emailData);
     await this.mailerService.sendMail({
-        to,
-        subject,
-        text,
-        html,
-        template,
-        context,
-      })
-    return { success: true, message: 'Email sent successfully'};
+      to,
+      subject,
+      text,
+      html,
+      template,
+      context,
+    });
+    return { success: true, message: 'Email sent successfully' };
   }
 
   async sendWelcomeEmail(to: string, name: string): Promise<void> {
@@ -34,7 +34,7 @@ export class EmailService {
 
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<void> {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    
+
     await this.sendEmail({
       to,
       subject: 'Password Reset Request',
@@ -46,7 +46,11 @@ export class EmailService {
     });
   }
 
-  async sendNotificationEmail(to: string, title: string, message: string): Promise<void> {
+  async sendNotificationEmail(
+    to: string,
+    title: string,
+    message: string,
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: title,
@@ -63,13 +67,17 @@ export class EmailService {
     });
   }
 
-  async sendBulkEmails(recipients: string[], subject: string, content: string): Promise<void> {
-    const emailPromises = recipients.map(recipient =>
+  async sendBulkEmails(
+    recipients: string[],
+    subject: string,
+    content: string,
+  ): Promise<void> {
+    const emailPromises = recipients.map((recipient) =>
       this.sendEmail({
         to: recipient,
         subject,
         html: content,
-      })
+      }),
     );
 
     try {

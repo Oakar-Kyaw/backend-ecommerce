@@ -6,14 +6,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { FileUpload } from 'libs/utils/file-upload';
 
 @Module({
-  imports: [
-    GlobalConfigModule,  
-  ],
+  imports: [GlobalConfigModule],
   controllers: [BrandController],
-  providers: [
-    BrandService,
-    PrismaService,
-    FileUpload
-  ]
+  providers: [BrandService, PrismaService, FileUpload],
 })
 export class BrandModule {}

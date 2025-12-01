@@ -39,16 +39,20 @@ export class EmailController {
 
   @Post('welcome')
   async sendWelcomeEmail(@Body() { to, name }: SendWelcomeEmailDto) {
-    return await this.emailService.sendWelcomeEmail(to, name)
+    return await this.emailService.sendWelcomeEmail(to, name);
   }
 
   @Post('notification')
-  async sendNotificationEmail(@Body() { to, title, message }: SendNotificationEmailDto) {
+  async sendNotificationEmail(
+    @Body() { to, title, message }: SendNotificationEmailDto,
+  ) {
     return this.emailService.sendNotificationEmail(to, title, message);
   }
 
   @Post('bulk')
-  async sendBulkEmails(@Body() { recipients, subject, content }: SendBulkEmailDto) {
+  async sendBulkEmails(
+    @Body() { recipients, subject, content }: SendBulkEmailDto,
+  ) {
     return await this.emailService.sendBulkEmails(recipients, subject, content);
   }
 }

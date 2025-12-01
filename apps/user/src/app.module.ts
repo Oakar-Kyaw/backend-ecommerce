@@ -6,7 +6,7 @@ import { BrandModule } from './brand.module';
 @Module({
   imports: [
     UserModule,
-    BrandModule   // import all your modules here
+    BrandModule, // import all your modules here
   ],
 })
 export class AppModule {}
