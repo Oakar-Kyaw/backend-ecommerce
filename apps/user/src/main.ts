@@ -11,11 +11,6 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const httpsOptions = {};
   const app = await NestFactory.create(AppModule);
-  app.enableCors({
-    origin: '*',
-    methods: 'GET,POST,PUT,DELETE,OPTIONS',
-    allowedHeaders: '*',
-  });
   serversetup(app, envConfig().user_service_port);
   // Enable REST API on port 3000 (or any you want)
   await app.listen(envConfig().user_service_port);

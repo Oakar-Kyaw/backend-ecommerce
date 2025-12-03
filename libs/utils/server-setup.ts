@@ -4,6 +4,11 @@ import { AllExceptionFilter } from 'libs/exception/http.exception';
 
 export default function serversetup(app, port) {
   console.log('app and port: ', port);
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,POST,PUT,DELETE,OPTIONS',
+    allowedHeaders: '*',
+  });
   //for all undefined routes and custom http exception
   app.useGlobalFilters(new AllExceptionFilter());
   // global exception error and non property field error
