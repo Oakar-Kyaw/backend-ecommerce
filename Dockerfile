@@ -8,6 +8,7 @@ COPY tsconfig*.json ./
 COPY nest-cli.json ./
 COPY apps apps
 COPY libs libs
+COPY libs/logs libs/logs
 
 RUN npm install -g npm@11.6.4
 RUN npm ci
