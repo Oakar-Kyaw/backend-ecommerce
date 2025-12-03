@@ -29,7 +29,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=user \
             --build-arg APP_PORT=5001 \
-            -t oakarkyaw/user:latest .
+            -t oakarkyaw/user:latest . --no-cache
 
       - name: Push user service
         run: docker push oakarkyaw/user:latest
@@ -42,7 +42,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=product \
             --build-arg APP_PORT=5004 \
-            -t oakarkyaw/product:latest .
+            -t oakarkyaw/product:latest . --no-cache
 
       - name: Push product service
         run: docker push oakarkyaw/product:latest
@@ -55,7 +55,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=auth \
             --build-arg APP_PORT=5003 \
-            -t oakarkyaw/auth:latest .
+            -t oakarkyaw/auth:latest . --no-cache
 
       - name: Push auth service
         run: docker push oakarkyaw/auth:latest
