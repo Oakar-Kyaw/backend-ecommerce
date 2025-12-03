@@ -2,7 +2,7 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { UserModule } from './user.module';
 import { BrandModule } from './brand.module';
-import { RequestLoggerMiddleware } from '../../../libs/logs/logs-implementation';
+import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
 
 @Module({
   imports: [
