@@ -6,7 +6,7 @@ import { envConfig } from 'libs/config/envConfig';
 import { AuthWorker } from './auth.worker';
 import { PublishMessageModule } from 'libs/queue/publish.module';
 import { AuthPrismaService } from '../prisma/auth.prisma.service';
-import { RequestLoggerMiddleware } from '../../../libs/logs/logs';
+import { RequestLoggerMiddleware } from '../../../libs/logs/logs-implementation';
 
 @Module({
   imports: [
