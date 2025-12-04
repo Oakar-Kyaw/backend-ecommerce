@@ -102,22 +102,31 @@ jobs:
             # Run updated containers (using existing .env)
             # ==================================
 
+            # User service
             docker run -d \
               --name user \
               --env-file /home/ubuntu/megasmart-backend/.env \
               -p 5001:5001 \
+              -v /home/ubuntu/megasmart-backend/logs/user:/var/log/nestapp \
+              --network ecom \
               oakarkyaw/user:latest
 
+            # Product service
             docker run -d \
               --name product \
               --env-file /home/ubuntu/megasmart-backend/.env \
               -p 5004:5004 \
+              -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp \
+              --network ecom \
               oakarkyaw/product:latest
 
+            # Auth service
             docker run -d \
               --name auth \
               --env-file /home/ubuntu/megasmart-backend/.env \
               -p 5003:5003 \
+              -v /home/ubuntu/megasmart-backend/logs/auth:/var/log/nestapp \
+              --network ecom \
               oakarkyaw/auth:latest
 
             echo "🔥 Deployment completed successfully (using docker run)!"
