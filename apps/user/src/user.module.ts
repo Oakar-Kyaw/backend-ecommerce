@@ -10,6 +10,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BrandUserService } from './brand-user.service';
 import { EventPublisherService } from './event-publisher.service';
 import { FileUpload } from 'libs/utils/file-upload';
+import { ShippingFeeService } from './shipping-fee.service';
+import { ShippingFeeController } from './shipping-fee.controller';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { FileUpload } from 'libs/utils/file-upload';
     PublishMessageModule,
     PassportModule.register({ defaultStrategy: 'facebook' }),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, ShippingFeeController],
   providers: [
     UsersService,
     PrismaService,
@@ -26,6 +28,7 @@ import { FileUpload } from 'libs/utils/file-upload';
     FacebookStrategy,
     GoogleStrategy,
     FileUpload,
+    ShippingFeeService,
   ],
 })
 export class UserModule {}
