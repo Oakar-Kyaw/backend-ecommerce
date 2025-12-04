@@ -94,7 +94,7 @@ export class BrandService {
       }
       where.createdAt = createdAt;
     }
-
+    
     const page = query?.page ? Number(query.page) : undefined;
     const pageSize = query?.pageSize ? Number(query.pageSize) : undefined;
     const order = query?.order === 'asc' ? 'asc' : 'desc';

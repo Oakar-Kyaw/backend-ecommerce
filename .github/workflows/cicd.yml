@@ -5,9 +5,50 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-push:
+  detect-changes:
     runs-on: ubuntu-latest
+    outputs:
+      rebuild_user: ${{ steps.detect.outputs.rebuild_user }}
+      rebuild_product: ${{ steps.detect.outputs.rebuild_product }}
+      rebuild_auth: ${{ steps.detect.outputs.rebuild_auth }}
+      rebuild_all: ${{ steps.detect.outputs.rebuild_all }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Detect changes
+        id: detect
+        run: |
+          git fetch origin master --depth=1
+          changed_files=$(git diff --name-only origin/master)
+          echo "Changed files:"
+          echo "$changed_files"
+
+          rebuild_user=false
+          rebuild_product=false
+          rebuild_auth=false
+          rebuild_all=false
+
+          for file in $changed_files; do
+            if [[ "$file" == apps/user/* ]]; then
+              rebuild_user=true
+            elif [[ "$file" == apps/product/* ]]; then
+              rebuild_product=true
+            elif [[ "$file" == apps/auth/* ]]; then
+              rebuild_auth=true
+            else
+              rebuild_all=true
+            fi
+          done
+
+          echo "rebuild_user=$rebuild_user" >> $GITHUB_OUTPUT
+          echo "rebuild_product=$rebuild_product" >> $GITHUB_OUTPUT
+          echo "rebuild_auth=$rebuild_auth" >> $GITHUB_OUTPUT
+          echo "rebuild_all=$rebuild_all" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: detect-changes
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,49 +62,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # =============================
-      # Build USER service
-      # =============================
-      - name: Build user service
+      - name: Build & Push user service
+        if: needs.detect-changes.outputs.rebuild_user == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
-          docker build \
-            --build-arg APP_NAME=user \
-            --build-arg APP_PORT=5001 \
-            -t oakarkyaw/user:latest .
+          docker build --build-arg APP_NAME=user --build-arg APP_PORT=5001 -t oakarkyaw/user:latest ./apps/user
+          docker push oakarkyaw/user:latest
 
-      - name: Push user service
-        run: docker push oakarkyaw/user:latest
-
-      # =============================
-      # Build PRODUCT service
-      # =============================
-      - name: Build product service
+      - name: Build & Push product service
+        if: needs.detect-changes.outputs.rebuild_product == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
-          docker build \
-            --build-arg APP_NAME=product \
-            --build-arg APP_PORT=5004 \
-            -t oakarkyaw/product:latest .
+          docker build --build-arg APP_NAME=product --build-arg APP_PORT=5004 -t oakarkyaw/product:latest ./apps/product
+          docker push oakarkyaw/product:latest
 
-      - name: Push product service
-        run: docker push oakarkyaw/product:latest
-
-      # =============================
-      # Build AUTH service
-      # =============================
-      - name: Build auth service
+      - name: Build & Push auth service
+        if: needs.detect-changes.outputs.rebuild_auth == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
-          docker build \
-            --build-arg APP_NAME=auth \
-            --build-arg APP_PORT=5003 \
-            -t oakarkyaw/auth:latest .
-
-      - name: Push auth service
-        run: docker push oakarkyaw/auth:latest
+          docker build --build-arg APP_NAME=auth --build-arg APP_PORT=5003 -t oakarkyaw/auth:latest ./apps/auth
+          docker push oakarkyaw/auth:latest
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1
@@ -74,59 +93,19 @@ jobs:
           script: |
             cd /home/ubuntu/megasmart-backend
 
-            # ==================================
-            # Pull latest source (optional)
-            # ==================================
-            sudo git pull https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/megasmartcart/megasmart-backend.git
-
-            # ==================================
-            # Pull newest Docker images
-            # ==================================
             docker pull oakarkyaw/user:latest
             docker pull oakarkyaw/product:latest
             docker pull oakarkyaw/auth:latest
 
-            # ==================================
-            # Stop & remove existing containers
-            # ==================================
             docker stop user || true
             docker rm user || true
-
             docker stop product || true
             docker rm product || true
-
             docker stop auth || true
             docker rm auth || true
 
-            # ==================================
-            # Run updated containers (using existing .env)
-            # ==================================
+            docker run -d --name user --env-file /home/ubuntu/megasmart-backend/.env -p 5001:5001 -v /home/ubuntu/megasmart-backend/logs/user:/var/log/nestapp --network ecom oakarkyaw/user:latest
+            docker run -d --name product --env-file /home/ubuntu/megasmart-backend/.env -p 5004:5004 -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp --network ecom oakarkyaw/product:latest
+            docker run -d --name auth --env-file /home/ubuntu/megasmart-backend/.env -p 5003:5003 -v /home/ubuntu/megasmart-backend/logs/auth:/var/log/nestapp --network ecom oakarkyaw/auth:latest
 
-            # User service
-            docker run -d \
-              --name user \
-              --env-file /home/ubuntu/megasmart-backend/.env \
-              -p 5001:5001 \
-              -v /home/ubuntu/megasmart-backend/logs/user:/var/log/nestapp \
-              --network ecom \
-              oakarkyaw/user:latest
-
-            # Product service
-            docker run -d \
-              --name product \
-              --env-file /home/ubuntu/megasmart-backend/.env \
-              -p 5004:5004 \
-              -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp \
-              --network ecom \
-              oakarkyaw/product:latest
-
-            # Auth service
-            docker run -d \
-              --name auth \
-              --env-file /home/ubuntu/megasmart-backend/.env \
-              -p 5003:5003 \
-              -v /home/ubuntu/megasmart-backend/logs/auth:/var/log/nestapp \
-              --network ecom \
-              oakarkyaw/auth:latest
-
-            echo "🔥 Deployment completed successfully (using docker run)!"
+            echo "🔥 Deployment completed successfully!"
