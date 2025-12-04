@@ -94,7 +94,7 @@ export class BrandService {
       }
       where.createdAt = createdAt;
     }
-    
+
     const page = query?.page ? Number(query.page) : undefined;
     const pageSize = query?.pageSize ? Number(query.pageSize) : undefined;
     const order = query?.order === 'asc' ? 'asc' : 'desc';
@@ -183,7 +183,7 @@ export class BrandService {
   // ===== SOFT DELETE BRAND =====
   async softDelete(id: number) {
     const brand = await this.prisma.brand.findUnique({ where: { id } });
-    if (!brand) throw new NotFoundException(`Brand with ID ${id} not found`);
+    if (!brand) throw new NotFoundException(`Brand with ID ${id} not found.`);
 
     const deletedBrand = await this.prisma.brand.update({
       where: { id },

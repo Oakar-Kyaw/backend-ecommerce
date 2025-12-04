@@ -19,16 +19,18 @@ jobs:
       - name: Detect changes
         id: detect
         run: |
-          git fetch origin master --depth=1
-          changed_files=$(git diff --name-only origin/master)
+          # List changed files between previous and current commit
+          changed_files=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
           echo "Changed files:"
           echo "$changed_files"
 
+          # Initialize outputs
           rebuild_user=false
           rebuild_product=false
           rebuild_auth=false
           rebuild_all=false
 
+          # Determine which services to rebuild
           for file in $changed_files; do
             if [[ "$file" == apps/user/* ]]; then
               rebuild_user=true
@@ -62,18 +64,21 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Build & Push USER service
       - name: Build & Push user service
         if: needs.detect-changes.outputs.rebuild_user == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
           docker build --build-arg APP_NAME=user --build-arg APP_PORT=5001 -t oakarkyaw/user:latest ./apps/user
           docker push oakarkyaw/user:latest
 
+      # Build & Push PRODUCT service
       - name: Build & Push product service
         if: needs.detect-changes.outputs.rebuild_product == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
           docker build --build-arg APP_NAME=product --build-arg APP_PORT=5004 -t oakarkyaw/product:latest ./apps/product
           docker push oakarkyaw/product:latest
 
+      # Build & Push AUTH service
       - name: Build & Push auth service
         if: needs.detect-changes.outputs.rebuild_auth == 'true' || needs.detect-changes.outputs.rebuild_all == 'true'
         run: |
@@ -93,10 +98,12 @@ jobs:
           script: |
             cd /home/ubuntu/megasmart-backend
 
+            # Pull latest Docker images
             docker pull oakarkyaw/user:latest
             docker pull oakarkyaw/product:latest
             docker pull oakarkyaw/auth:latest
 
+            # Stop & remove existing containers
             docker stop user || true
             docker rm user || true
             docker stop product || true
@@ -104,6 +111,7 @@ jobs:
             docker stop auth || true
             docker rm auth || true
 
+            # Run updated containers
             docker run -d --name user --env-file /home/ubuntu/megasmart-backend/.env -p 5001:5001 -v /home/ubuntu/megasmart-backend/logs/user:/var/log/nestapp --network ecom oakarkyaw/user:latest
             docker run -d --name product --env-file /home/ubuntu/megasmart-backend/.env -p 5004:5004 -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp --network ecom oakarkyaw/product:latest
             docker run -d --name auth --env-file /home/ubuntu/megasmart-backend/.env -p 5003:5003 -v /home/ubuntu/megasmart-backend/logs/auth:/var/log/nestapp --network ecom oakarkyaw/auth:latest
