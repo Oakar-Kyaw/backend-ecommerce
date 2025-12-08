@@ -21,7 +21,24 @@ model Category {
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
   isDeleted               Boolean                @default(false)
+  subCategories           SubCategory[]
 
   @@unique([title, isDeleted])
   @@index([isDeleted])
+}
+
+model SubCategory {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  
+  isDeleted   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([title, categoryId, isDeleted])
+  @@index([isDeleted])
+  @@index([categoryId])
 }
