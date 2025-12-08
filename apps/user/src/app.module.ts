@@ -1,7 +1,8 @@
 // src/app.module.ts
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { UserModule } from './user.module';
 import { BrandModule } from './brand.module';
+import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
 
 @Module({
   imports: [
@@ -9,4 +10,8 @@ import { BrandModule } from './brand.module';
     BrandModule, // import all your modules here
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}

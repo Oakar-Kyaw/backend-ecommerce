@@ -8,6 +8,8 @@ services:
     env_file: .env
     networks:
       - ecom
+    volumes:
+      - ./logs/user:/var/log/nestapp  
 
   product:
     image: oakarkyaw/product:latest
@@ -16,6 +18,8 @@ services:
     env_file: .env
     networks:
       - ecom
+    volumes:
+      - ./logs/product:/var/log/nestapp
 
   auth:
     image: oakarkyaw/auth:latest
@@ -24,6 +28,8 @@ services:
     env_file: .env
     networks:
       - ecom
+    volumes:
+      - ./logs/auth:/var/log/nestapp
 
 networks:
   ecom:

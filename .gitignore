@@ -61,3 +61,4 @@ docker.yml
 cicd.yml
 server-nginx.conf
 server-env
+*.xlsx
