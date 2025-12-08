@@ -30,5 +30,6 @@ import { ShippingFeeController } from './shipping-fee.controller';
     FileUpload,
     ShippingFeeService,
   ],
+  exports: [UsersService],
 })
 export class UserModule {}

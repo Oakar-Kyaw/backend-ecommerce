@@ -20,8 +20,9 @@ model Category {
   description             String
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
-  isDeleted               Boolean                @default(false)
+  isDeleted   Boolean                @default(false)
   subCategories           SubCategory[]
+  products                Product[]
 
   @@unique([title, isDeleted])
   @@index([isDeleted])
@@ -38,7 +39,75 @@ model SubCategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  products    Product[]
+
   @@unique([title, categoryId, isDeleted])
   @@index([isDeleted])
   @@index([categoryId])
+}
+
+model Product {
+  id              Int         @id @default(autoincrement())
+  name            String
+  code            String      @unique
+  type            String
+  weight          String
+  discountPercent Float
+  description     String
+  mainImage       String
+  
+  categoryId      Int
+  category        Category    @relation(fields: [categoryId], references: [id])
+  
+  subCategoryId   Int?
+  subCategory     SubCategory? @relation(fields: [subCategoryId], references: [id])
+  
+  isDeleted       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  colors          ProductColor[]
+  sizes           ProductSize[]
+  variants        ProductVariant[]
+}
+
+model ProductColor {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  hex       String
+  
+  imageFront String?
+  imageBack  String?
+  imageSideL String?
+  imageSideR String?
+
+  variants  ProductVariant[]
+}
+
+model ProductSize {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  price     Float
+
+  variants  ProductVariant[]
+}
+
+model ProductVariant {
+  id             Int          @id @default(autoincrement())
+  productId      Int
+  product        Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  productSizeId  Int
+  productSize    ProductSize  @relation(fields: [productSizeId], references: [id], onDelete: Cascade)
+  
+  productColorId Int
+  productColor   ProductColor @relation(fields: [productColorId], references: [id], onDelete: Cascade)
+  
+  quantity       Int          @default(0)
+
+  @@unique([productSizeId, productColorId])
 }

@@ -33,6 +33,18 @@
       ],
       "libs/env-config/*": [
         "libs/env-config/src/*"
+      ],
+      "@prisma/auth": [
+        "node_modules/@prisma/auth"
+      ],
+      "@prisma/product": [
+        "node_modules/@prisma/product"
+      ],
+      "@prisma/user": [
+        "node_modules/@prisma/user"
+      ],
+      "@prisma/notification": [
+        "node_modules/@prisma/notification"
       ]
     }
   }

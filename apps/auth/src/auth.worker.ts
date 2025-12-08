@@ -15,6 +15,7 @@ interface UserDto {
   phone?: string;
   password?: string;
   isDeleted?: boolean;
+  role?: any;
 }
 
 class UserService {
