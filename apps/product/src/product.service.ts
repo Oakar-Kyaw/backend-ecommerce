@@ -106,18 +106,44 @@ export class ProductService {
     return this.findOne(product.id);
   }
 
-  async findAll() {
-    const products = await this.prisma.product.findMany({
-      where: { isDeleted: false },
-      include: {
-        colors: true,
-        sizes: true,
-        variants: true,
-      },
-    });
+  async findAll({
+    page = 1,
+    pageSize = 10,
+  }: {
+    page?: number;
+    pageSize?: number;
+  } = {}) {
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    const [products, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { isDeleted: false },
+        include: {
+          colors: true,
+          sizes: true,
+          variants: true,
+        },
+        skip,
+        take,
+      }),
+      this.prisma.product.count({
+        where: { isDeleted: false },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
 
     return {
+      success: true,
+      message: 'LIST_OF_ITEMS',
       data: products.map((product) => this.mapToResponse(product).data),
+      part: total,
+      page,
+      pageSize,
+      limit: pageSize,
+      skip,
+      totalPages,
     };
   }
 
@@ -133,7 +159,11 @@ export class ProductService {
       if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
       // Map to response format
-      return this.mapToResponse(product);
+      return {
+          success: true,
+          message: 'ITEM_BY_ID',
+          ...this.mapToResponse(product)
+      };
   }
 
   async remove(id: number) {
