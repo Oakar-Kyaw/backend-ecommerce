@@ -129,4 +129,4 @@ jobs:
               --network ecom \
               oakarkyaw/auth:latest
 
-            echo "🔥 Deployment completed successfully (using docker run)!"
+            echo "🔥 Deployment completed successfully (using docker run)!. yay"
