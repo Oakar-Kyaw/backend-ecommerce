@@ -16,6 +16,7 @@ import {
 import * as XLSX from 'xlsx';
 import { UsersService } from './user.service';
 import { RoleEnum, CreateUserWithProfileDto } from '../dto/create-user.dto';
+import { EventPublisherService } from './event-publisher.service';
 
 @Injectable()
 export class BrandService {
@@ -23,6 +24,7 @@ export class BrandService {
     @Inject(PRISMA) private readonly prisma,
     private readonly uploadFile: FileUpload,
     private readonly usersService: UsersService,
+    private readonly eventPublisherService: EventPublisherService
   ) {}
 
   // ===== CREATE BRAND =====
@@ -50,6 +52,7 @@ export class BrandService {
         photoUrl,
       },
     });
+    console.log("brand user", createBrandDto)
 
     // Create User if email is provided
     if (createBrandDto.email) {
@@ -62,6 +65,18 @@ export class BrandService {
           firstName: createBrandDto.name,
           phone: createBrandDto.phone,
         } as CreateUserWithProfileDto);
+
+        console.log("user")
+        //write user to auth db
+        this.eventPublisherService.userCreated({
+          email: createBrandDto.email,
+          password: "Brand123@",
+          role: RoleEnum.SALE,
+          brandId: brand.id,
+          firstName: createBrandDto.name,
+          phone: createBrandDto.phone,
+        })
+        console.log("end")
       } catch (error) {
         // Log error but don't fail the brand creation?
         // Or rethrow? If we rethrow, the client sees an error even though brand is created.
