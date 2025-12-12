@@ -14,7 +14,14 @@ RUN npm ci
 
 ARG APP_NAME
 
-RUN npx prisma generate --schema=apps/${APP_NAME}/prisma/schema.prisma
+# Run prisma generate only when APP_TYPE is NOT "mongo"
+RUN if [ "$APP_TYPE" != "mongo" ]; then \
+      echo "Running Prisma generate for $APP_NAME"; \
+      npx prisma generate --schema=apps/${APP_NAME}/prisma/schema.prisma; \
+    else \
+      echo "Skipping Prisma generate because APP_TYPE=mongo"; \
+    fi
+    
 RUN npx nest build ${APP_NAME}
 
 # ==============================================

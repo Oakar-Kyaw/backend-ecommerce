@@ -42,6 +42,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=order \
             --build-arg APP_PORT=5006 \
+            --build-arg APP_TYPE=mongo \
             -t oakarkyaw/order:latest .
       
       - name: Push order service
@@ -55,6 +56,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=payment \
             --build-arg APP_PORT=5007 \
+            --build-arg APP_TYPE=mongo \
             -t oakarkyaw/payment:latest .
 
       - name: Push payment service
