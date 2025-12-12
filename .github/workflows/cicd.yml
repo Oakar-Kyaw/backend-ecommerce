@@ -118,6 +118,8 @@ jobs:
             docker pull oakarkyaw/user:latest
             docker pull oakarkyaw/product:latest
             docker pull oakarkyaw/auth:latest
+            docker pull oakarkyaw/order:latest
+            docker pull oakarkyaw/payment:latest
 
             # ==================================
             # Stop & remove existing containers
