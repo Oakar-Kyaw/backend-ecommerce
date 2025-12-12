@@ -35,6 +35,32 @@ jobs:
         run: docker push oakarkyaw/user:latest
 
       # =============================
+      # Build order service
+      # =============================
+      - name: Build order service
+        run: |
+          docker build \
+            --build-arg APP_NAME=order \
+            --build-arg APP_PORT=5006 \
+            -t oakarkyaw/order:latest .
+      
+      - name: Push order service
+        run: docker push oakarkyaw/order:latest
+      
+      # =============================
+      # Build payment service
+      # =============================
+      - name: Build payment service
+        run: |
+          docker build \
+            --build-arg APP_NAME=payment \
+            --build-arg APP_PORT=5007 \
+            -t oakarkyaw/payment:latest .
+
+      - name: Push payment service
+        run: docker push oakarkyaw/payment:latest
+
+      # =============================
       # Build PRODUCT service
       # =============================
       - name: Build product service
@@ -59,6 +85,11 @@ jobs:
 
       - name: Push auth service
         run: docker push oakarkyaw/auth:latest
+
+      - name: Push user service
+        run: docker push oakarkyaw/user:latest
+
+      
 
   deploy:
     needs: build-and-push
@@ -119,6 +150,24 @@ jobs:
               -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp \
               --network ecom \
               oakarkyaw/product:latest
+            
+            # Order service
+            docker run -d \
+              --name order \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5006:5006 \
+              -v /home/ubuntu/megasmart-backend/logs/order:/var/log/nestapp \
+              --network ecom \
+              oakarkyaw/order:latest
+
+            # Payment service
+            docker run -d \
+              --name payment \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5007:5007 \
+              -v /home/ubuntu/megasmart-backend/logs/payment:/var/log/nestapp \
+              --network ecom \
+              oakarkyaw/payment:latest
 
             # Auth service
             docker run -d \
