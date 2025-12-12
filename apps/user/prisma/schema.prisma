@@ -63,20 +63,6 @@ model BrandUserRelationship {
    @@unique([userId, brandId])
 }
 
-model ShippingFee {
-  id         Int       @id @default(autoincrement())
-  country    String
-  weightKg   Float
-  price      Int
-  currency   String    @default("MMK")
-  isDeleted  Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  @@unique([country, weightKg, isDeleted])
-  @@index([country, isDeleted])
-}
-
 enum Role {
   CUSTOMER
   ADMIN

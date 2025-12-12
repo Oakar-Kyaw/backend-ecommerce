@@ -1,6 +1,27 @@
 version: "3.8"
 
 services:
+
+  order:
+    image: oakarkyaw/order:latest
+    container_name: order
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - ecom
+    volumes:
+      - ./logs/order:/var/log/nestapp
+  
+  payment:
+    image: oakarkyaw/payment:latest
+    container_name: payment
+    restart: unless-stopped
+    env_file: .env
+    networks:
+      - ecom
+    volumes:
+      - ./logs/payment:/var/log/nestapp
+
   user:
     image: oakarkyaw/user:latest
     container_name: user
