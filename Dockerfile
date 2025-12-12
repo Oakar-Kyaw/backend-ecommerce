@@ -13,15 +13,16 @@ RUN npm install -g npm@11.6.4
 RUN npm ci
 
 ARG APP_NAME
+ARG APP_TYPE
 
-# Run prisma generate only when APP_TYPE is NOT "mongo"
-RUN if [ "$APP_TYPE" != "mongo" ]; then \
+# Run prisma generate only when APP_TYPE is NOT "mongo" and schema exists
+RUN if [ "$DB_TYPE" != "mongo" ] && [ -f "apps/${APP_NAME}/prisma/schema.prisma" ]; then \
       echo "Running Prisma generate for $APP_NAME"; \
       npx prisma generate --schema=apps/${APP_NAME}/prisma/schema.prisma; \
     else \
-      echo "Skipping Prisma generate because APP_TYPE=mongo"; \
+      echo "Skipping Prisma generate because APP_TYPE=mongo or schema missing"; \
     fi
-    
+
 RUN npx nest build ${APP_NAME}
 
 # ==============================================

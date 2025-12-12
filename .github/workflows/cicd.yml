@@ -29,6 +29,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=user \
             --build-arg APP_PORT=5001 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/user:latest .
 
       - name: Push user service
@@ -42,7 +43,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=order \
             --build-arg APP_PORT=5006 \
-            --build-arg APP_TYPE=mongo \
+            --build-arg DB_TYPE=mongo \
             -t oakarkyaw/order:latest .
       
       - name: Push order service
@@ -56,7 +57,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=payment \
             --build-arg APP_PORT=5007 \
-            --build-arg APP_TYPE=mongo \
+            --build-arg DB_TYPE=mongo \
             -t oakarkyaw/payment:latest .
 
       - name: Push payment service
@@ -70,6 +71,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=product \
             --build-arg APP_PORT=5004 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/product:latest .
 
       - name: Push product service
@@ -83,6 +85,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=auth \
             --build-arg APP_PORT=5003 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/auth:latest .
 
       - name: Push auth service
