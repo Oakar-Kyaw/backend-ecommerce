@@ -29,10 +29,39 @@ jobs:
           docker build \
             --build-arg APP_NAME=user \
             --build-arg APP_PORT=5001 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/user:latest .
 
       - name: Push user service
         run: docker push oakarkyaw/user:latest
+
+      # =============================
+      # Build order service
+      # =============================
+      - name: Build order service
+        run: |
+          docker build \
+            --build-arg APP_NAME=order \
+            --build-arg APP_PORT=5006 \
+            --build-arg DB_TYPE=mongo \
+            -t oakarkyaw/order:latest .
+      
+      - name: Push order service
+        run: docker push oakarkyaw/order:latest
+      
+      # =============================
+      # Build payment service
+      # =============================
+      - name: Build payment service
+        run: |
+          docker build \
+            --build-arg APP_NAME=payment \
+            --build-arg APP_PORT=5007 \
+            --build-arg DB_TYPE=mongo \
+            -t oakarkyaw/payment:latest .
+
+      - name: Push payment service
+        run: docker push oakarkyaw/payment:latest
 
       # =============================
       # Build PRODUCT service
@@ -42,6 +71,7 @@ jobs:
           docker build \
             --build-arg APP_NAME=product \
             --build-arg APP_PORT=5004 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/product:latest .
 
       - name: Push product service
@@ -55,10 +85,16 @@ jobs:
           docker build \
             --build-arg APP_NAME=auth \
             --build-arg APP_PORT=5003 \
+            --build-arg DB_TYPE=postgres \
             -t oakarkyaw/auth:latest .
 
       - name: Push auth service
         run: docker push oakarkyaw/auth:latest
+
+      - name: Push user service
+        run: docker push oakarkyaw/user:latest
+
+      
 
   deploy:
     needs: build-and-push
@@ -85,6 +121,8 @@ jobs:
             docker pull oakarkyaw/user:latest
             docker pull oakarkyaw/product:latest
             docker pull oakarkyaw/auth:latest
+            docker pull oakarkyaw/order:latest
+            docker pull oakarkyaw/payment:latest
 
             # ==================================
             # Stop & remove existing containers
@@ -119,6 +157,24 @@ jobs:
               -v /home/ubuntu/megasmart-backend/logs/product:/var/log/nestapp \
               --network ecom \
               oakarkyaw/product:latest
+            
+            # Order service
+            docker run -d \
+              --name order \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5006:5006 \
+              -v /home/ubuntu/megasmart-backend/logs/order:/var/log/nestapp \
+              --network ecom \
+              oakarkyaw/order:latest
+
+            # Payment service
+            docker run -d \
+              --name payment \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5007:5007 \
+              -v /home/ubuntu/megasmart-backend/logs/payment:/var/log/nestapp \
+              --network ecom \
+              oakarkyaw/payment:latest
 
             # Auth service
             docker run -d \
@@ -129,4 +185,4 @@ jobs:
               --network ecom \
               oakarkyaw/auth:latest
 
-            echo "🔥 Deployment completed successfully (using docker run)!"
+            echo "🔥 Deployment completed successfully (using docker run)!. yay"

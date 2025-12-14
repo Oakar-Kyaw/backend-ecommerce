@@ -47,7 +47,7 @@ export class UsersService {
       });
 
   private emailApi = createAPI(
-    `http://localhost:${envConfig().noti_service_port}/api/v1/email`,
+    `http://localhost:${envConfig().notification_service_port}/api/v1/email`,
   );
 
   async create(createUserDto: CreateUserWithProfileDto) {

@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { PRISMA } from '../prisma/prisma.service';
-import { CreateShippingFeeDto } from '../dto/create-shipping-fee.dto';
-import { UpdateShippingFeeDto } from '../dto/update-shipping-fee.dto';
+import { CreateShippingFeeDto } from '../../dto/create-shipping-fee.dto';
 import * as XLSX from 'xlsx';
+import { PRISMA } from 'apps/product/prisma/prisma.service';
+import { UpdateShippingFeeDto } from 'apps/product/dto/update-shipping-fee.dto';
 
 @Injectable()
 export class ShippingFeeService {

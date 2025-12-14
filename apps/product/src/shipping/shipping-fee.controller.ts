@@ -1,9 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Res, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { CreateShippingFeeDto } from '../../dto/create-shipping-fee.dto';
 import { ShippingFeeService } from './shipping-fee.service';
-import { CreateShippingFeeDto } from '../dto/create-shipping-fee.dto';
-import { UpdateShippingFeeDto } from '../dto/update-shipping-fee.dto';
+import { UpdateShippingFeeDto } from 'apps/product/dto/update-shipping-fee.dto';
 
 @Controller('api/v1/shipping-fees')
 export class ShippingFeeController {
