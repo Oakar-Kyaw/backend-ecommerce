@@ -387,6 +387,15 @@ export class UsersService {
     }
 
     return this.prisma.$transaction(async (prisma) => {
+      // Delete brand user relationships
+      await prisma.brandUserRelationship.deleteMany({
+        where: { userId: id },
+      });
+
+      // Delete Redis OTP keys
+      await this.redis.del(`otp:signup:${userExists.email}`);
+      await this.redis.del(`otp:forgot:${userExists.email}`);
+
       // Finally, soft-delete the user itself
       const deletedUser = await prisma.user.update({
         where: { id },
