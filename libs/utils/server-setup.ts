@@ -19,9 +19,19 @@ export default function serversetup(app, port) {
       transform: true,
       errorHttpStatusCode: 400,
       exceptionFactory: (validationErrors) => {
-        const messages = validationErrors.flatMap((error) =>
-          Object.values(error.constraints ?? {}),
-        );
+        const formatErrors = (errors: any[]) => {
+          return errors.flatMap((error) => {
+            if (error.constraints) {
+              return Object.values(error.constraints);
+            }
+            if (error.children && error.children.length > 0) {
+              return formatErrors(error.children);
+            }
+            return [];
+          });
+        };
+        const messages = formatErrors(validationErrors);
+        console.log('messge', messages);
         return new BadRequestException(messages);
       },
     }),

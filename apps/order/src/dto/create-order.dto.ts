@@ -59,6 +59,7 @@ export class CreateOrderDto {
   @IsOptional()
   currency?: string;
 
+  @IsNotEmpty()
   @ValidateNested()
   @Type(() => ShippingAddressDto)
   shippingAddress: ShippingAddressDto;
