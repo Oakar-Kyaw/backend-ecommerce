@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "concurrently  \"node dist/apps/auth/main\" \"node dist/apps/user/main\"",
-    "start:all": "concurrently \"nest start product --watch\" \"nest start order --watch\" \"nest start payment --watch\" \"nest start auth --watch\" \"nest start user --watch\"",
+    "start:all": "concurrently \"nest start product --watch\" \"nest start order --watch\" \"nest start payment --watch\" \"nest start auth --watch\" \"nest start user --watch\" \"nest start chat --watch\" \"nest start notification --watch\"",
     "production:build": "nest build auth && nest build user && nest build product && cp -R apps/auth/prisma dist/apps/auth/prisma",
     "production:start": "pm2 start -f dist/apps/user/main.js --name user &&  pm2 start -f dist/apps/auth/main.js --name auth && pm2 start -f dist/apps/product/main.js --name product",
     "prisma:all": "prisma generate --schema=./apps/auth/prisma/schema.prisma && prisma generate --schema=./apps/product/prisma/schema.prisma && prisma generate --schema=./apps/notification/prisma/schema.prisma && prisma generate --schema=./apps/user/prisma/schema.prisma",

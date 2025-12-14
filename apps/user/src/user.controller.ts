@@ -100,43 +100,40 @@ export class UsersController {
   @ApiQuery({
     name: 'order',
     required: false,
-    description: 'Sort order asc | desc',
+    enum: ['asc', 'desc'],
+    description: 'Sort order (id)',
   })
-  //  @ApiQuery({ name: 'role', required: false, description: 'Role to filter users by', example: 'ADMIN' })
+  @ApiQuery({
+    name: 'isDeleted',
+    required: false,
+    type: Boolean,
+    description: 'Filter by isDeleted status',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: RoleEnum,
+    description: 'Filter by user role',
+  })
   @ApiResponse({
     status: 200,
-    description: 'List of users',
+    description: 'List of users retrieved successfully',
     type: UserListResponseDto,
   })
-  @ApiResponse({
-    status: 500,
-    description: 'Internal Server Error',
-    type: ServerErrorResponseDto,
-  })
-  async findAll(
-    @Query('isDeleted') isDeleted?: boolean,
-    @Query('email') email?: string,
-    @Query('phone') phone?: string,
-    @Query('role') role?: RoleEnum,
-    @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('pageSize') pageSize?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-    @Query('order') order?: 'asc' | 'desc',
+  findAll(
+    @Query()
+    query: {
+      search?: string;
+      page?: string;
+      pageSize?: string;
+      from?: string;
+      to?: string;
+      order?: 'asc' | 'desc';
+      isDeleted?: boolean;
+      role?: RoleEnum;
+    },
   ) {
-    return this.usersService.findAll({
-      isDeleted,
-      email,
-      phone,
-      role,
-      search,
-      page,
-      pageSize,
-      from,
-      to,
-      order,
-    });
+    return this.usersService.findAll(query);
   }
 
   @Get('export')
@@ -152,11 +149,17 @@ export class UsersController {
     res.send(buffer);
   }
 
-  @Serialize(UserByIdResponseDto)
+  @MessagePattern('get_user')
+  getUser(@Payload() data: { userId: number }) {
+    return this.usersService.findOne(data.userId, 'tcp');
+  }
+
   @Get(':id')
+  @Serialize(UserByIdResponseDto)
+  @ApiOperation({ summary: 'Get user by ID' })
   @ApiResponse({
     status: 200,
-    description: 'USER_BY_ID',
+    description: 'User details retrieved successfully',
     type: UserByIdResponseDto,
   })
   @ApiResponse({

@@ -1,19 +1,30 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Expose, Transform } from 'class-transformer';
 import { HydratedDocument } from 'mongoose';
 
 export type ChatMessageDocument = HydratedDocument<ChatMessage>;
 
-@Schema()
+export enum MessageType {
+  TEXT = 'text',
+  PHOTO = 'photo',
+  VOICE = 'voice',
+}
+
+@Schema({ timestamps: true })
 export class ChatMessage {
   @Prop({ required: true })
-  sender: number;
+  senderId: number;
 
   @Prop({ required: true })
-  reciepent: number;
+  recipientId: number;
 
   @Prop({ required: true })
-  message: string;
+  message: string; // Text content or file URL
+
+  @Prop({ required: true, enum: MessageType, default: MessageType.TEXT })
+  type: MessageType;
+
+  @Prop({ default: false })
+  isRead: boolean;
 }
 
 export const ChatMessageSchema = SchemaFactory.createForClass(ChatMessage);

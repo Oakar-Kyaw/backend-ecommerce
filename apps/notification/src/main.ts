@@ -9,23 +9,22 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'debug', 'log'],
   });
-  serversetup(app, envConfig().noti_service_port);
+  serversetup(app, envConfig().notification_service_port);
   // Enable REST API on port 3000 (or any you want)
-  await app.listen(envConfig().noti_service_port);
-  //serversetup(app, envConfig().noti_service_port)
-  console.log(`🚀 Noti HTTP running on ${envConfig().noti_service_port}`);
+  await app.listen(envConfig().notification_service_port);
+  //serversetup(app, envConfig().notification_service_port)
+  console.log(`🚀 Noti HTTP running on ${envConfig().notification_service_port}`);
 
   // Also connect TCP microservice (for inter-service calls)
-  // app.connectMicroservice<MicroserviceOptions>({
-  //   transport: Transport.TCP,
-  //   options: {
-  //     port: envConfig().noti_service_tcp, // <- must match what USER service expects
-  //     host: '0.0.0.0',
-  //     //host: 'user'
-  //   },
-  // });
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.TCP,
+    options: {
+      port: envConfig().notification_service_tcp,
+      host: '0.0.0.0',
+    },
+  });
 
   await app.startAllMicroservices();
-  console.log(`🚀 Noti HTTP running on ${envConfig().noti_service_port}`);
+  console.log(`🚀 Noti TCP running on ${envConfig().notification_service_tcp}`);
 }
 bootstrap();

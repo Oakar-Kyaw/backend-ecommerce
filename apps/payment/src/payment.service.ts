@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Payment, PaymentDocument, PaymentProvider, PaymentStatus } from './schemas/payment.schema';
@@ -6,6 +6,7 @@ import { Transaction, TransactionDocument, TransactionStatus, TransactionType } 
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { envConfig } from 'libs/config/envConfig';
 import Stripe from 'stripe';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class PaymentService {
@@ -14,6 +15,7 @@ export class PaymentService {
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
+    @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
   ) {
     const stripeKey = envConfig().stripe_secret_key;
     if (stripeKey) {
@@ -90,6 +92,15 @@ export class PaymentService {
       }
 
       await payment.save();
+
+      // Emit notification
+      this.notificationClient.emit('notify_payment', {
+        orderId: payment.orderId,
+        userId: payment.userId,
+        amount: payment.amount,
+        status: payment.status,
+      });
+
     } catch (error) {
       payment.status = PaymentStatus.FAILED;
       payment.metadata = { error: error.message };
@@ -97,22 +108,34 @@ export class PaymentService {
       
       transactionStatus = TransactionStatus.FAILED;
       providerResponse = { error: error.message };
+
+      // Emit notification for failure
+      this.notificationClient.emit('notify_payment', {
+        orderId: payment.orderId,
+        userId: payment.userId,
+        amount: payment.amount,
+        status: PaymentStatus.FAILED,
+      });
+
       throw new BadRequestException(`Stripe payment failed: ${error.message}`);
     } finally {
-        // Log the transaction
-        const transaction = new this.transactionModel({
-            paymentId: payment._id,
-            amount: payment.amount,
-            currency: 'usd', // Should match what was sent to Stripe
-            provider: PaymentProvider.STRIPE,
-            transactionId: transactionId || 'N/A',
-            type: TransactionType.CHARGE,
-            status: transactionStatus,
-            metadata: providerResponse,
-        });
-        await transaction.save();
+      // Create transaction record
+      await this.transactionModel.create({
+          paymentId: payment._id,
+          amount: payment.amount,
+          currency: payment.currency,
+          status: transactionStatus,
+          type: TransactionType.CHARGE, 
+          provider: payment.provider,
+          transactionId: transactionId || `txn_${Date.now()}`,
+          providerResponse,
+          metadata: {
+              paymentMethodId,
+              error: transactionStatus === TransactionStatus.FAILED ? providerResponse?.error : null
+          }
+      });
     }
-    
+
     return payment;
   }
 

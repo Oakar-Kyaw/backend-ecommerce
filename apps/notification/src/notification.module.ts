@@ -5,18 +5,18 @@ import * as admin from 'firebase-admin';
 import { envConfig } from 'libs/config/envConfig';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PrismaModule } from 'apps/prisma/prisma.module';
-import { MailerModule } from '@nestjs-modules/mailer';
+import { EmailModule } from './email.module';
 
 @Module({
   imports: [
     PrismaModule,
+    EmailModule,
     ClientsModule.register([
       {
         name: 'USER',
         transport: Transport.TCP,
         //for local
-        options: { host: 'localhost', port: envConfig().user_service_port },
-        //options: { host: 'user', port: envConfig().user_service_tcp },
+        options: { host: '0.0.0.0', port: envConfig().user_service_tcp },
       },
     ]),
   ],

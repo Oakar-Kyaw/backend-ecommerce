@@ -7,15 +7,26 @@ import admin from 'firebase-admin';
 import { firstValueFrom } from 'rxjs';
 import { ClientProxy } from '@nestjs/microservices';
 import { NOTIFICATION_PRISMA } from 'apps/prisma/prisma.service';
+import { EmailService } from './email.service';
+import { Role } from '@prisma/notification';
+
 @Injectable()
 export class NotificationService {
   constructor(
     @Inject(NOTIFICATION_PRISMA) private readonly prisma,
     @Inject('USER') private readonly userClient: ClientProxy,
+    private readonly emailService: EmailService,
   ) {}
+
   async sendNotification(data: NotificationDto) {
-    const { userId, brandId, branchId, role, title, body, icon } = data;
+    let { userId, brandId, branchId, role, title, body, icon } = data;
     console.log('data', data);
+    
+    // Ensure numeric types
+    if (userId && typeof userId === 'string') userId = parseInt(userId, 10);
+    if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
+    if (branchId && typeof branchId === 'string') branchId = parseInt(branchId, 10);
+
     const notificationTokenData = await this.prisma.notificationToken.findFirst(
       {
         where: {
@@ -29,31 +40,107 @@ export class NotificationService {
         },
       },
     );
-    if (!notificationTokenData)
-      throw new NotFoundException(`User Id ${userId} doesn't subscribe noti`);
+    
+    if (!notificationTokenData) {
+        console.warn(`User Id ${userId} doesn't subscribe noti`);
+        return { success: false, message: 'No token found' };
+    }
+
     console.log('notification data: ', notificationTokenData);
     const token = notificationTokenData.token.trim();
-    const response = await admin.messaging().send({
-      token,
-      webpush: {
-        // notification: {
-        //   title,
-        //   body,
-        //   icon,
-        // },
-        headers: {
-          TTL: '86400', // 24 hours TTL
+    try {
+      const response = await admin.messaging().send({
+        token,
+        webpush: {
+          headers: {
+            TTL: '86400', // 24 hours TTL
+          },
         },
-      },
-      data: {
-        title: title,
-        body: body,
-        icon: icon || '',
-      },
-    });
-    console.log('response', response);
-    return { success: true, message: 'Notification sent successfully' };
+        data: {
+          title: title,
+          body: body,
+          icon: icon || '',
+        },
+      });
+      console.log('response', response);
+      return { success: true, message: 'Notification sent successfully' };
+    } catch (error) {
+      console.error('FCM Error:', error);
+      return { success: false, message: 'FCM Error', error };
+    }
   }
+
+  async sendOrderNotification(payload: any) {
+    let { email, name, userId, orderId, totalAmount, status } = payload;
+    
+    if (!email && userId) {
+        const userEmail = await this.getUserEmail(userId);
+        if (userEmail) email = userEmail;
+    }
+
+    // 1. Send Email
+    if (email) {
+        await this.emailService.sendNotificationEmail(
+            email,
+            `Order #${orderId} ${status}`,
+            `Hi ${name || 'Customer'}, your order #${orderId} has been ${status}. Total: $${totalAmount}`
+        );
+    }
+
+    // 2. Send Push
+    if (userId) {
+        await this.sendNotification({
+            userId,
+            title: `Order ${status}`,
+            body: `Your order #${orderId} is ${status}.`,
+            role: Role.CUSTOMER,
+        } as any);
+    }
+  }
+
+  async sendPaymentNotification(payload: any) {
+    let { email, name, userId, orderId, amount, status } = payload;
+    
+    if (!email && userId) {
+        const userEmail = await this.getUserEmail(userId);
+        if (userEmail) email = userEmail;
+    }
+
+    // 1. Send Email
+    if (email) {
+        await this.emailService.sendNotificationEmail(
+            email,
+            `Payment ${status} for Order #${orderId}`,
+            `Hi ${name || 'Customer'}, your payment of $${amount} for order #${orderId} was ${status}.`
+        );
+    }
+
+    // 2. Send Push
+    if (userId) {
+        await this.sendNotification({
+            userId,
+            title: `Payment ${status}`,
+            body: `Payment of $${amount} for Order #${orderId} : ${status}`,
+            role: Role.CUSTOMER,
+        } as any);
+    }
+  }
+
+  private async getUserEmail(userId: string | number): Promise<string | null> {
+    try {
+      const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+      if (isNaN(id)) return null;
+      
+      const response = await firstValueFrom(
+        this.userClient.send('get_user', { userId: id })
+      );
+      return response?.data?.email || null;
+    } catch (error) {
+      console.error(`Failed to fetch user ${userId}`, error);
+      return null;
+    }
+  }
+
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
     const { brandId, branchId, role, title, body, icon } = data;

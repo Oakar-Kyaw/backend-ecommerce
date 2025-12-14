@@ -5,10 +5,24 @@ import {
   SaveNotificationTokenDto,
 } from './dto/create-notification.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
 @Controller('api/v1')
 export class NotificationController {
   constructor(private readonly pushNotificationService: NotificationService) {}
+  
+  @EventPattern('notify_order')
+  async handleOrderNotification(@Payload() data: any) {
+    console.log('Received notify_order event', data);
+    await this.pushNotificationService.sendOrderNotification(data);
+  }
+
+  @EventPattern('notify_payment')
+  async handlePaymentNotification(@Payload() data: any) {
+    console.log('Received notify_payment event', data);
+    await this.pushNotificationService.sendPaymentNotification(data);
+  }
+
   @ApiOperation({ summary: 'Send a push notification to a single device' })
   @ApiResponse({ status: 200, description: 'Notification sent successfully' })
   @Post('send-notification')
