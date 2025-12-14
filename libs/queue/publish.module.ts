@@ -17,6 +17,6 @@ import { envConfig } from 'libs/config/envConfig';
     BullModule.registerQueue({ name: CREATED_USER_QUEUE }),
   ],
   providers: [PublishMessage],
-  exports: [PublishMessage],
+  exports: [PublishMessage, BullModule],
 })
 export class PublishMessageModule {}

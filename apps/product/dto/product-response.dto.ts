@@ -84,6 +84,18 @@ export class ProductResponseDto {
   sizes: ProductSizeResponseDto[];
 }
 
+export class ProductItemResponseDto {
+  @Expose()
+  success: boolean;
+
+  @Expose()
+  message: string;
+
+  @Expose()
+  @Type(() => ProductResponseDto)
+  data: ProductResponseDto;
+}
+
 export class ProductListResponseDto {
   @Expose()
   success: boolean;
@@ -112,16 +124,4 @@ export class ProductListResponseDto {
 
   @Expose()
   totalPages: number;
-}
-
-export class ProductItemResponseDto {
-  @Expose()
-  success: boolean;
-
-  @Expose()
-  message: string;
-
-  @Expose()
-  @Type(() => ProductResponseDto)
-  data: ProductResponseDto;
 }

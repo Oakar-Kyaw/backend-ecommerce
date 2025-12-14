@@ -10,8 +10,8 @@ import { PublishMessage } from 'libs/queue/publish';
 export class EventPublisherService {
   constructor(private readonly publishMessage: PublishMessage) {}
 
-  userCreated(user) {
-    this.publishMessage.publish(CREATED_USER_QUEUE, CREATED_USER_JOB, {
+  async userCreated(user) {
+    return this.publishMessage.publish(CREATED_USER_QUEUE, CREATED_USER_JOB, {
       userId: user.id,
       email: user.email,
       phone: user.phone ?? null,
@@ -20,8 +20,8 @@ export class EventPublisherService {
     });
   }
 
-  userUpdated(user) {
-    this.publishMessage.publish(CREATED_USER_QUEUE, UPDATED_USER_JOB, {
+  async userUpdated(user) {
+    return this.publishMessage.publish(CREATED_USER_QUEUE, UPDATED_USER_JOB, {
       userId: user.id,
       email: user.email,
       phone: user.phone ?? null,

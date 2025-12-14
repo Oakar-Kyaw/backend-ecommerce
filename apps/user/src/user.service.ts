@@ -102,7 +102,7 @@ export class UsersService {
     if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
     // 5️publish event
-    this.eventPublisher.userCreated(user);
+    await this.eventPublisher.userCreated(user);
 
     return {
       success: true,

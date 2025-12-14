@@ -47,16 +47,23 @@ export class ShippingFeeService {
     const minW = query?.minWeight ? Number(query.minWeight) : undefined;
     const maxW = query?.maxWeight ? Number(query.maxWeight) : undefined;
 
-    if (exactW !== undefined) {
+    if (exactW !== undefined && !isNaN(exactW)) {
       where.weightKg = exactW;
-    } else if (minW !== undefined || maxW !== undefined) {
+    } else if (
+      (minW !== undefined && !isNaN(minW)) ||
+      (maxW !== undefined && !isNaN(maxW))
+    ) {
       where.weightKg = {};
-      if (minW !== undefined) where.weightKg.gte = minW;
-      if (maxW !== undefined) where.weightKg.lte = maxW;
+      if (minW !== undefined && !isNaN(minW)) where.weightKg.gte = minW;
+      if (maxW !== undefined && !isNaN(maxW)) where.weightKg.lte = maxW;
     }
 
-    const page = query?.page ? Number(query.page) : 1;
-    const pageSize = query?.pageSize ? Number(query.pageSize) : 20;
+    let page = query?.page ? Number(query.page) : 1;
+    let pageSize = query?.pageSize ? Number(query.pageSize) : 20;
+
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(pageSize) || pageSize < 1) pageSize = 20;
+
     const skip = (page - 1) * pageSize;
 
     // Sorting

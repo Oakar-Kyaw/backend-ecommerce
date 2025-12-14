@@ -7,10 +7,13 @@ import { AuthWorker } from './auth.worker';
 import { PublishMessageModule } from 'libs/queue/publish.module';
 import { AuthPrismaService } from '../prisma/auth.prisma.service';
 import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
+import { BullModule } from '@nestjs/bullmq';
+import { CREATED_USER_QUEUE } from 'libs/queue/constant';
 
 @Module({
   imports: [
     PublishMessageModule,
+    BullModule.registerQueue({ name: CREATED_USER_QUEUE }),
     JwtModule.register({
       global: true,
       secret: envConfig().JWTSecret,
