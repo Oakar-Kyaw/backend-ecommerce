@@ -6,6 +6,7 @@ import {
   CREATED_USER_QUEUE,
   UPDATED_BRAND,
   UPDATED_USER_JOB,
+  DELETED_USER_JOB,
 } from 'libs/queue/constant';
 import { PublishMessage } from 'libs/queue/publish';
 
@@ -30,6 +31,12 @@ export class EventPublisherService {
       phone: user.phone ?? null,
       password: user.password ?? null,
       role: user.role ?? 'CUSTOMER',
+    });
+  }
+
+  async userDeleted(userId: number) {
+    return this.publishMessage.publish(CREATED_USER_QUEUE, DELETED_USER_JOB, {
+      userId,
     });
   }
 

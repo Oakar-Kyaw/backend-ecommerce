@@ -18,7 +18,7 @@ import { ProductResponseDto, ProductListResponseDto, ProductItemResponseDto } fr
 import { Serialize } from 'libs/interceptor/response.interceptor';
 
 @ApiTags('Items')
-@Controller('api/v1/items')
+@Controller(['api/products', 'api/v1/products', 'api/v1/items'])
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 

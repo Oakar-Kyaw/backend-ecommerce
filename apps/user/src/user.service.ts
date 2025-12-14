@@ -392,7 +392,8 @@ export class UsersService {
         where: { id },
         data: { isDeleted: true },
       });
-      this.eventPublisher.userUpdated(deletedUser);
+      // this.eventPublisher.userUpdated(deletedUser);
+      this.eventPublisher.userDeleted(id);
 
       return {
         success: true,
@@ -517,5 +518,17 @@ export class UsersService {
       message: 'CREATED_USER',
       data: user,
     };
+  }
+
+  async removeByEmail(email: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+
+    return this.remove(user.id);
   }
 }

@@ -8,7 +8,6 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  Request as ReqDecorator,
   UseInterceptors,
   UseGuards,
   Req,
@@ -27,7 +26,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiQuery,
-  ApiParam,
   ApiBody,
   ApiConsumes,
 } from '@nestjs/swagger';
@@ -38,7 +36,6 @@ import {
   UpdatedUserResponseDto,
   UserByIdResponseDto,
   UserListResponseDto,
-  UserResponseDto,
 } from '../dto/user-response.dto';
 import { SendOtpDto, VerifyOtpDto } from '../dto/otp.dto';
 import {
@@ -49,7 +46,6 @@ import {
 } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { envConfig } from 'libs/config/envConfig';
 import { FileUpload } from 'libs/utils/file-upload';
 
 @ApiTags('Users')
@@ -328,5 +324,12 @@ export class UsersController {
       throw new BadRequestException('OTP code is required');
     }
     return this.usersService.verifyOtp({ ...body, otp });
+  }
+
+  @Public()
+  @Delete('email')
+  @ApiOperation({ summary: 'Delete user by email (Dev/Testing)' })
+  async deleteUserByEmail(@Query('email') email: string) {
+    return this.usersService.removeByEmail(email);
   }
 }

@@ -29,13 +29,17 @@ export class OrderService {
     const savedOrder = await createdOrder.save();
     
     // Emit notification
-    this.notificationClient.emit('notify_order', {
-      orderId: savedOrder._id,
-      userId: savedOrder.userId,
-      totalAmount: savedOrder.totalAmount,
-      status: savedOrder.status,
-      // name: user name is fetched by notification service if needed
-    });
+    try {
+      this.notificationClient.emit('notify_order', {
+        orderId: savedOrder._id,
+        userId: savedOrder.userId,
+        totalAmount: savedOrder.totalAmount,
+        status: savedOrder.status,
+        // name: user name is fetched by notification service if needed
+      });
+    } catch (error) {
+      console.error('Failed to emit notify_order event:', error);
+    }
 
     return savedOrder;
   }
