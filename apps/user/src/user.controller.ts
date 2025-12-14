@@ -8,7 +8,7 @@ import {
   Delete,
   Query,
   ParseIntPipe,
-  Request,
+  Request as ReqDecorator,
   UseInterceptors,
   UseGuards,
   Req,
@@ -16,7 +16,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request as ExpressRequest } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
@@ -29,6 +29,7 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import {
@@ -47,7 +48,7 @@ import {
   UnauthorizeResponseDto,
 } from '../../../libs/interceptor/error-response';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { envConfig } from 'libs/config/envConfig';
 import { FileUpload } from 'libs/utils/file-upload';
 
@@ -59,6 +60,7 @@ export class UsersController {
     private readonly usersService: UsersService,
     private readonly fileUploadService: FileUpload,
   ) {}
+
 
   @Public()
   @Serialize(CreatedUserResponseDto)
@@ -204,7 +206,7 @@ export class UsersController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserWithProfileDto: UpdateUserWithProfileDto,
-    @Request() req,
+    @Req() req,
   ) {
     return this.usersService.update(id, updateUserWithProfileDto, req);
   }
@@ -306,7 +308,8 @@ export class UsersController {
 
   @Public()
   @Post('forgot/otp/verify')
-  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(AnyFilesInterceptor())
   async verifyOtp(@Body() body: VerifyOtpDto) {
     const otp = body.otp || body.code;
     if (!otp) {
@@ -316,20 +319,10 @@ export class UsersController {
   }
 
   @Public()
-  @Post('otp/verify')
-  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  @Post(['otp/verify', 'signup/otp/verify'])
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(AnyFilesInterceptor())
   async verifyOtpLegacy(@Body() body: VerifyOtpDto) {
-    const otp = body.otp || body.code;
-    if (!otp) {
-      throw new BadRequestException('OTP code is required');
-    }
-    return this.usersService.verifyOtp({ ...body, otp });
-  }
-
-  @Public()
-  @Post('signup/otp/verify')
-  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
-  async verifySignupOtp(@Body() body: VerifyOtpDto) {
     const otp = body.otp || body.code;
     if (!otp) {
       throw new BadRequestException('OTP code is required');

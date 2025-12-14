@@ -1,5 +1,6 @@
-import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Post, BadRequestException, UseInterceptors } from '@nestjs/common';
+import { ApiTags, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './user.service';
 import { SendOtpDto, VerifyOtpDto } from '../dto/otp.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
@@ -28,6 +29,8 @@ export class OtpController {
 
   @Public()
   @Post('verify')
+  @ApiConsumes('multipart/form-data', 'application/json')
+  @UseInterceptors(AnyFilesInterceptor())
   async verifyOtp(@Body() body: VerifyOtpDto) {
     const otp = body.otp || body.code;
     if (!otp) {
