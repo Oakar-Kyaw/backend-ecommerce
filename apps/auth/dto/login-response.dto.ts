@@ -13,6 +13,10 @@ export class LoginUserResponseDto {
   @Expose()
   id: number;
 
+  @ApiProperty({ example: 12 })
+  @Expose()
+  userId: number;
+
   @ApiProperty({ example: 'Admin' })
   @Expose()
   name: string;

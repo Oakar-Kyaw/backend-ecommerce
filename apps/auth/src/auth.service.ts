@@ -48,6 +48,7 @@ export class AuthService {
       throw new UnauthorizedException(`Password was wrong.`);
     const payload = {
       id: user.userId,
+      userId: user.userId,
       email: user.email,
       phone: user.phone,
       role: user.role,
@@ -131,7 +132,9 @@ export class AuthService {
     // const { success, message, data } = await firstValueFrom(
     //       this.userClient.send({cmd: 'get_user_by_id'}, { id: payload.id })
     //   );
-    const data = await this.prisma.user.findFirst();
+    const data = await this.prisma.user.findFirst({
+      where: { userId: payload.id },
+    });
     console.log(
       '👤 User found for refresh:',
       data ? `Yes (${data.email})` : 'No',
@@ -144,8 +147,10 @@ export class AuthService {
     console.log('🎫 Generating new access token...');
     const newAccessToken = await this.jwtService.signAsync({
       id: data.userId,
+      userId: data.userId,
       email: data.email,
       phone: data.phone,
+      role: data.role,
     });
 
     console.log('✅ New access token generated successfully');
@@ -155,5 +160,39 @@ export class AuthService {
       message: 'Access Token',
       access_token: newAccessToken,
     };
+  }
+
+  async getSession(authorizationHeader: string) {
+    if (!authorizationHeader) {
+      throw new BadRequestException('Authorization header is required');
+    }
+    const tokenParts = authorizationHeader.split(' ');
+    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+      throw new BadRequestException('Invalid authorization header format');
+    }
+    const token = tokenParts[1];
+
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      const user = await this.prisma.user.findFirst({
+        where: { userId: payload.id },
+      });
+
+      if (!user) throw new NotFoundException('User not found');
+
+      return {
+        success: true,
+        message: 'Session Valid',
+        data: {
+          id: user.userId,
+          userId: user.userId,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
   }
 }

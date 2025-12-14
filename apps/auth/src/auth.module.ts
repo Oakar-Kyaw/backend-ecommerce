@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
+import { SessionController } from './session.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { envConfig } from 'libs/config/envConfig';
@@ -21,7 +22,7 @@ import { CREATED_USER_QUEUE } from 'libs/queue/constant';
       signOptions: { expiresIn: '900s' },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, SessionController],
   providers: [AuthService, AuthWorker, AuthPrismaService],
 })
 export class AuthModule {
