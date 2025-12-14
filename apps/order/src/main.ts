@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { OrderModule } from './order.module';
 import { envConfig } from 'libs/config/envConfig';
 import serversetup from 'libs/utils/server-setup';
-import '../config/dbConfig';
+// import '../config/dbConfig';
 
 async function bootstrap() {
   const app = await NestFactory.create(OrderModule);

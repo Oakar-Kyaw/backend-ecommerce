@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { envConfig } from 'libs/config/envConfig';
 import serversetup from 'libs/utils/server-setup';
-import '../config/dbConfig';
+// import '../config/dbConfig';
 import { PaymentModule } from './payment.module';
 
 async function bootstrap() {
