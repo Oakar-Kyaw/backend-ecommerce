@@ -14,6 +14,7 @@ import {
   Req,
   Res,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
@@ -290,8 +291,49 @@ export class UsersController {
   }
 
   @Public()
+  @Post('otp')
+  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  async sendOtpLegacy(@Body() body: SendOtpDto) {
+    return this.usersService.sendOtp(body);
+  }
+
+  @Public()
+  @Post('signup/otp')
+  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  async sendSignupOtp(@Body() body: SendOtpDto) {
+    return this.usersService.sendOtp({ ...body, mode: 'signup' });
+  }
+
+  @Public()
   @Post('forgot/otp/verify')
+  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
   async verifyOtp(@Body() body: VerifyOtpDto) {
-    return this.usersService.verifyOtp(body);
+    const otp = body.otp || body.code;
+    if (!otp) {
+      throw new BadRequestException('OTP code is required');
+    }
+    return this.usersService.verifyOtp({ ...body, otp });
+  }
+
+  @Public()
+  @Post('otp/verify')
+  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  async verifyOtpLegacy(@Body() body: VerifyOtpDto) {
+    const otp = body.otp || body.code;
+    if (!otp) {
+      throw new BadRequestException('OTP code is required');
+    }
+    return this.usersService.verifyOtp({ ...body, otp });
+  }
+
+  @Public()
+  @Post('signup/otp/verify')
+  @UseInterceptors(FileInterceptor('file')) // Handle multipart/form-data
+  async verifySignupOtp(@Body() body: VerifyOtpDto) {
+    const otp = body.otp || body.code;
+    if (!otp) {
+      throw new BadRequestException('OTP code is required');
+    }
+    return this.usersService.verifyOtp({ ...body, otp });
   }
 }

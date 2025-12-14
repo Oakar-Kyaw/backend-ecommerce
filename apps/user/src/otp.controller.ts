@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { UsersService } from './user.service';
 import { SendOtpDto, VerifyOtpDto } from '../dto/otp.dto';
@@ -29,6 +29,10 @@ export class OtpController {
   @Public()
   @Post('verify')
   async verifyOtp(@Body() body: VerifyOtpDto) {
-    return this.usersService.verifyOtp(body);
+    const otp = body.otp || body.code;
+    if (!otp) {
+      throw new BadRequestException('OTP code is required');
+    }
+    return this.usersService.verifyOtp({ ...body, otp });
   }
 }

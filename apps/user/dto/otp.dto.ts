@@ -24,8 +24,13 @@ export class VerifyOtpDto {
   @IsOptional()
   mode?: string;
 
-  @ApiProperty({ example: '123456' })
+  @ApiProperty({ example: '123456', required: false })
   @IsString()
-  @IsNotEmpty()
-  otp: string;
+  @IsOptional()
+  otp?: string;
+
+  @ApiProperty({ example: '123456', required: false })
+  @IsString()
+  @IsOptional()
+  code?: string;
 }
