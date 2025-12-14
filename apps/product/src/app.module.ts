@@ -5,9 +5,16 @@ import { CategoryModule } from './categories/category.module';
 import { SubCategoryModule } from './subcategories/subcategory.module';
 import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
 import { ShippingFeeModule } from './shipping/shipping-fee.module';
+import { CurrencyModule } from './currency/currency.module';
 
 @Module({
-  imports: [ProductModule, CategoryModule, SubCategoryModule, ShippingFeeModule],
+  imports: [
+    ProductModule,
+    CategoryModule,
+    SubCategoryModule,
+    ShippingFeeModule,
+    CurrencyModule,
+  ],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
