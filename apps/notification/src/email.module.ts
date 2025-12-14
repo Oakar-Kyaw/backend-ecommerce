@@ -10,13 +10,17 @@ import { envConfig } from 'libs/config/envConfig';
   imports: [
     MailerModule.forRoot({
       transport: {
-        host: envConfig().smtp_host || 'smtp.gmail.com',
+        host: '173.194.174.109', // Direct IP to bypass DNS issues with smtp.gmail.com
         port: envConfig().smtp_port || 587,
         secure: false, // true for 465, false for other ports
         auth: {
           user: envConfig().smtp_user, // your email
           pass: envConfig().smtp_pass, // your app password
         },
+        tls: {
+          rejectUnauthorized: false,
+        },
+        family: 4, // Force IPv4
       },
       defaults: {
         from: `"Mega Smart Cart" <${process.env.SMTP_USER}>`,

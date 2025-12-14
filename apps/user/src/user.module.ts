@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './user.controller';
+import { OtpController } from './otp.controller';
 import { UsersService } from './user.service';
 import { GlobalConfigModule } from 'libs/config/envConfig';
 import { PublishMessageModule } from 'libs/queue/publish.module';
@@ -17,7 +18,7 @@ import { FileUpload } from 'libs/utils/file-upload';
     PublishMessageModule,
     PassportModule.register({ defaultStrategy: 'facebook' }),
   ],
-  controllers: [UsersController],
+  controllers: [UsersController, OtpController],
   providers: [
     UsersService,
     PrismaService,

@@ -38,6 +38,7 @@ import {
   UserListResponseDto,
   UserResponseDto,
 } from '../dto/user-response.dto';
+import { SendOtpDto, VerifyOtpDto } from '../dto/otp.dto';
 import {
   ExistedDataResponseDto,
   NotFoundResponseDto,
@@ -283,9 +284,14 @@ export class UsersController {
   }
 
   @Public()
+  @Post('otp/send')
+  async sendOtpPost(@Body() body: SendOtpDto) {
+    return this.usersService.sendOtp(body);
+  }
+
+  @Public()
   @Post('forgot/otp/verify')
-  async verifyOtp(@Body() body: any) {
-    const { email, mode, otp } = body || {};
-    return this.usersService.verifyOtp({ email, mode, otp });
+  async verifyOtp(@Body() body: VerifyOtpDto) {
+    return this.usersService.verifyOtp(body);
   }
 }

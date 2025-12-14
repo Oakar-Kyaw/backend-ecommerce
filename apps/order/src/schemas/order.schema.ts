@@ -17,8 +17,8 @@ export class Order {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true, type: [{ productId: String, quantity: Number, price: Number }] })
-  items: { productId: string; quantity: number; price: number }[];
+  @Prop({ required: true, type: [{ productId: String, quantity: Number, price: Number, color: String, size: String }] })
+  items: { productId: string; quantity: number; price: number; color?: string; size?: string }[];
 
   @Prop({ required: true })
   totalAmount: number;

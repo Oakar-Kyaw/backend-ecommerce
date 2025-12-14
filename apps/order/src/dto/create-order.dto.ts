@@ -13,6 +13,14 @@ class OrderItemDto {
   @IsNumber()
   @IsNotEmpty()
   price: number;
+
+  @IsString()
+  @IsOptional()
+  color?: string;
+
+  @IsString()
+  @IsOptional()
+  size?: string;
 }
 
 class ShippingAddressDto {
