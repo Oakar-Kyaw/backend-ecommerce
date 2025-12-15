@@ -4,12 +4,11 @@ import { NotificationService } from './notification.service';
 import * as admin from 'firebase-admin';
 import { envConfig } from 'libs/config/envConfig';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { PrismaModule } from 'apps/prisma/prisma.module';
 import { EmailModule } from './email.module';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
   imports: [
-    PrismaModule,
     EmailModule,
     // ClientsModule.register([
     //   {
@@ -21,7 +20,7 @@ import { EmailModule } from './email.module';
     // ]),
   ],
   controllers: [NotificationController],
-  providers: [NotificationService],
+  providers: [NotificationService, PrismaService],
 })
 export class NotificationModule {
   constructor() {

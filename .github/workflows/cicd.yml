@@ -106,18 +106,18 @@ jobs:
       - name: Push chat service
         run: docker push oakarkyaw/chat:latest
 
-      # # =============================
-      # # Build notification service
-      # # =============================
-      # - name: Build notification service
-      #   run: |
-      #     docker build \
-      #       --build-arg APP_NAME=notification \
-      #       --build-arg APP_PORT=5005 \
-      #       -t oakarkyaw/notification:latest .
+      # =============================
+      # Build notification service
+      # =============================
+      - name: Build notification service
+        run: |
+          docker build \
+            --build-arg APP_NAME=notification \
+            --build-arg APP_PORT=5005 \
+            -t oakarkyaw/notification:latest .
       
-      # - name: Push notification service
-      #   run: docker push oakarkyaw/notification:latest
+      - name: Push notification service
+        run: docker push oakarkyaw/notification:latest
       
 
   deploy:
@@ -148,7 +148,7 @@ jobs:
             docker pull oakarkyaw/order:latest
             docker pull oakarkyaw/payment:latest
             docker pull oakarkyaw/chat:latest
-            # docker pull oakarkyaw/notification:latest
+            docker pull oakarkyaw/notification:latest
             # ==================================
             # Stop & remove existing containers
             # ==================================
@@ -169,7 +169,10 @@ jobs:
 
             docker stop chat || true
             docker rm chat || true
-            
+
+            docker stop notification || true
+            docker rm notification || true
+
             # docker stop notification || true
             # docker rm notification || true
             # ==================================
@@ -232,12 +235,12 @@ jobs:
               oakarkyaw/chat:latest
             
             # Notification service
-            # docker run -d \
-            #   --name notification \
-            #   --env-file /home/ubuntu/megasmart-backend/.env \
-            #   -p 5005:5005 \
-            #   -v /home/ubuntu/megasmart-backend/logs/notification:/var/log/nestapp \
-            #   --network ecom \
-            #   oakarkyaw/notification:latest
+            docker run -d \
+              --name notification \
+              --env-file /home/ubuntu/megasmart-backend/.env \
+              -p 5005:5005 \
+              -v /home/ubuntu/megasmart-backend/logs/notification:/var/log/nestapp \
+              --network ecom \
+              oakarkyaw/notification:latest
 
             echo "🔥 Deployment completed successfully (using docker run)!. yay"
