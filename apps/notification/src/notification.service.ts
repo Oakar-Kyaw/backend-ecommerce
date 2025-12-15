@@ -14,7 +14,7 @@ import { Role } from '@prisma/notification';
 export class NotificationService {
   constructor(
     @Inject(NOTIFICATION_PRISMA) private readonly prisma,
-    @Inject('USER') private readonly userClient: ClientProxy,
+    //@Inject('USER') private readonly userClient: ClientProxy,
     private readonly emailService: EmailService,
   ) {}
 
@@ -131,9 +131,10 @@ export class NotificationService {
       const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
       if (isNaN(id)) return null;
       
-      const response = await firstValueFrom(
-        this.userClient.send('get_user', { userId: id })
-      );
+      const response =  { data: {email: "oakarkyaw7090@gmail.com"}}
+      // await firstValueFrom(
+      //   // this.userClient.send('get_user', { userId: id })
+      // );
       return response?.data?.email || null;
     } catch (error) {
       console.error(`Failed to fetch user ${userId}`, error);
@@ -210,13 +211,14 @@ export class NotificationService {
     // }
     console.log('userId', userId);
     if (userId) {
-      const existingUser = await firstValueFrom(
-        this.userClient.send({ cmd: 'get_user_by_id' }, { id: userId }),
-      );
+      const existingUser = { success: false , data : null}
+      // await firstValueFrom(
+      //   this.userClient.send({ cmd: 'get_user_by_id' }, { id: userId }),
+      // );
       console.log('exist', existingUser);
       if (!existingUser.success)
         throw new NotFoundException(`User Id ${userId} not found`);
-      data.role = existingUser.data.role;
+      //data.role = existingUser.data.role;
     }
     console.log('data to save', data);
     const token = await this.prisma.notificationToken.create({ data });
