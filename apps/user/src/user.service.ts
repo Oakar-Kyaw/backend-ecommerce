@@ -29,6 +29,8 @@ import * as XLSX from 'xlsx';
 import Redis from 'ioredis';
 import createAPI from 'libs/utils/axio.instance';
 
+import { SyncAction, SyncDeviceTokenDto } from '../dto/sync-device-token.dto';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -164,7 +166,10 @@ export class UsersService {
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
         where,
-        include: { brandUserRelationship: { include: { brand: true } } },
+        include: {
+          brandUserRelationship: { include: { brand: true } },
+          device_infos: true,
+        },
         orderBy: { id: order },
         skip: meta.skip,
         take: meta.limit,
@@ -309,7 +314,10 @@ export class UsersService {
       where: {
         id,
       },
-      include: { brandUserRelationship: { include: { brand: true } } },
+      include: {
+        brandUserRelationship: { include: { brand: true } },
+        device_infos: true,
+      },
     });
 
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
@@ -539,5 +547,56 @@ export class UsersService {
     }
 
     return this.remove(user.id);
+  }
+
+  async syncDeviceToken(dto: SyncDeviceTokenDto) {
+    const { userId, deviceToken, action, deviceInfo } = dto;
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User #${userId} not found`);
+    }
+
+    const tokens = user.device_tokens || [];
+    if (action === SyncAction.ADD) {
+      // 1. Add to User.device_tokens if not present
+      if (!tokens.includes(deviceToken)) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { device_tokens: { push: deviceToken } },
+        });
+      }
+
+      // 2. Upsert DeviceInfo
+      if (deviceInfo) {
+        await this.prisma.deviceInfo.upsert({
+          where: { deviceToken },
+          update: {
+            ...deviceInfo,
+            lastActive: new Date(),
+          },
+          create: {
+            ...deviceInfo,
+            userId,
+            deviceToken,
+          },
+        });
+      }
+    } else if (action === SyncAction.REMOVE) {
+      // 1. Remove from User.device_tokens
+      const newTokens = tokens.filter((t) => t !== deviceToken);
+      if (newTokens.length !== tokens.length) {
+        await this.prisma.user.update({
+          where: { id: userId },
+          data: { device_tokens: newTokens },
+        });
+      }
+
+      // 2. Remove DeviceInfo
+      await this.prisma.deviceInfo.deleteMany({
+        where: { deviceToken },
+      });
+    }
+    
+    return { success: true };
   }
 }

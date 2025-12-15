@@ -5,6 +5,8 @@ import { Order, OrderDocument } from './schemas/order.schema';
 import { ShippingLocation, ShippingLocationDocument } from './schemas/shipping-location.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy } from '@nestjs/microservices';
+import axios from 'axios';
+import { envConfig } from 'libs/config/envConfig';
 
 @Injectable()
 export class OrderService {
@@ -54,16 +56,33 @@ export class OrderService {
     return savedOrder;
   }
 
-  async findOne(id: string): Promise<Order> {
-    const order = await this.orderModel.findById(id).populate('shippingLocationId');
+  async findOne(id: string): Promise<any> {
+    const order = await this.orderModel.findById(id).populate('shippingLocationId').lean();
     if (!order) {
       throw new NotFoundException(`Order #${id} not found`);
     }
-    return order;
+
+    // Fetch payment details
+    try {
+      const paymentResponse = await axios.get(`http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${id}`);
+      return { ...order, payment: paymentResponse.data };
+    } catch (error) {
+      // Payment might not exist yet, just return order
+      return { ...order, payment: null };
+    }
   }
 
-  async findAll(userId: string): Promise<Order[]> {
-    return this.orderModel.find({ userId }).populate('shippingLocationId').exec();
+  async findAll(userId: string): Promise<any[]> {
+    const orders = await this.orderModel.find({ userId }).populate('shippingLocationId').lean().exec();
+    
+    return Promise.all(orders.map(async (order: any) => {
+      try {
+        const paymentResponse = await axios.get(`http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${order._id}`);
+        return { ...order, payment: paymentResponse.data };
+      } catch (error) {
+        return { ...order, payment: null };
+      }
+    }));
   }
 
   async updateStatus(id: string, status: string): Promise<Order> {

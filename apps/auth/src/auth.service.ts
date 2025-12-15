@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { comparePassword } from '../../../libs/utils/hash';
 import { envConfig } from 'libs/config/envConfig';
 import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
+import axios from 'axios';
 
 // interface PayloadInterface {
 //   id: number;
@@ -46,6 +47,33 @@ export class AuthService {
     const passwordComparison = await comparePassword(password, user.password);
     if (!passwordComparison)
       throw new UnauthorizedException(`Password was wrong.`);
+    
+    // Handle Device Token
+    if (datas.deviceToken) {
+      const tokens = user.device_tokens || [];
+      if (!tokens.includes(datas.deviceToken)) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { device_tokens: { push: datas.deviceToken } },
+        });
+      }
+
+      // Sync with User Service (Always sync to ensure consistency and update device info)
+      try {
+        await axios.post(
+          `http://localhost:${envConfig().user_service_port}/api/v1/users/device-token`,
+          {
+            userId: user.userId,
+            deviceToken: datas.deviceToken,
+            action: 'add',
+            deviceInfo: datas.deviceInfo,
+          },
+        );
+      } catch (e) {
+        console.error('Failed to sync device token with User Service', e.message);
+      }
+    }
+
     const payload = {
       id: user.userId,
       userId: user.userId,
@@ -69,7 +97,7 @@ export class AuthService {
     };
   }
 
-  async signOut(authorizationHeader: string) {
+  async signOut(authorizationHeader: string, deviceToken?: string) {
     console.log('🚪 Starting logout process');
     console.log(
       '🎫 Authorization header received:',
@@ -100,6 +128,44 @@ export class AuthService {
     //   await this.prisma.blacklistToken.create({
     //     data: { token: token },
     //   });
+
+    if (deviceToken) {
+      try {
+        const payload = await this.jwtService.verifyAsync(token, {
+          secret: envConfig().JWTSecret,
+        });
+        const user = await this.prisma.user.findUnique({
+          where: { userId: payload.userId },
+        });
+
+        if (user) {
+          const tokens = user.device_tokens || [];
+          const newTokens = tokens.filter((t) => t !== deviceToken);
+
+          if (newTokens.length !== tokens.length) {
+            await this.prisma.user.update({
+              where: { id: user.id },
+              data: { device_tokens: newTokens },
+            });
+          }
+
+          // Sync with User Service (Always attempt removal)
+          try {
+            await axios.post(
+              `http://localhost:${envConfig().user_service_port}/api/v1/users/device-token`,
+              {
+                userId: user.userId,
+                deviceToken,
+                action: 'remove',
+              },
+            );
+          } catch (e) {
+            console.error('Failed to sync device token removal', e.message);
+          }
+        }      } catch (e) {
+        console.error('Error removing device token on logout:', e);
+      }
+    }
 
     console.log('✅ Token blacklisted successfully');
 

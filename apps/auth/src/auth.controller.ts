@@ -35,8 +35,11 @@ export class AuthController {
   @Post('logout')
   @ApiResponse({ type: LogOutResponseDto })
   @Serialize(LogOutResponseDto)
-  loginout(@Headers('Authorization') authorizationHeader: string) {
-    return this.authService.signOut(authorizationHeader);
+  loginout(
+    @Headers('Authorization') authorizationHeader: string,
+    @Body('deviceToken') deviceToken?: string,
+  ) {
+    return this.authService.signOut(authorizationHeader, deviceToken);
   }
 
   @Public()

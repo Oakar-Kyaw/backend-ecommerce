@@ -79,6 +79,10 @@ export class UserResponseDto {
   @Expose()
   @Type(() => IBrandUserRelationship)
   brandUserRelationship: IBrandUserRelationship[];
+
+  @Expose()
+  @Type(() => DeviceInfoResponseDto)
+  device_infos: DeviceInfoResponseDto[];
 }
 
 // ===== BASE RESPONSE WRAPPER =====
@@ -202,4 +206,36 @@ class IBrandUserRelationship {
   @Expose()
   @Type(() => IBrandInfoDto)
   brand: IBrandInfoDto;
+}
+
+export class DeviceInfoResponseDto {
+  @Expose()
+  deviceToken: string;
+
+  @Expose()
+  deviceType: string;
+
+  @Expose()
+  deviceName: string;
+
+  @Expose()
+  osVersion: string;
+
+  @Expose()
+  appVersion: string;
+
+  @Expose()
+  ipAddress: string;
+
+  @Expose()
+  latitude: number;
+
+  @Expose()
+  longitude: number;
+
+  @Expose()
+  location: string;
+
+  @Expose()
+  lastActive: Date;
 }

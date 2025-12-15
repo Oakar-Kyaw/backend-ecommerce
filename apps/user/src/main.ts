@@ -24,3 +24,4 @@ async function bootstrap() {
   console.log(`🚀 USER TCP running on ${envConfig().user_service_tcp}`);
 }
 bootstrap();
+// Force rebuild comment 2

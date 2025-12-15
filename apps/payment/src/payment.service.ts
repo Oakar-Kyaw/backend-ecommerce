@@ -52,6 +52,10 @@ export class PaymentService {
     return payment;
   }
 
+  async findByOrder(orderId: string): Promise<Payment | null> {
+    return this.paymentModel.findOne({ orderId }).sort({ createdAt: -1 });
+  }
+
   private async processStripePayment(payment: PaymentDocument, paymentMethodId: string): Promise<Payment> {
     if (!this.stripe) {
       throw new BadRequestException('Stripe is not configured on the server');

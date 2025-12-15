@@ -47,6 +47,7 @@ import {
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { FileUpload } from 'libs/utils/file-upload';
+import { SyncDeviceTokenDto } from '../dto/sync-device-token.dto';
 
 @ApiTags('Users')
 @Controller('api/v1/users')
@@ -57,6 +58,12 @@ export class UsersController {
     private readonly fileUploadService: FileUpload,
   ) {}
 
+
+  @Post('device-token')
+  @ApiOperation({ summary: 'Sync device token' })
+  syncDeviceToken(@Body() dto: SyncDeviceTokenDto) {
+    return this.usersService.syncDeviceToken(dto);
+  }
 
   @Public()
   @Serialize(CreatedUserResponseDto)

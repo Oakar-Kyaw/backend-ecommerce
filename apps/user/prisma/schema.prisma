@@ -30,6 +30,25 @@ model User {
   isDeleted               Boolean                @default(false)
   dateOfBirth             DateTime?
   brandUserRelationship   BrandUserRelationship[]
+  device_tokens           String[]
+  device_infos            DeviceInfo[]
+}
+
+model DeviceInfo {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  deviceToken String   @unique
+  deviceType  String?
+  deviceName  String?
+  osVersion   String?
+  appVersion  String?
+  ipAddress   String?
+  latitude    Float?
+  longitude   Float?
+  location    String?
+  lastActive  DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model Brand {

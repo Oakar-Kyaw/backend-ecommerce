@@ -17,4 +17,13 @@ export class LoginDto {
   //@IsString()
   @ApiProperty({ example: 'admin123' })
   password: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ example: 'device_token_123', required: false })
+  deviceToken?: string;
+
+  @IsOptional()
+  @ApiProperty({ example: { deviceType: 'ios', deviceName: 'iPhone 13' }, required: false })
+  deviceInfo?: any;
 }
