@@ -14,17 +14,5 @@ async function bootstrap() {
   await app.listen(envConfig().notification_service_port);
   //serversetup(app, envConfig().notification_service_port)
   console.log(`🚀 Noti HTTP running on ${envConfig().notification_service_port}`);
-
-  // Also connect TCP microservice (for inter-service calls)
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      port: envConfig().notification_service_tcp,
-      host: '0.0.0.0',
-    },
-  });
-
-  await app.startAllMicroservices();
-  console.log(`🚀 Noti TCP running on ${envConfig().notification_service_tcp}`);
 }
 bootstrap();

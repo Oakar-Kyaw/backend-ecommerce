@@ -4,16 +4,14 @@ import {
   SaveNotificationTokenDto,
 } from './dto/create-notification.dto';
 import admin from 'firebase-admin';
-import { firstValueFrom } from 'rxjs';
-import { ClientProxy } from '@nestjs/microservices';
-import { NOTIFICATION_PRISMA } from 'apps/prisma/prisma.service';
 import { EmailService } from './email.service';
 import { Role } from '@prisma/notification';
+import { PRISMA } from '../prisma/prisma.service';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    @Inject(NOTIFICATION_PRISMA) private readonly prisma,
+    @Inject(PRISMA) private readonly prisma,
     //@Inject('USER') private readonly userClient: ClientProxy,
     private readonly emailService: EmailService,
   ) {}

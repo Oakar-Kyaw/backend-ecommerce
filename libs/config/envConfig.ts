@@ -37,7 +37,7 @@ export const envConfig = () => ({
   notification_service_port: parseInt(process.env.NOTIFICATION_SERVER_PORT ?? '5009', 10),
   notification_service_tcp: parseInt(process.env.NOTIFICATION_TCP_PORT ?? '5010', 10),
   notification_service_db: process.env.NOTIFICATION_DB_URL,
-  chat_gateway_port: parseInt(process.env.CHAT_GATEWAY_PORT ?? '5008', 10),
+  chat_gateway_port: parseInt(process.env.CHAT_GATEWAY_PORT ?? '5009', 10),
   JWTRefreshSecret: process.env.JWT_REFRESH_SECRET,
   firebase_projectId: process.env.FIREBASE_PROJECT_ID,
   firebase_clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
