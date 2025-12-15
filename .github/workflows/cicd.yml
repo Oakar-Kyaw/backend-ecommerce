@@ -114,7 +114,6 @@ jobs:
           docker build \
             --build-arg APP_NAME=notification \
             --build-arg APP_PORT=5005 \
-            --build-arg DB_TYPE=mongo \
             -t oakarkyaw/notification:latest .
       
       - name: Push notification service
