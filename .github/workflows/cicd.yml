@@ -230,4 +230,4 @@ jobs:
             # Notification service
             docker run -d --name notification --env-file /home/ubuntu/megasmart-backend/.env -p 5005:5005 -v /home/ubuntu/megasmart-backend/logs/notification:/var/log/nestapp --network ecom oakarkyaw/notification:latest
 
-            echo "🔥 Deployment completed successfully (using docker run)!. yay"
+            echo "🔥 Deployment completed successfully (using docker run)!"
