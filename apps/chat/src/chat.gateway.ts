@@ -10,8 +10,9 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 import { MessageType } from '../schema/message.schema';
+import { envConfig } from 'libs/config/envConfig';
 
-@WebSocketGateway({ cors: true })
+@WebSocketGateway( envConfig().chat_gateway_port,{ cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;

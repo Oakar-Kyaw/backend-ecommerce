@@ -225,22 +225,9 @@ jobs:
               oakarkyaw/auth:latest
 
             # Chat service
-            docker run -d \
-              --name chat \
-              --env-file /home/ubuntu/megasmart-backend/.env \
-              -p 5008:5008 \
-              -p 5009:5009
-              -v /home/ubuntu/megasmart-backend/logs/chat:/var/log/nestapp \
-              --network ecom \
-              oakarkyaw/chat:latest
+            docker run -d --name chat --env-file /home/ubuntu/megasmart-backend/.env -p 5008:5008 -p 5009:5009 -v /home/ubuntu/megasmart-backend/logs/chat:/var/log/nestapp --network ecom oakarkyaw/chat:latest
             
             # Notification service
-            docker run -d \
-              --name notification \
-              --env-file /home/ubuntu/megasmart-backend/.env \
-              -p 5005:5005 \
-              -v /home/ubuntu/megasmart-backend/logs/notification:/var/log/nestapp \
-              --network ecom \
-              oakarkyaw/notification:latest
+            docker run -d --name notification --env-file /home/ubuntu/megasmart-backend/.env -p 5005:5005 -v /home/ubuntu/megasmart-backend/logs/notification:/var/log/nestapp --network ecom oakarkyaw/notification:latest
 
             echo "🔥 Deployment completed successfully (using docker run)!. yay"
