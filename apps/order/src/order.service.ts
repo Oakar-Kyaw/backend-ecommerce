@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
+import { ShippingLocation, ShippingLocationDocument } from './schemas/shipping-location.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy } from '@nestjs/microservices';
 
@@ -9,11 +10,16 @@ import { ClientProxy } from '@nestjs/microservices';
 export class OrderService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(ShippingLocation.name) private shippingLocationModel: Model<ShippingLocationDocument>,
     @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
-    const { items, shippingFee = 0, tax = 0 } = createOrderDto;
+    const { items, shippingFee = 0, tax = 0, shippingAddress, ...orderData } = createOrderDto;
+
+    // Create and save shipping location
+    const createdLocation = new this.shippingLocationModel(shippingAddress);
+    const savedLocation = await createdLocation.save();
 
     // Calculate subtotal from items
     const subTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -22,9 +28,13 @@ export class OrderService {
     const totalAmount = subTotal + shippingFee + tax;
 
     const createdOrder = new this.orderModel({
-      ...createOrderDto,
+      ...orderData,
+      items,
+      shippingFee,
+      tax,
       subTotal,
       totalAmount,
+      shippingLocationId: savedLocation._id,
     });
     const savedOrder = await createdOrder.save();
     
@@ -45,7 +55,7 @@ export class OrderService {
   }
 
   async findOne(id: string): Promise<Order> {
-    const order = await this.orderModel.findById(id);
+    const order = await this.orderModel.findById(id).populate('shippingLocationId');
     if (!order) {
       throw new NotFoundException(`Order #${id} not found`);
     }
@@ -53,7 +63,7 @@ export class OrderService {
   }
 
   async findAll(userId: string): Promise<Order[]> {
-    return this.orderModel.find({ userId }).exec();
+    return this.orderModel.find({ userId }).populate('shippingLocationId').exec();
   }
 
   async updateStatus(id: string, status: string): Promise<Order> {

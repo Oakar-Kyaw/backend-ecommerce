@@ -35,6 +35,18 @@ class ShippingAddressDto {
   @IsString()
   @IsNotEmpty()
   phone: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  latitude: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  longitude: number;
+
+  @IsString()
+  @IsOptional()
+  placeId?: string;
 }
 
 export class CreateOrderDto {

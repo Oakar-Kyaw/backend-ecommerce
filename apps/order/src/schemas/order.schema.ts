@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
+import { ShippingLocation } from './shipping-location.schema';
 
 export type OrderDocument = HydratedDocument<Order>;
 
@@ -38,12 +39,8 @@ export class Order {
   @Prop({ required: true, enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 
-  @Prop({ type: Object })
-  shippingAddress: {
-    address: string;
-    city: string;
-    phone: string;
-  };
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ShippingLocation' })
+  shippingLocationId: ShippingLocation;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
