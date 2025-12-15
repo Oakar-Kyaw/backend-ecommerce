@@ -17,6 +17,10 @@ import { envConfig } from 'libs/config/envConfig';
     MongooseModule.forRootAsync({
       useFactory: () => ({
         uri: envConfig().chat_service_db,
+        connectionFactory(connection) {
+            console.log("Social Db is connected: ")
+            return connection;
+        },
       }),
     }),
     MongooseModule.forFeature([

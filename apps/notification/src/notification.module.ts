@@ -11,14 +11,14 @@ import { EmailModule } from './email.module';
   imports: [
     PrismaModule,
     EmailModule,
-    ClientsModule.register([
-      {
-        name: 'USER',
-        transport: Transport.TCP,
-        //for local
-        options: { host: '0.0.0.0', port: envConfig().user_service_tcp },
-      },
-    ]),
+    // ClientsModule.register([
+    //   {
+    //     name: 'USER',
+    //     transport: Transport.TCP,
+    //     //for local
+    //     options: { host: '0.0.0.0', port: envConfig().user_service_tcp },
+    //   },
+    // ]),
   ],
   controllers: [NotificationController],
   providers: [NotificationService],
