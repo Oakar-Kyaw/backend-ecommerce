@@ -7,6 +7,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 import { envConfig } from 'libs/config/envConfig';
+import { getPagination, buildPaginationResponse } from '../../../libs/utils/pagination';
 
 @Injectable()
 export class OrderService {
@@ -62,27 +63,23 @@ export class OrderService {
       throw new NotFoundException(`Order #${id} not found`);
     }
 
-    // Fetch payment details
-    try {
-      const paymentResponse = await axios.get(`http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${id}`);
-      return { ...order, payment: paymentResponse.data };
-    } catch (error) {
-      // Payment might not exist yet, just return order
-      return { ...order, payment: null };
-    }
+    return this.populateOrderDetails(order);
   }
 
-  async findAll(userId: string): Promise<any[]> {
+  async findAll(page?: number, pageSize?: number): Promise<any> {
+    const meta = getPagination({ page, pageSize });
+    const orders = await this.orderModel.find().populate('shippingLocationId').lean().skip(meta.skip).limit(meta.limit).exec();
+    const total = await this.orderModel.countDocuments().exec();
+
+    const enrichedOrders = await Promise.all(orders.map((order) => this.populateOrderDetails(order)));
+
+    return buildPaginationResponse(enrichedOrders, meta, total, 'LIST_OF_ORDERS');
+  }
+
+  async findByUser(userId: string): Promise<any[]> {
     const orders = await this.orderModel.find({ userId }).populate('shippingLocationId').lean().exec();
     
-    return Promise.all(orders.map(async (order: any) => {
-      try {
-        const paymentResponse = await axios.get(`http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${order._id}`);
-        return { ...order, payment: paymentResponse.data };
-      } catch (error) {
-        return { ...order, payment: null };
-      }
-    }));
+    return Promise.all(orders.map((order) => this.populateOrderDetails(order)));
   }
 
   async updateStatus(id: string, status: string): Promise<Order> {
@@ -104,5 +101,36 @@ export class OrderService {
     });
 
     return order;
+  }
+
+  private async populateOrderDetails(order: any) {
+    const [payment, userInfo] = await Promise.all([
+      this.fetchPaymentDetails(order._id),
+      this.fetchUserDetails(order.userId),
+    ]);
+    return { ...order, payment, userInfo };
+  }
+
+  private async fetchPaymentDetails(orderId: string) {
+    try {
+      const response = await axios.get(`http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${orderId}`);
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async fetchUserDetails(userId: string) {
+    try {
+      const response = await axios.get(`http://localhost:${envConfig().user_service_port}/api/v1/users/${userId}`);
+      console.log('Fetched user details for:', userId, 'Response:', response.data);
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching user details for:', userId, error.message);
+      if (error.response) {
+        console.error('Error response data:', error.response.data);
+      }
+      return null;
+    }
   }
 }

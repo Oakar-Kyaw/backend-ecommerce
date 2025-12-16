@@ -7,7 +7,7 @@ import { IBrandInfoDto } from './brand-response.dto';
 export class UserResponseDto {
   //  @ApiProperty({ example: 'uuid-123' })
   @Expose()
-  readonly id: string;
+  readonly id: number;
 
   //  @ApiProperty({ example: 'xxxxxx' })
   @Expose()

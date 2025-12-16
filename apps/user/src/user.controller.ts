@@ -180,7 +180,10 @@ export class UsersController {
     type: ServerErrorResponseDto,
   })
   async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id, 'http');
+    console.log('Fetching user with ID:', id);
+    const user = await this.usersService.findOne(id, 'http');
+    console.log('User found:', user);
+    return user;
   }
 
   @Serialize(UpdatedUserResponseDto)
