@@ -30,4 +30,4 @@ export class PrismaService
   }
 }
 
-export const PRISMA = PrismaService;
+export const Noti_PRISMA = PrismaService;

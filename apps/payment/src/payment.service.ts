@@ -7,6 +7,8 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { envConfig } from 'libs/config/envConfig';
 import Stripe from 'stripe';
 import { ClientProxy } from '@nestjs/microservices';
+import { EventPublisherService } from './event-publisher.service';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class PaymentService {
@@ -15,7 +17,9 @@ export class PaymentService {
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Transaction.name) private transactionModel: Model<TransactionDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
+    private readonly eventPublisher: EventPublisherService
   ) {
     const stripeKey = envConfig().stripe_secret_key;
     if (stripeKey) {
@@ -67,43 +71,51 @@ export class PaymentService {
 
     try {
       // Create PaymentIntent
-      const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: payment.amount, 
-        currency: 'usd', 
-        payment_method: paymentMethodId,
-        confirm: true,
-        return_url: 'http://localhost:3000/payment/success', 
-        automatic_payment_methods: {
-            enabled: true,
-            allow_redirects: 'never'
-        }
-      });
+      // const paymentIntent = await this.stripe.paymentIntents.create({
+      //   amount: payment.amount, 
+      //   currency: 'usd', 
+      //   payment_method: paymentMethodId,
+      //   confirm: true,
+      //   return_url: 'http://localhost:3000/payment/success', 
+      //   automatic_payment_methods: {
+      //       enabled: true,
+      //       allow_redirects: 'never'
+      //   }
+      // });
 
-      providerResponse = paymentIntent;
-      transactionId = paymentIntent.id;
+      // providerResponse = paymentIntent;
+      // transactionId = paymentIntent.id;
 
-      if (transactionId) {
-        payment.transactionId = transactionId;
-      }
-      payment.metadata = paymentIntent;
+      // if (transactionId) {
+      //   payment.transactionId = transactionId;
+      // }
+      // payment.metadata = paymentIntent;
 
-      if (paymentIntent.status === 'succeeded') {
-        payment.status = PaymentStatus.COMPLETED;
-        transactionStatus = TransactionStatus.SUCCESS;
-      } else {
-        payment.status = PaymentStatus.FAILED;
-        transactionStatus = TransactionStatus.FAILED;
-      }
+      // if (paymentIntent.status === 'succeeded') {
+      //   payment.status = PaymentStatus.COMPLETED;
+      //   transactionStatus = TransactionStatus.SUCCESS;
+      // } else {
+      //   payment.status = PaymentStatus.FAILED;
+      //   transactionStatus = TransactionStatus.FAILED;
+      // }
 
-      await payment.save();
+      // await payment.save();
 
       // Emit notification
-      this.notificationClient.emit('notify_payment', {
+      const userData = await this.userModel.findOne({userId: payment.userId})
+      this.eventPublisher.sendPaymentNotification({
         orderId: payment.orderId,
         userId: payment.userId,
         amount: payment.amount,
         status: payment.status,
-      });
+        email: userData?.email || null
+      })
+      // this.notificationClient.emit('notify_payment', {
+      //   orderId: payment.orderId,
+      //   userId: payment.userId,
+      //   amount: payment.amount,
+      //   status: payment.status,
+      // });
 
     } catch (error) {
       payment.status = PaymentStatus.FAILED;
@@ -114,12 +126,14 @@ export class PaymentService {
       providerResponse = { error: error.message };
 
       // Emit notification for failure
-      this.notificationClient.emit('notify_payment', {
+      const userData = await this.userModel.findOne({userId: payment.userId})
+      this.eventPublisher.sendPaymentNotification({
         orderId: payment.orderId,
         userId: payment.userId,
         amount: payment.amount,
         status: PaymentStatus.FAILED,
-      });
+        email: userData?.email || null
+      })
 
       throw new BadRequestException(`Stripe payment failed: ${error.message}`);
     } finally {

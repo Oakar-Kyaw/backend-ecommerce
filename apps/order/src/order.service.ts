@@ -8,11 +8,15 @@ import { ClientProxy } from '@nestjs/microservices';
 import axios from 'axios';
 import { envConfig } from 'libs/config/envConfig';
 import { getPagination, buildPaginationResponse } from '../../../libs/utils/pagination';
+import { EventPublisherService } from './event-publisher.service';
+import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class OrderService {
   constructor(
+    private readonly eventPublisher: EventPublisherService,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(ShippingLocation.name) private shippingLocationModel: Model<ShippingLocationDocument>,
     @Inject('NOTIFICATION_SERVICE') private readonly notificationClient: ClientProxy,
   ) {}
@@ -43,13 +47,14 @@ export class OrderService {
     
     // Emit notification
     try {
-      this.notificationClient.emit('notify_order', {
-        orderId: savedOrder._id,
+      const userData = await this.userModel.findOne({ userId: savedOrder.userId})
+      this.eventPublisher.sendOrderNotification({
+        orderId: String(savedOrder._id),
         userId: savedOrder.userId,
         totalAmount: savedOrder.totalAmount,
         status: savedOrder.status,
-        // name: user name is fetched by notification service if needed
-      });
+        email: userData?.email || null
+      })
     } catch (error) {
       console.error('Failed to emit notify_order event:', error);
     }
@@ -93,12 +98,14 @@ export class OrderService {
     }
 
     // Emit notification
-    this.notificationClient.emit('notify_order', {
-      orderId: order._id,
-      userId: order.userId,
-      totalAmount: order.totalAmount,
-      status: order.status,
-    });
+    const userData = await this.userModel.findOne({ userId: order.userId})
+    this.eventPublisher.sendOrderNotification({
+        orderId: String(order._id),
+        userId: order.userId,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        email: userData?.email || null
+    })
 
     return order;
   }

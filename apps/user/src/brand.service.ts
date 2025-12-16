@@ -17,6 +17,7 @@ import * as XLSX from 'xlsx';
 import { UsersService } from './user.service';
 import { RoleEnum, CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { EventPublisherService } from './event-publisher.service';
+import { QueueServices } from 'libs/queue/constant';
 
 @Injectable()
 export class BrandService {
@@ -68,13 +69,15 @@ export class BrandService {
 
         console.log("user")
         //write user to auth db
-        this.eventPublisherService.userCreated({
-          email: createBrandDto.email,
-          password: "Brand123@",
-          role: RoleEnum.SALE,
-          brandId: brand.id,
-          firstName: createBrandDto.name,
-          phone: createBrandDto.phone,
+        QueueServices.map(async(name)=>{
+          await this.eventPublisherService.createUser(name,{
+            email: createBrandDto.email,
+            password: "Brand123@",
+            role: RoleEnum.SALE,
+            brandId: brand.id,
+            firstName: createBrandDto.name,
+            phone: createBrandDto.phone,
+          })
         })
         console.log("end")
       } catch (error) {

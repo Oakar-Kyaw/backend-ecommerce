@@ -14,8 +14,12 @@ import {
 import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import {
+  CREATED_NOTIFICATION_SERVICE_QUEUE,
+  CREATED_ORDER_SERVICE_QUEUE,
+  CREATED_PAYMENT_SERVICE_QUEUE,
   CREATED_USER_JOB,
-  CREATED_USER_QUEUE,
+  CREATED_USER_SERVICE_QUEUE,
+  QueueServices,
   UPDATED_USER_JOB,
 } from 'libs/queue/constant';
 import { PublishMessage } from 'libs/queue/publish';
@@ -48,10 +52,6 @@ export class UsersService {
         password: envConfig().redis_password || undefined,
       });
 
-  private emailApi = createAPI(
-    `http://localhost:${envConfig().notification_service_port}/api/v1/email`,
-  );
-
   async create(createUserDto: CreateUserWithProfileDto) {
     const { email, phone } = createUserDto;
     // Check if email already exists
@@ -71,6 +71,7 @@ export class UsersService {
 
     if (dto.role && ['USER', 'CUSTOMER'].includes(String(dto.role))) {
       const otp = (createUserDto as any).otp;
+      console.log("otp is ", otp)
       if (!otp) throw new UnauthorizedException('OTP_REQUIRED');
       const key = `otp:signup:${email}`;
       const stored = await this.redis.get(key);
@@ -78,7 +79,8 @@ export class UsersService {
       if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
       await this.redis.del(key);
     }
-
+    //delete otp in payload which doesn't exist in db table
+    delete dto.otp
     // check if brand exists
     if (brandId) {
       // check if brand exists
@@ -87,7 +89,7 @@ export class UsersService {
       });
       if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
     }
-
+    
     const roleValue = dto.role === 'USER' ? 'CUSTOMER' : dto.role;
     const user = await this.prisma.user.create({
       data: {
@@ -99,12 +101,31 @@ export class UsersService {
     });
 
     console.log('user: ', user);
-
     // 4️link brand if provided
-    if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
+   if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
-    // 5️publish event
-    await this.eventPublisher.userCreated(user);
+    QueueServices.map(async (name)=>{
+      console.log("sending data to ", name)
+      await this.eventPublisher.createUser(name, user);
+    })
+    //send welcome message
+    await this.eventPublisher.sendEmail({
+      to: email,
+      subject: 'Welcome to Our Platform!',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h1 style="color: #4CAF50;">Welcome, ${createUserDto.firstName} ${createUserDto.lastName}!</h1>
+          <p>Thank you for joining our platform. We are excited to have you on board!</p>
+          <p>Here is a quick tip to get started:</p>
+          <ul>
+            <li>Set up your profile</li>
+            <li>Check out the latest features</li>
+          </ul>
+          <p>We are here to help anytime. Enjoy your journey with us!</p>
+          <p style="margin-top: 20px;">— The Team</p>
+        </div>
+      `,
+    });
 
     return {
       success: true,
@@ -275,11 +296,11 @@ export class UsersService {
     const key = `otp:${mode || 'signup'}:${email}`;
     await this.redis.set(key, otp, 'EX', 300);
     try {
-      await this.emailApi.post('/send', {
-        to: email,
-        subject: 'Your verification code',
-        html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
-      });
+       this.eventPublisher.sendEmail({
+          to: email,
+         subject: 'Your verification code',
+         html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+       })
     } catch (err) {
       console.error('OTP email send failed', err);
       // Continue returning success so the user can verify with the stored OTP
@@ -299,6 +320,7 @@ export class UsersService {
     if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
+    console.log("otp",otp, key, stored)
     if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
     if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
     await this.redis.del(key);
@@ -499,7 +521,7 @@ export class UsersService {
         photoUrl: picture,
       },
     });
-    this.eventPublisher.userCreated(user);
+  //  this.eventPublisher.createUser(,user);
     return {
       success: true,
       message: 'User has been created successfully.',
@@ -529,7 +551,7 @@ export class UsersService {
       },
     });
     console.log('user: ', user);
-    this.eventPublisher.userCreated(user);
+    //this.eventPublisher.createUser(user);
     return {
       success: true,
       message: 'CREATED_USER',
