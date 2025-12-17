@@ -212,9 +212,9 @@ export class UsersController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserWithProfileDto: UpdateUserWithProfileDto,
-    @Req() req,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.usersService.update(id, updateUserWithProfileDto, req);
+    return this.usersService.update(id, updateUserWithProfileDto, file);
   }
 
   @Serialize(DeletedUserResponseDto)

@@ -34,10 +34,12 @@ import Redis from 'ioredis';
 import createAPI from 'libs/utils/axio.instance';
 
 import { SyncAction, SyncDeviceTokenDto } from '../dto/sync-device-token.dto';
+import { FileUpload } from 'libs/utils/file-upload';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly uploadFile: FileUpload,
     @Inject(PRISMA) private readonly prisma,
     // @InjectQueue(CREATED_USER_QUEUE) private readonly queue: Queue,
     private readonly brandUserService: BrandUserService,
@@ -355,7 +357,7 @@ export class UsersService {
   async update(
     id: number,
     updateUserDto: UpdateUserWithProfileDto,
-    req: Request,
+    file: Express.Multer.File
   ) {
     //console.log("req", req["user"])
     //   const loginuser = await this.prisma.user.findUnique({
@@ -364,6 +366,7 @@ export class UsersService {
     //  // console.log("login user", loginuser?.role === "MEMBER")
     // if(loginuser?.id != id && loginuser?.role != "ADMIN") throw new UnauthorizedException("You can't edit other user")
 
+    let imageUrl;
     const existingUser = await this.prisma.user.findUnique({
       where: { id, isDeleted: false },
     });
@@ -375,7 +378,11 @@ export class UsersService {
       where: { NOT: { id }, email: updateUserDto.email },
     });
 
-    console.log('existing other user', existingOtherUser);
+    if (file)
+      imageUrl = (
+        await this.uploadFile .uploadSingle({ file, folderName: 'profile' })
+      ).url;
+    console.log('existing other user', existingOtherUser, "photo url", imageUrl);
 
     if (existingOtherUser)
       throw new ConflictException(
@@ -386,7 +393,7 @@ export class UsersService {
       updateUserDto.password = await hashedPassword(updateUserDto.password);
 
     //console.log("update user data: ", updateUserDto)
-    const { brandId, ...dto } = updateUserDto;
+    const { brandId, otp, ...dto } = updateUserDto;
     if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
 
     const updateRole = dto['role'] === 'USER' ? 'CUSTOMER' : dto['role'];
@@ -394,11 +401,12 @@ export class UsersService {
       where: { id },
       data: {
         ...dto,
+        ...(file ? { photoUrl: imageUrl } : {}),
         ...(dto['role'] ? { role: updateRole } : {}),
       },
       include: { brandUserRelationship: { include: { brand: true } } },
     });
-
+    console.log("updated user :", updateUser, dto, imageUrl)
     this.eventPublisher.userUpdated(updateUser);
     return {
       success: true,
