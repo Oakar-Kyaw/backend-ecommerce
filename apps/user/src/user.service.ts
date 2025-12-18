@@ -57,6 +57,7 @@ export class UsersService {
       });
 
   async create(createUserDto: CreateUserWithProfileDto) {
+    console.log('UserService.create called with:', JSON.stringify(createUserDto, null, 2));
     const { email, phone } = createUserDto;
     // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
@@ -66,6 +67,7 @@ export class UsersService {
     });
 
     if (existingUser) {
+      console.warn(`User with email ${email} or phone ${phone} already exists`);
       throw new ConflictException('Email or phone already exists');
     }
 
@@ -127,12 +129,12 @@ export class UsersService {
       include: { brandUserRelationship: { include: { brand: true } } },
     });
 
-    console.log('user: ', user);
+    console.log('User created in DB:', user);
     // 4️link brand if provided
     if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
     QueueServices.map(async (name) => {
-      console.log('sending data to ', name);
+      console.log('Sending user creation event to queue:', name);
       await this.eventPublisher.createUser(name, user);
     });
     //send welcome message
@@ -338,13 +340,19 @@ export class UsersService {
 
   async verifyOtp(dto: VerifyOtpDto) {
     const { email, mode, otp } = dto;
+    console.log('Verifying OTP with DTO:', JSON.stringify(dto, null, 2));
+
     if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
 
     // If signup mode and registration data is present (password is a good indicator), create the user immediately
     if ((mode === 'signup' || !mode) && dto.password) {
+      console.log('Attempting to create user during OTP verification...');
+      
       // We check OTP existence here to fail fast, but let create() handle the final verification and deletion
       const key = `otp:signup:${email}`;
       const stored = await this.redis.get(key);
+      console.log(`Checking Redis Key: ${key}, Stored: ${stored}, Provided: ${otp}`);
+      
       if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
       if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
 
@@ -363,8 +371,17 @@ export class UsersService {
         otp: otp, // Pass OTP so create method can verify and delete it
       };
 
-      // This will create user in User DB and publish event for Auth DB
-      return this.create(createUserDto);
+      console.log('Calling create() with:', JSON.stringify(createUserDto, null, 2));
+      
+      try {
+        // This will create user in User DB and publish event for Auth DB
+        const result = await this.create(createUserDto);
+        console.log('User creation result:', result);
+        return result;
+      } catch (error) {
+        console.error('Error creating user during OTP verification:', error);
+        throw error;
+      }
     }
     
     // If we are here, it means we are just verifying OTP without creating user (e.g. forgot password flow, or legacy signup flow)
