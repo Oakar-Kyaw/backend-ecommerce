@@ -6,11 +6,8 @@ import { PublishMessageModule } from 'libs/queue/publish.module';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
-  imports: [
-    PublishMessageModule,
-    NotificationModule, 
-    EmailModule],
+  imports: [PublishMessageModule, NotificationModule, EmailModule],
   controllers: [],
-  providers: [ NotificationWorker, PrismaService],
+  providers: [NotificationWorker, PrismaService],
 })
 export class AppModule {}

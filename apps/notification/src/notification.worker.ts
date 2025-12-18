@@ -16,11 +16,11 @@ import { Inject } from '@nestjs/common';
 // ✅ Correct handler type
 type JobHandler = (job: Job) => Promise<void>;
 type UserType = {
-    email: string,
-    phone: string,
-    userId: number,
-    role: string
-}
+  email: string;
+  phone: string;
+  userId: number;
+  role: string;
+};
 
 @Processor(CREATED_NOTIFICATION_SERVICE_QUEUE)
 export class NotificationWorker extends WorkerHost {
@@ -29,7 +29,7 @@ export class NotificationWorker extends WorkerHost {
   constructor(
     private readonly emailService: EmailService,
     private readonly notificationService: NotificationService,
-    @Inject(Noti_PRISMA) private readonly prisma
+    @Inject(Noti_PRISMA) private readonly prisma,
   ) {
     super();
 
@@ -58,7 +58,7 @@ export class NotificationWorker extends WorkerHost {
         `Notification Worker failed on job ${job.id} (${job.name}):`,
         err,
       );
-      throw err; 
+      throw err;
     }
   }
 
@@ -66,8 +66,8 @@ export class NotificationWorker extends WorkerHost {
     await this.notificationService.sendOrderNotification(job.data);
   }
 
-  private async sendPaymentNotification(job: Job): Promise<void>{
-    await this.notificationService.sendPaymentNotification(job.data)
+  private async sendPaymentNotification(job: Job): Promise<void> {
+    await this.notificationService.sendPaymentNotification(job.data);
   }
 
   private async sendEmail(job: Job): Promise<void> {
@@ -76,7 +76,7 @@ export class NotificationWorker extends WorkerHost {
 
   private async saveUser(job: Job): Promise<void> {
     const data: UserType = job.data as UserType;
-    console.log("data is: ", data);
+    console.log('data is: ', data);
 
     await this.prisma.user.create({
       data: {
@@ -87,6 +87,4 @@ export class NotificationWorker extends WorkerHost {
       },
     });
   }
-
 }
-

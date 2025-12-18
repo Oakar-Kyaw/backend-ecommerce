@@ -8,6 +8,6 @@ async function bootstrap() {
   const app = await NestFactory.create(OrderModule);
   serversetup(app, envConfig().order_service_port);
   await app.listen(envConfig().order_service_port ?? 3000);
-  console.log("server is running: ", envConfig().order_service_port);
+  console.log('server is running: ', envConfig().order_service_port);
 }
 bootstrap();

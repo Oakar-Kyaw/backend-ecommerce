@@ -57,7 +57,11 @@ export class EmailService {
       return { success: true, message: 'SMTP transport is ready' };
     } catch (error) {
       console.error('SMTP verify error', error);
-      return { success: false, message: 'SMTP transport error', error: String(error) };
+      return {
+        success: false,
+        message: 'SMTP transport error',
+        error: String(error),
+      };
     }
   }
 

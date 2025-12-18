@@ -21,11 +21,12 @@ export class NotificationService {
   async sendNotification(data: NotificationDto) {
     let { userId, brandId, branchId, role, title, body, icon } = data;
     console.log('data', data);
-    
+
     // Ensure numeric types
     if (userId && typeof userId === 'string') userId = parseInt(userId, 10);
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
-    if (branchId && typeof branchId === 'string') branchId = parseInt(branchId, 10);
+    if (branchId && typeof branchId === 'string')
+      branchId = parseInt(branchId, 10);
 
     const notificationTokenData = await this.prisma.notificationToken.findFirst(
       {
@@ -40,10 +41,10 @@ export class NotificationService {
         },
       },
     );
-    
+
     if (!notificationTokenData) {
-        console.warn(`User Id ${userId} doesn't subscribe noti`);
-        return { success: false, message: 'No token found' };
+      console.warn(`User Id ${userId} doesn't subscribe noti`);
+      return { success: false, message: 'No token found' };
     }
 
     console.log('notification data: ', notificationTokenData);
@@ -71,26 +72,43 @@ export class NotificationService {
   }
 
   async sendOrderNotification(payload: any) {
-    let { email, name, userId, orderId, totalAmount, status, items, shippingAddress } = payload;
-    
-    console.log("send order notif: ", payload)
+    let {
+      email,
+      name,
+      userId,
+      orderId,
+      totalAmount,
+      status,
+      items,
+      shippingAddress,
+    } = payload;
+
+    console.log('send order notif: ', payload);
     if (!email && userId) {
-        const userEmail = await this.getUserEmail(userId);
-        if (userEmail) email = userEmail;
+      const userEmail = await this.getUserEmail(userId);
+      if (userEmail) email = userEmail;
     }
 
     // 1. Send Email
     if (email) {
-        const itemsHtml = items && items.length ? items.map((item: any) => `
+      const itemsHtml =
+        items && items.length
+          ? items
+              .map(
+                (item: any) => `
             <tr>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.name || item.productId}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.quantity}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price * item.quantity}</td>
             </tr>
-        `).join('') : '<tr><td colspan="4">No details available</td></tr>';
+        `,
+              )
+              .join('')
+          : '<tr><td colspan="4">No details available</td></tr>';
 
-        const addressHtml = shippingAddress ? `
+      const addressHtml = shippingAddress
+        ? `
             <div style="margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
                 <h4 style="margin: 0 0 10px 0; color: #555;">Shipping Address</h4>
                 <p style="margin: 0; color: #666;">
@@ -98,9 +116,10 @@ export class NotificationService {
                     Phone: ${shippingAddress.phone}
                 </p>
             </div>
-        ` : '';
+        `
+        : '';
 
-        const fullHtml = `
+      const fullHtml = `
             <h2 style="color: #333;">Order Update</h2>
             <p>Hi ${name || 'Customer'},</p>
             <p>Your order <strong>#${orderId}</strong> status is now: <span style="color: #0b6fff; font-weight: bold;">${status}</span></p>
@@ -129,49 +148,49 @@ export class NotificationService {
             ${addressHtml}
         `;
 
-        await this.emailService.sendEmail({
-            to: email,
-            subject: `Order #${orderId} ${status}`,
-            html: fullHtml
-        });
+      await this.emailService.sendEmail({
+        to: email,
+        subject: `Order #${orderId} ${status}`,
+        html: fullHtml,
+      });
     }
 
     // 2. Send Push
     if (userId) {
-        await this.sendNotification({
-            userId,
-            title: `Order ${status}`,
-            body: `Your order #${orderId} is ${status}.`,
-            role: Role.CUSTOMER,
-        } as any);
+      await this.sendNotification({
+        userId,
+        title: `Order ${status}`,
+        body: `Your order #${orderId} is ${status}.`,
+        role: Role.CUSTOMER,
+      } as any);
     }
   }
 
   async sendPaymentNotification(payload: any) {
     let { email, name, userId, orderId, amount, status } = payload;
-    
+
     if (!email && userId) {
-        const userEmail = await this.getUserEmail(userId);
-        if (userEmail) email = userEmail;
+      const userEmail = await this.getUserEmail(userId);
+      if (userEmail) email = userEmail;
     }
 
     // 1. Send Email
     if (email) {
-        await this.emailService.sendNotificationEmail(
-            email,
-            `Payment ${status} for Order #${orderId}`,
-            `Hi ${name || 'Customer'}, your payment of $${amount} for order #${orderId} was ${status}.`
-        );
+      await this.emailService.sendNotificationEmail(
+        email,
+        `Payment ${status} for Order #${orderId}`,
+        `Hi ${name || 'Customer'}, your payment of $${amount} for order #${orderId} was ${status}.`,
+      );
     }
 
     // 2. Send Push
     if (userId) {
-        await this.sendNotification({
-            userId,
-            title: `Payment ${status}`,
-            body: `Payment of $${amount} for Order #${orderId} : ${status}`,
-            role: Role.CUSTOMER,
-        } as any);
+      await this.sendNotification({
+        userId,
+        title: `Payment ${status}`,
+        body: `Payment of $${amount} for Order #${orderId} : ${status}`,
+        role: Role.CUSTOMER,
+      } as any);
     }
   }
 
@@ -179,13 +198,13 @@ export class NotificationService {
     try {
       const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
       if (isNaN(id)) return null;
-      
-      const user =  await this.prisma.user.findFirst({
+
+      const user = await this.prisma.user.findFirst({
         where: {
-           userId
-        }
-      })
-      console.log("email", user)
+          userId,
+        },
+      });
+      console.log('email', user);
       // await firstValueFrom(
       //   // this.userClient.send('get_user', { userId: id })
       // );
@@ -196,13 +215,13 @@ export class NotificationService {
     }
   }
 
-
   async sendNotificationToMultipleTokens(data: NotificationDto) {
     let { brandId, branchId, role, title, body, icon } = data;
 
     // Ensure numeric types
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
-    if (branchId && typeof branchId === 'string') branchId = parseInt(branchId, 10);
+    if (branchId && typeof branchId === 'string')
+      branchId = parseInt(branchId, 10);
 
     const messageToken = await this.prisma.notificationToken.findMany({
       where: {
@@ -252,18 +271,24 @@ export class NotificationService {
   }
   async sendBrandOrderNotification(payload: any) {
     const { brandId, orderId, items, status, shippingAddress } = payload;
-    console.log(`Processing notification for Brand ${brandId} regarding Order #${orderId}`);
-    
+    console.log(
+      `Processing notification for Brand ${brandId} regarding Order #${orderId}`,
+    );
+
     // 1. Fetch Brand Details (Email)
     const brand = await this.fetchBrandDetails(brandId);
-    
-    if (brand && brand.email) {
-        // 2. Send Email to Brand
-        const itemsListHtml = items.map((item: any) => 
-            `<li>${item.quantity}x ${item.name || item.productId} - $${item.price}</li>`
-        ).join('');
 
-        const addressHtml = shippingAddress ? `
+    if (brand && brand.email) {
+      // 2. Send Email to Brand
+      const itemsListHtml = items
+        .map(
+          (item: any) =>
+            `<li>${item.quantity}x ${item.name || item.productId} - $${item.price}</li>`,
+        )
+        .join('');
+
+      const addressHtml = shippingAddress
+        ? `
             <div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee;">
                 <h4 style="margin: 0 0 5px 0;">Shipping Details</h4>
                 <p style="margin: 0;">
@@ -271,38 +296,42 @@ export class NotificationService {
                     Phone: ${shippingAddress.phone}
                 </p>
             </div>
-        ` : '';
+        `
+        : '';
 
-        await this.emailService.sendNotificationEmail(
-            brand.email,
-            `New Order #${orderId} Received`,
-            `<h3>New Order Received</h3>
+      await this.emailService.sendNotificationEmail(
+        brand.email,
+        `New Order #${orderId} Received`,
+        `<h3>New Order Received</h3>
              <p>Hello ${brand.name},</p>
              <p>You have received a new order #${orderId}.</p>
              <p><strong>Status:</strong> ${status}</p>
              <ul>${itemsListHtml}</ul>
              ${addressHtml}
-             <p>Please log in to your dashboard to manage this order.</p>`
-        );
-        console.log(`Email sent to brand ${brand.name} at ${brand.email}`);
+             <p>Please log in to your dashboard to manage this order.</p>`,
+      );
+      console.log(`Email sent to brand ${brand.name} at ${brand.email}`);
     } else {
-        console.warn(`Could not fetch brand email for Brand ID ${brandId}`);
+      console.warn(`Could not fetch brand email for Brand ID ${brandId}`);
     }
 
     // 3. Send Push Notification to Brand Users (Admins/Staff)
     // Assuming brand users have role 'BRAND_ADMIN' or similar and are linked via brandId
     // Note: The current NotificationToken schema supports 'brandId'.
     // We notify all tokens associated with this brandId.
-    
+
     try {
-        await this.sendNotificationToMultipleTokens({
-            brandId: brandId.toString(),
-            title: 'New Order Received',
-            body: `Order #${orderId} has been placed containing your items.`,
-            role: undefined, // Send to all roles under this brand? Or specific? Let's assume all for now.
-        } as any);
+      await this.sendNotificationToMultipleTokens({
+        brandId: brandId.toString(),
+        title: 'New Order Received',
+        body: `Order #${orderId} has been placed containing your items.`,
+        role: undefined, // Send to all roles under this brand? Or specific? Let's assume all for now.
+      } as any);
     } catch (e) {
-        console.log('No push tokens found for brand or error sending push:', e.message);
+      console.log(
+        'No push tokens found for brand or error sending push:',
+        e.message,
+      );
     }
   }
 
@@ -313,7 +342,10 @@ export class NotificationService {
       const response = await axios.get(url);
       return response.data.data;
     } catch (error) {
-      console.error(`Error fetching brand details for ID ${brandId}:`, error.message);
+      console.error(
+        `Error fetching brand details for ID ${brandId}:`,
+        error.message,
+      );
       return null;
     }
   }
@@ -337,7 +369,7 @@ export class NotificationService {
     // }
     console.log('userId', userId);
     if (userId) {
-      const existingUser = { success: false , data : null}
+      const existingUser = { success: false, data: null };
       // await firstValueFrom(
       //   this.userClient.send({ cmd: 'get_user_by_id' }, { id: userId }),
       // );

@@ -12,7 +12,7 @@ import { ChatService } from './chat.service';
 import { MessageType } from '../schema/message.schema';
 import { envConfig } from 'libs/config/envConfig';
 
-@WebSocketGateway( envConfig().chat_gateway_port,{ cors: true })
+@WebSocketGateway(envConfig().chat_gateway_port, { cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
@@ -60,22 +60,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     let senderId = Number(client.handshake.query.userId);
     if (isNaN(senderId)) {
-       // Fallback: try to get from headers
-       const headerUserId = client.handshake.headers['user-id'];
-       if (headerUserId) {
-         senderId = Number(headerUserId);
-       }
+      // Fallback: try to get from headers
+      const headerUserId = client.handshake.headers['user-id'];
+      if (headerUserId) {
+        senderId = Number(headerUserId);
+      }
     }
 
     if (isNaN(senderId)) {
-      client.emit('error', { message: 'Authentication error: userId is required in handshake query (e.g., ?userId=1) or headers.' });
+      client.emit('error', {
+        message:
+          'Authentication error: userId is required in handshake query (e.g., ?userId=1) or headers.',
+      });
       return;
     }
 
     const { recipientId, message, type } = payload;
 
     if (!recipientId || !message) {
-      client.emit('error', { message: 'Invalid payload: recipientId and message are required.' });
+      client.emit('error', {
+        message: 'Invalid payload: recipientId and message are required.',
+      });
       return;
     }
 
@@ -100,16 +105,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.emit('messageSent', savedMessage);
     } catch (error) {
       console.error('Error sending message:', error);
-      client.emit('error', { message: 'Failed to send message', details: error.message });
+      client.emit('error', {
+        message: 'Failed to send message',
+        details: error.message,
+      });
     }
   }
 
   // Handle joining a group
   @SubscribeMessage('joinGroup')
-  handleJoinGroup(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: any,
-  ) {
+  handleJoinGroup(@ConnectedSocket() socket: Socket, @MessageBody() data: any) {
     let parsedData;
     try {
       parsedData = typeof data === 'string' ? JSON.parse(data) : data;

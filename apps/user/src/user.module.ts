@@ -27,7 +27,7 @@ import * as admin from 'firebase-admin';
     EventPublisherService,
     FacebookStrategy,
     GoogleStrategy,
-    FileUpload
+    FileUpload,
   ],
   exports: [UsersService],
 })
@@ -35,7 +35,10 @@ export class UserModule {
   constructor() {
     // Initialize Firebase only if not already initialized
     if (admin.apps.length === 0) {
-      console.log('Initializing Firebase with Project ID:', envConfig().firebase_projectId);
+      console.log(
+        'Initializing Firebase with Project ID:',
+        envConfig().firebase_projectId,
+      );
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: envConfig().firebase_projectId,

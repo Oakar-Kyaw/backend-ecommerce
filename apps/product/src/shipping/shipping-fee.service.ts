@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { CreateShippingFeeDto } from '../../dto/create-shipping-fee.dto';
 import * as XLSX from 'xlsx';
 import { PRISMA } from 'apps/product/prisma/prisma.service';
@@ -29,7 +34,7 @@ export class ShippingFeeService {
     pageSize?: string;
   }) {
     const where: any = { isDeleted: false };
-    
+
     // Search
     if (query?.search) {
       const searchNum = Number(query.search);
@@ -41,7 +46,7 @@ export class ShippingFeeService {
 
     // Filters
     if (query?.country) where.country = query.country;
-    
+
     // Weight Filter
     const exactW = query?.weight ? Number(query.weight) : undefined;
     const minW = query?.minWeight ? Number(query.minWeight) : undefined;
@@ -75,10 +80,20 @@ export class ShippingFeeService {
     }
 
     const [items, total] = await Promise.all([
-      this.prisma.shippingFee.findMany({ where, orderBy, skip, take: pageSize }),
+      this.prisma.shippingFee.findMany({
+        where,
+        orderBy,
+        skip,
+        take: pageSize,
+      }),
       this.prisma.shippingFee.count({ where }),
     ]);
-    return { success: true, message: 'LIST_OF_SHIPPING_FEES', data: items, meta: { page, pageSize, total } };
+    return {
+      success: true,
+      message: 'LIST_OF_SHIPPING_FEES',
+      data: items,
+      meta: { page, pageSize, total },
+    };
   }
 
   async findOne(id: number) {
@@ -93,17 +108,25 @@ export class ShippingFeeService {
     if (dto.country || dto.weightKg) {
       const country = dto.country ?? exists.country;
       const weightKg = dto.weightKg ?? exists.weightKg;
-      const dup = await this.prisma.shippingFee.findFirst({ where: { country, weightKg, isDeleted: false, NOT: { id } } });
+      const dup = await this.prisma.shippingFee.findFirst({
+        where: { country, weightKg, isDeleted: false, NOT: { id } },
+      });
       if (dup) throw new ConflictException('SHIPPING_FEE_EXISTS');
     }
-    const updated = await this.prisma.shippingFee.update({ where: { id }, data: dto });
+    const updated = await this.prisma.shippingFee.update({
+      where: { id },
+      data: dto,
+    });
     return { success: true, message: 'UPDATED_SHIPPING_FEE', data: updated };
   }
 
   async remove(id: number) {
     const exists = await this.prisma.shippingFee.findUnique({ where: { id } });
     if (!exists || exists.isDeleted) throw new NotFoundException('NOT_FOUND');
-    const deleted = await this.prisma.shippingFee.update({ where: { id }, data: { isDeleted: true } });
+    const deleted = await this.prisma.shippingFee.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
     return { success: true, message: 'DELETED_SHIPPING_FEE', data: deleted };
   }
 

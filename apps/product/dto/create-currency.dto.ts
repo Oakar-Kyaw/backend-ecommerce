@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateCurrencyDto {
   @ApiProperty({ example: 'USD', description: 'Currency code' })
@@ -17,12 +23,19 @@ export class CreateCurrencyDto {
   @IsNotEmpty()
   symbol: string;
 
-  @ApiProperty({ example: 1.0, description: 'Exchange rate relative to base currency' })
+  @ApiProperty({
+    example: 1.0,
+    description: 'Exchange rate relative to base currency',
+  })
   @IsNumber()
   @IsNotEmpty()
   exchangeRate: number;
 
-  @ApiProperty({ example: false, description: 'Is default currency', required: false })
+  @ApiProperty({
+    example: false,
+    description: 'Is default currency',
+    required: false,
+  })
   @IsBoolean()
   @IsOptional()
   isDefault?: boolean;

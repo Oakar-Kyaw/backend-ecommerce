@@ -74,7 +74,7 @@ export class UsersService {
 
     if (dto.role && ['USER', 'CUSTOMER'].includes(String(dto.role))) {
       const otp = (createUserDto as any).otp;
-      console.log("otp is ", otp)
+      console.log('otp is ', otp);
       if (!otp) throw new UnauthorizedException('OTP_REQUIRED');
       const key = `otp:signup:${email}`;
       const stored = await this.redis.get(key);
@@ -96,17 +96,17 @@ export class UsersService {
         console.error('Error creating Firebase user:', error);
         // If user already exists in Firebase, we proceed to create in our DB (syncing)
         if (error.code !== 'auth/email-already-exists') {
-           // For other errors, we might want to throw or just log. 
-           // If Firebase is critical, we should throw.
-           // throw new ConflictException(`Firebase Error: ${error.message}`);
-           console.warn(`Failed to create Firebase user: ${error.message}`);
+          // For other errors, we might want to throw or just log.
+          // If Firebase is critical, we should throw.
+          // throw new ConflictException(`Firebase Error: ${error.message}`);
+          console.warn(`Failed to create Firebase user: ${error.message}`);
         } else {
-           console.log(`User ${email} already exists in Firebase.`);
+          console.log(`User ${email} already exists in Firebase.`);
         }
       }
     }
     //delete otp in payload which doesn't exist in db table
-    delete dto.otp
+    delete dto.otp;
     // check if brand exists
     if (brandId) {
       // check if brand exists
@@ -115,7 +115,7 @@ export class UsersService {
       });
       if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
     }
-    
+
     const roleValue = dto.role === 'USER' ? 'CUSTOMER' : dto.role;
     const user = await this.prisma.user.create({
       data: {
@@ -128,12 +128,12 @@ export class UsersService {
 
     console.log('user: ', user);
     // 4️link brand if provided
-   if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
+    if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
-    QueueServices.map(async (name)=>{
-      console.log("sending data to ", name)
+    QueueServices.map(async (name) => {
+      console.log('sending data to ', name);
       await this.eventPublisher.createUser(name, user);
-    })
+    });
     //send welcome message
     await this.eventPublisher.sendEmail({
       to: email,
@@ -323,11 +323,11 @@ export class UsersService {
     const key = `otp:${mode || 'signup'}:${email}`;
     await this.redis.set(key, otp, 'EX', 300);
     try {
-       this.eventPublisher.sendEmail({
-          to: email,
-         subject: 'Your verification code',
-         html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
-       })
+      this.eventPublisher.sendEmail({
+        to: email,
+        subject: 'Your verification code',
+        html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
     } catch (err) {
       console.error('OTP email send failed', err);
       // Continue returning success so the user can verify with the stored OTP
@@ -347,7 +347,7 @@ export class UsersService {
     if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
-    console.log("otp",otp, key, stored)
+    console.log('otp', otp, key, stored);
     if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
     if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
     await this.redis.del(key);
@@ -382,7 +382,7 @@ export class UsersService {
   async update(
     id: number,
     updateUserDto: UpdateUserWithProfileDto,
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ) {
     //console.log("req", req["user"])
     //   const loginuser = await this.prisma.user.findUnique({
@@ -405,9 +405,14 @@ export class UsersService {
 
     if (file)
       imageUrl = (
-        await this.uploadFile .uploadSingle({ file, folderName: 'profile' })
+        await this.uploadFile.uploadSingle({ file, folderName: 'profile' })
       ).url;
-    console.log('existing other user', existingOtherUser, "photo url", imageUrl);
+    console.log(
+      'existing other user',
+      existingOtherUser,
+      'photo url',
+      imageUrl,
+    );
 
     if (existingOtherUser)
       throw new ConflictException(
@@ -420,7 +425,7 @@ export class UsersService {
     //console.log("update user data: ", updateUserDto)
     const { brandId, otp, ...rawDto } = updateUserDto;
 
-    //remove null field 
+    //remove null field
     const dto = this.removeEmptyFields(rawDto);
 
     if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
@@ -435,7 +440,7 @@ export class UsersService {
       },
       include: { brandUserRelationship: { include: { brand: true } } },
     });
-    console.log("updated user :", updateUser, dto, imageUrl)
+    console.log('updated user :', updateUser, dto, imageUrl);
     this.eventPublisher.userUpdated(updateUser);
     return {
       success: true,
@@ -558,7 +563,7 @@ export class UsersService {
         photoUrl: picture,
       },
     });
-  //  this.eventPublisher.createUser(,user);
+    //  this.eventPublisher.createUser(,user);
     return {
       success: true,
       message: 'User has been created successfully.',
@@ -655,7 +660,7 @@ export class UsersService {
         where: { deviceToken },
       });
     }
-    
+
     return { success: true };
   }
 
@@ -673,25 +678,24 @@ export class UsersService {
       GROUP BY month
       ORDER BY month ASC
     `;
-    
+
     // Format to array of 12 months
     const monthlyRegistrations = Array(12).fill(0);
-    (usersByMonth as any[]).forEach(item => {
-        monthlyRegistrations[item.month - 1] = item.count;
+    (usersByMonth as any[]).forEach((item) => {
+      monthlyRegistrations[item.month - 1] = item.count;
     });
 
     return {
-        year,
-        monthlyRegistrations
+      year,
+      monthlyRegistrations,
     };
   }
 
   removeEmptyFields<T extends Record<string, any>>(obj: T): Partial<T> {
     return Object.fromEntries(
       Object.entries(obj).filter(
-        ([_, value]) => value !== null && value !== undefined && value !== ''
-      )
+        ([_, value]) => value !== null && value !== undefined && value !== '',
+      ),
     ) as Partial<T>;
-}
-
+  }
 }

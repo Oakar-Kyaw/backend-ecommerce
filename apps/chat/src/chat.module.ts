@@ -18,8 +18,8 @@ import { envConfig } from 'libs/config/envConfig';
       useFactory: () => ({
         uri: envConfig().chat_service_db,
         connectionFactory(connection) {
-            console.log("Social Db is connected: ")
-            return connection;
+          console.log('Social Db is connected: ');
+          return connection;
         },
       }),
     }),

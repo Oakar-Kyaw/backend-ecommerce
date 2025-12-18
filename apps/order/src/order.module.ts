@@ -3,7 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 import { Order, OrderSchema } from './schemas/order.schema';
-import { ShippingLocation, ShippingLocationSchema } from './schemas/shipping-location.schema';
+import {
+  ShippingLocation,
+  ShippingLocationSchema,
+} from './schemas/shipping-location.schema';
 import { envConfig } from 'libs/config/envConfig';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PublishMessageModule } from 'libs/queue/publish.module';
@@ -17,7 +20,7 @@ import { OrderWorker } from './order.worker';
     MongooseModule.forFeature([
       { name: Order.name, schema: OrderSchema },
       { name: ShippingLocation.name, schema: ShippingLocationSchema },
-      { name: User.name, schema: UserSchema }
+      { name: User.name, schema: UserSchema },
     ]),
     PublishMessageModule,
     ClientsModule.register([

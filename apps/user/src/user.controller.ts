@@ -58,7 +58,6 @@ export class UsersController {
     private readonly fileUploadService: FileUpload,
   ) {}
 
-
   @Post('device-token')
   @ApiOperation({ summary: 'Sync device token' })
   syncDeviceToken(@Body() dto: SyncDeviceTokenDto) {

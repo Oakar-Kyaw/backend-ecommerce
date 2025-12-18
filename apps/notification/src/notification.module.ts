@@ -36,7 +36,7 @@ import { CREATED_NOTIFICATION_SERVICE_QUEUE } from 'libs/queue/constant';
   ],
   controllers: [NotificationController],
   providers: [NotificationService, PrismaService, NotificationWorker],
-  exports: [NotificationService]
+  exports: [NotificationService],
 })
 export class NotificationModule {
   constructor() {

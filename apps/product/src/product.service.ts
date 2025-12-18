@@ -1,6 +1,14 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'apps/product/prisma/prisma.service';
-import { CreateProductDto, ParsedColor, ParsedSize } from '../dto/create-product.dto';
+import {
+  CreateProductDto,
+  ParsedColor,
+  ParsedSize,
+} from '../dto/create-product.dto';
 import { FileUpload } from 'libs/utils/file-upload';
 import axios from 'axios';
 import { envConfig } from 'libs/config/envConfig';
@@ -12,7 +20,10 @@ export class ProductService {
     private readonly fileUpload: FileUpload,
   ) {}
 
-  async create(createProductDto: CreateProductDto, files: Array<Express.Multer.File>) {
+  async create(
+    createProductDto: CreateProductDto,
+    files: Array<Express.Multer.File>,
+  ) {
     // 1. Parse JSON fields
     let colors: ParsedColor[] = [];
     let sizes: ParsedSize[] = [];
@@ -24,11 +35,14 @@ export class ProductService {
     }
 
     // 2. Upload Main Image
-    const mainImageFile = files.find(f => f.fieldname === 'mainImage');
+    const mainImageFile = files.find((f) => f.fieldname === 'mainImage');
     if (!mainImageFile) {
-        throw new BadRequestException('Main image is required');
+      throw new BadRequestException('Main image is required');
     }
-    const mainImageUpload = await this.fileUpload.uploadSingle({ file: mainImageFile, folderName: 'products' });
+    const mainImageUpload = await this.fileUpload.uploadSingle({
+      file: mainImageFile,
+      folderName: 'products',
+    });
     const mainImageUrl = mainImageUpload.url;
 
     // 3. Create Product
@@ -43,7 +57,9 @@ export class ProductService {
         mainImage: mainImageUrl,
         brandId: parseInt(createProductDto.brandId),
         categoryId: parseInt(createProductDto.categoryId),
-        subCategoryId: createProductDto.subcategoryId ? parseInt(createProductDto.subcategoryId) : null,
+        subCategoryId: createProductDto.subcategoryId
+          ? parseInt(createProductDto.subcategoryId)
+          : null,
       },
     });
 
@@ -51,59 +67,67 @@ export class ProductService {
     const colorIdMap = new Map<string, number>(); // tempId -> dbId
 
     for (const color of colors) {
-        // Upload images for this color
-        const views = ['front', 'back', 'sideL', 'sideR'];
-        const imageUrls: Record<string, string | null> = { front: null, back: null, sideL: null, sideR: null };
+      // Upload images for this color
+      const views = ['front', 'back', 'sideL', 'sideR'];
+      const imageUrls: Record<string, string | null> = {
+        front: null,
+        back: null,
+        sideL: null,
+        sideR: null,
+      };
 
-        for (const view of views) {
-            const fieldName = `color_${color.id}_${view}`;
-            const file = files.find(f => f.fieldname === fieldName);
-            if (file) {
-                const upload = await this.fileUpload.uploadSingle({ file, folderName: 'products/colors' });
-                imageUrls[view] = upload.url;
-            }
+      for (const view of views) {
+        const fieldName = `color_${color.id}_${view}`;
+        const file = files.find((f) => f.fieldname === fieldName);
+        if (file) {
+          const upload = await this.fileUpload.uploadSingle({
+            file,
+            folderName: 'products/colors',
+          });
+          imageUrls[view] = upload.url;
         }
+      }
 
-        const createdColor = await this.prisma.productColor.create({
-            data: {
-                productId: product.id,
-                name: color.name,
-                hex: color.hex,
-                imageFront: imageUrls.front,
-                imageBack: imageUrls.back,
-                imageSideL: imageUrls.sideL,
-                imageSideR: imageUrls.sideR,
-            }
-        });
-        colorIdMap.set(color.id, createdColor.id);
+      const createdColor = await this.prisma.productColor.create({
+        data: {
+          productId: product.id,
+          name: color.name,
+          hex: color.hex,
+          imageFront: imageUrls.front,
+          imageBack: imageUrls.back,
+          imageSideL: imageUrls.sideL,
+          imageSideR: imageUrls.sideR,
+        },
+      });
+      colorIdMap.set(color.id, createdColor.id);
     }
 
     // 5. Process Sizes and Variants
     for (const size of sizes) {
-        const createdSize = await this.prisma.productSize.create({
-            data: {
-                productId: product.id,
-                name: size.name,
-                price: size.price,
-            }
-        });
+      const createdSize = await this.prisma.productSize.create({
+        data: {
+          productId: product.id,
+          name: size.name,
+          price: size.price,
+        },
+      });
 
-        // Quantities
-        if (size.quantities) {
-            for (const [colorTempId, quantity] of Object.entries(size.quantities)) {
-                const colorDbId = colorIdMap.get(colorTempId);
-                if (colorDbId) {
-                    await this.prisma.productVariant.create({
-                        data: {
-                            productId: product.id,
-                            productSizeId: createdSize.id,
-                            productColorId: colorDbId,
-                            quantity: quantity,
-                        }
-                    });
-                }
-            }
+      // Quantities
+      if (size.quantities) {
+        for (const [colorTempId, quantity] of Object.entries(size.quantities)) {
+          const colorDbId = colorIdMap.get(colorTempId);
+          if (colorDbId) {
+            await this.prisma.productVariant.create({
+              data: {
+                productId: product.id,
+                productSizeId: createdSize.id,
+                productColorId: colorDbId,
+                quantity: quantity,
+              },
+            });
+          }
         }
+      }
     }
 
     return this.findOne(product.id);
@@ -137,11 +161,11 @@ export class ProductService {
 
     const totalPages = Math.ceil(total / pageSize);
     const enrichedProducts = await Promise.all(
-        products.map(async (product) => {
-            const mapped = this.mapToResponse(product).data;
-            const brand = await this.fetchBrandDetails(product.brandId);
-            return { ...mapped, brand };
-        })
+      products.map(async (product) => {
+        const mapped = this.mapToResponse(product).data;
+        const brand = await this.fetchBrandDetails(product.brandId);
+        return { ...mapped, brand };
+      }),
     );
 
     return {
@@ -158,37 +182,39 @@ export class ProductService {
   }
 
   async findOne(id: number) {
-      const product = await this.prisma.product.findUnique({
-          where: { id, isDeleted: false },
-          include: {
-              colors: true,
-              sizes: true,
-              variants: true,
-          }
-      });
-      if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+    const product = await this.prisma.product.findUnique({
+      where: { id, isDeleted: false },
+      include: {
+        colors: true,
+        sizes: true,
+        variants: true,
+      },
+    });
+    if (!product)
+      throw new NotFoundException(`Product with ID ${id} not found`);
 
-      const brand = await this.fetchBrandDetails(product.brandId);
+    const brand = await this.fetchBrandDetails(product.brandId);
 
-      // Map to response format
-      const mapped = this.mapToResponse(product).data;
-      return {
-          success: true,
-          message: 'ITEM_BY_ID',
-          data: { ...mapped, brand }
-      };
+    // Map to response format
+    const mapped = this.mapToResponse(product).data;
+    return {
+      success: true,
+      message: 'ITEM_BY_ID',
+      data: { ...mapped, brand },
+    };
   }
 
   async remove(id: number) {
-      const product = await this.prisma.product.findUnique({ where: { id } });
-      if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+    const product = await this.prisma.product.findUnique({ where: { id } });
+    if (!product)
+      throw new NotFoundException(`Product with ID ${id} not found`);
 
-      await this.prisma.product.update({
-          where: { id },
-          data: { isDeleted: true }
-      });
+    await this.prisma.product.update({
+      where: { id },
+      data: { isDeleted: true },
+    });
 
-      return { message: 'Product deleted successfully' };
+    return { message: 'Product deleted successfully' };
   }
 
   private async fetchBrandDetails(brandId: number) {
@@ -201,7 +227,10 @@ export class ProductService {
       const response = await axios.get(url);
       return response.data.data;
     } catch (error) {
-      console.error(`Error fetching brand details for ID ${brandId}:`, error.message);
+      console.error(
+        `Error fetching brand details for ID ${brandId}:`,
+        error.message,
+      );
       if (error.response) {
         console.error('Error response status:', error.response.status);
         console.error('Error response data:', error.response.data);
@@ -211,49 +240,49 @@ export class ProductService {
   }
 
   private mapToResponse(product: any) {
-      const colors = product.colors.map(c => ({
-          id: c.id.toString(),
-          name: c.name,
-          hex: c.hex,
-          images: {
-              front: c.imageFront,
-              back: c.imageBack,
-              sideL: c.imageSideL,
-              sideR: c.imageSideR,
-          }
-      }));
+    const colors = product.colors.map((c) => ({
+      id: c.id.toString(),
+      name: c.name,
+      hex: c.hex,
+      images: {
+        front: c.imageFront,
+        back: c.imageBack,
+        sideL: c.imageSideL,
+        sideR: c.imageSideR,
+      },
+    }));
 
-      const sizes = product.sizes.map(s => {
-          const quantities: Record<string, number> = {};
-          const variants = product.variants.filter(v => v.productSizeId === s.id);
-          variants.forEach(v => {
-             quantities[v.productColorId.toString()] = v.quantity;
-          });
-          
-          return {
-              id: s.id.toString(),
-              name: s.name,
-              price: s.price,
-              quantities
-          };
+    const sizes = product.sizes.map((s) => {
+      const quantities: Record<string, number> = {};
+      const variants = product.variants.filter((v) => v.productSizeId === s.id);
+      variants.forEach((v) => {
+        quantities[v.productColorId.toString()] = v.quantity;
       });
 
       return {
-          data: {
-            id: product.id.toString(),
-            name: product.name,
-            code: product.code,
-            type: product.type,
-            weight: product.weight,
-            discountPercent: product.discountPercent,
-            brandId: product.brandId,
-            categoryId: product.categoryId.toString(),
-            subcategoryId: product.subCategoryId?.toString(),
-            description: product.description,
-            mainImage: product.mainImage,
-            colors,
-            sizes
-          }
+        id: s.id.toString(),
+        name: s.name,
+        price: s.price,
+        quantities,
       };
+    });
+
+    return {
+      data: {
+        id: product.id.toString(),
+        name: product.name,
+        code: product.code,
+        type: product.type,
+        weight: product.weight,
+        discountPercent: product.discountPercent,
+        brandId: product.brandId,
+        categoryId: product.categoryId.toString(),
+        subcategoryId: product.subCategoryId?.toString(),
+        description: product.description,
+        mainImage: product.mainImage,
+        colors,
+        sizes,
+      },
+    };
   }
 }

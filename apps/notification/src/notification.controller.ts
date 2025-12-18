@@ -10,7 +10,7 @@ import { EventPattern, Payload } from '@nestjs/microservices';
 @Controller('api/v1')
 export class NotificationController {
   constructor(private readonly pushNotificationService: NotificationService) {}
-  
+
   @EventPattern('notify_order')
   async handleOrderNotification(@Payload() data: any) {
     console.log('Received notify_order event', data);
