@@ -24,21 +24,27 @@ export class OrderService {
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const { items, shippingFee = 0, tax = 0, shippingAddress, ...orderData } = createOrderDto;
 
-    // Populate brandId for items if missing
-    await Promise.all(items.map(async (item) => {
-      if (!item.brandId) {
+    // Populate brandId for items if missing and fetch product names
+    const enrichedItems = await Promise.all(items.map(async (item) => {
+      let productName = 'Product';
+      if (!item.brandId || true) { // Always fetch for name
         try {
           const response = await axios.get(`http://localhost:${envConfig().product_service_port}/api/v1/products/${item.productId}`);
-          if (response.data?.data?.brandId) {
-            item.brandId = response.data.data.brandId;
+          if (response.data?.data) {
+             const product = response.data.data;
+             productName = product.name || 'Product';
+             if (!item.brandId) {
+                item.brandId = product.brandId;
+             }
           } else {
-             throw new NotFoundException(`Brand ID not found for product ${item.productId}`);
+             if (!item.brandId) throw new NotFoundException(`Brand ID not found for product ${item.productId}`);
           }
         } catch (error) {
           console.error(`Failed to fetch product details for ${item.productId}:`, error.message);
-          throw new NotFoundException(`Product ${item.productId} not found or Brand ID missing`);
+          if (!item.brandId) throw new NotFoundException(`Product ${item.productId} not found or Brand ID missing`);
         }
       }
+      return { ...item, name: productName };
     }));
 
     // Create and save shipping location
@@ -70,23 +76,33 @@ export class OrderService {
     // Emit notification
     try {
       const userData = await this.userModel.findOne({ userId: savedOrder.userId})
-      this.eventPublisher.sendOrderNotification({
+      
+      await this.eventPublisher.sendOrderNotification({
         orderId: String(savedOrder._id),
         userId: savedOrder.userId,
         totalAmount: savedOrder.totalAmount,
         status: savedOrder.status,
         email: userData?.email || null,
+        items: enrichedItems,
+        shippingAddress: savedLocation
       });
 
       // Notify brands
-      const brandIds = [...new Set(items.map(item => item.brandId))];
-      for (const brandId of brandIds) {
-        const brandItems = items.filter(item => item.brandId === brandId);
+      const brandItems = enrichedItems.reduce((acc, item) => {
+        if (!acc[item.brandId]) {
+          acc[item.brandId] = [];
+        }
+        acc[item.brandId].push(item);
+        return acc;
+      }, {});
+
+      for (const [brandId, items] of Object.entries(brandItems)) {
         this.notificationClient.emit('notify_brand_order', {
           brandId,
           orderId: savedOrder._id,
-          items: brandItems,
+          items,
           status: savedOrder.status,
+          shippingAddress: savedLocation
         });
       }
     } catch (error) {
@@ -126,7 +142,7 @@ export class OrderService {
       id,
       { status },
       { new: true },
-    );
+    ).populate('shippingLocationId');
     if (!order) {
       throw new NotFoundException(`Order #${id} not found`);
     }
@@ -138,7 +154,9 @@ export class OrderService {
         userId: order.userId,
         totalAmount: order.totalAmount,
         status: order.status,
-        email: userData?.email || null
+        email: userData?.email || null,
+        items: order.items,
+        shippingAddress: order.shippingLocationId
     })
 
     return order;
@@ -413,13 +431,9 @@ export class OrderService {
   private async fetchUserDetails(userId: string) {
     try {
       const response = await axios.get(`http://localhost:${envConfig().user_service_port}/api/v1/users/${userId}`);
-      console.log('Fetched user details for:', userId, 'Response:', response.data);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching user details for:', userId, error.message);
-      if (error.response) {
-        console.error('Error response data:', error.response.data);
-      }
       return null;
     }
   }

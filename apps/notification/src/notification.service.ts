@@ -71,7 +71,7 @@ export class NotificationService {
   }
 
   async sendOrderNotification(payload: any) {
-    let { email, name, userId, orderId, totalAmount, status } = payload;
+    let { email, name, userId, orderId, totalAmount, status, items, shippingAddress } = payload;
     
     console.log("send order notif: ", payload)
     if (!email && userId) {
@@ -81,11 +81,59 @@ export class NotificationService {
 
     // 1. Send Email
     if (email) {
-        await this.emailService.sendNotificationEmail(
-            email,
-            `Order #${orderId} ${status}`,
-            `Hi ${name || 'Customer'}, your order #${orderId} has been ${status}. Total: $${totalAmount}`
-        );
+        const itemsHtml = items && items.length ? items.map((item: any) => `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.name || item.productId}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.quantity}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price * item.quantity}</td>
+            </tr>
+        `).join('') : '<tr><td colspan="4">No details available</td></tr>';
+
+        const addressHtml = shippingAddress ? `
+            <div style="margin-top: 20px; padding: 15px; background-color: #f9f9f9; border-radius: 5px;">
+                <h4 style="margin: 0 0 10px 0; color: #555;">Shipping Address</h4>
+                <p style="margin: 0; color: #666;">
+                    ${shippingAddress.address}, ${shippingAddress.city}<br>
+                    Phone: ${shippingAddress.phone}
+                </p>
+            </div>
+        ` : '';
+
+        const fullHtml = `
+            <h2 style="color: #333;">Order Update</h2>
+            <p>Hi ${name || 'Customer'},</p>
+            <p>Your order <strong>#${orderId}</strong> status is now: <span style="color: #0b6fff; font-weight: bold;">${status}</span></p>
+            
+            <h3 style="margin-top: 20px; color: #444;">Order Details</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                    <tr style="background-color: #f4f4f4;">
+                        <th style="text-align: left; padding: 12px; color: #555;">Product</th>
+                        <th style="text-align: left; padding: 12px; color: #555;">Qty</th>
+                        <th style="text-align: left; padding: 12px; color: #555;">Price</th>
+                        <th style="text-align: left; padding: 12px; color: #555;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align: right; padding: 12px; font-weight: bold;">Total Amount:</td>
+                        <td style="padding: 12px; font-weight: bold;">$${totalAmount}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            ${addressHtml}
+        `;
+
+        await this.emailService.sendEmail({
+            to: email,
+            subject: `Order #${orderId} ${status}`,
+            html: fullHtml
+        });
     }
 
     // 2. Send Push
@@ -132,7 +180,7 @@ export class NotificationService {
       const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
       if (isNaN(id)) return null;
       
-      const user =  await this.prisma.users.findFirst({
+      const user =  await this.prisma.user.findFirst({
         where: {
            userId
         }
@@ -203,7 +251,7 @@ export class NotificationService {
     }
   }
   async sendBrandOrderNotification(payload: any) {
-    const { brandId, orderId, items, status } = payload;
+    const { brandId, orderId, items, status, shippingAddress } = payload;
     console.log(`Processing notification for Brand ${brandId} regarding Order #${orderId}`);
     
     // 1. Fetch Brand Details (Email)
@@ -212,8 +260,18 @@ export class NotificationService {
     if (brand && brand.email) {
         // 2. Send Email to Brand
         const itemsListHtml = items.map((item: any) => 
-            `<li>${item.quantity}x Product ID ${item.productId} - $${item.price}</li>`
+            `<li>${item.quantity}x ${item.name || item.productId} - $${item.price}</li>`
         ).join('');
+
+        const addressHtml = shippingAddress ? `
+            <div style="margin-top: 20px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee;">
+                <h4 style="margin: 0 0 5px 0;">Shipping Details</h4>
+                <p style="margin: 0;">
+                    ${shippingAddress.address}, ${shippingAddress.city}<br>
+                    Phone: ${shippingAddress.phone}
+                </p>
+            </div>
+        ` : '';
 
         await this.emailService.sendNotificationEmail(
             brand.email,
@@ -223,6 +281,7 @@ export class NotificationService {
              <p>You have received a new order #${orderId}.</p>
              <p><strong>Status:</strong> ${status}</p>
              <ul>${itemsListHtml}</ul>
+             ${addressHtml}
              <p>Please log in to your dashboard to manage this order.</p>`
         );
         console.log(`Email sent to brand ${brand.name} at ${brand.email}`);

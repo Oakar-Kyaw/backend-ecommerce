@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
   UseInterceptors,
 } from '@nestjs/common';
+import * as admin from 'firebase-admin';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
 import {
   getPagination,
@@ -80,6 +81,29 @@ export class UsersService {
       if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
       if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
       await this.redis.del(key);
+
+      // Create user in Firebase Auth
+      try {
+        await admin.auth().createUser({
+          email: email,
+          password: createUserDto.password,
+          displayName: `${createUserDto.firstName} ${createUserDto.lastName}`,
+          emailVerified: true,
+          ...(phone && { phoneNumber: phone }),
+        });
+        console.log(`Firebase user created for ${email}`);
+      } catch (error) {
+        console.error('Error creating Firebase user:', error);
+        // If user already exists in Firebase, we proceed to create in our DB (syncing)
+        if (error.code !== 'auth/email-already-exists') {
+           // For other errors, we might want to throw or just log. 
+           // If Firebase is critical, we should throw.
+           // throw new ConflictException(`Firebase Error: ${error.message}`);
+           console.warn(`Failed to create Firebase user: ${error.message}`);
+        } else {
+           console.log(`User ${email} already exists in Firebase.`);
+        }
+      }
     }
     //delete otp in payload which doesn't exist in db table
     delete dto.otp
@@ -295,6 +319,7 @@ export class UsersService {
   async sendOtp({ email, mode }: { email: string; mode?: string }) {
     if (!email) throw new NotFoundException('EMAIL_REQUIRED');
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(`DEBUG OTP for ${email}: ${otp}`);
     const key = `otp:${mode || 'signup'}:${email}`;
     await this.redis.set(key, otp, 'EX', 300);
     try {

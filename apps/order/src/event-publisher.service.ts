@@ -17,14 +17,24 @@ import { PublishMessage } from 'libs/queue/publish';
 export class EventPublisherService {
   constructor(private readonly publishMessage: PublishMessage) {}
 
-  async sendOrderNotification(data: { orderId: string, userId: string, totalAmount: number, status: string, email: string | null}) {
+  async sendOrderNotification(data: { 
+    orderId: string, 
+    userId: string, 
+    totalAmount: number, 
+    status: string, 
+    email: string | null,
+    items: any[],
+    shippingAddress: any
+  }) {
     // 1️⃣ Publish to user service queue
     await this.publishMessage.publish(CREATED_NOTIFICATION_SERVICE_QUEUE, SEND_ORDER_NOTIFICATION,  {
         orderId: data.orderId,
         userId: data.userId,
         totalAmount: data.totalAmount,
         status: data.status,
-        email: data.email
+        email: data.email,
+        items: data.items,
+        shippingAddress: data.shippingAddress
         // name: user name is fetched by notification service if needed
       });
   }    
