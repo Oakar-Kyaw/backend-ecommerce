@@ -6,14 +6,14 @@ import {
 import admin from 'firebase-admin';
 import { EmailService } from './email.service';
 import { Role } from '@prisma/notification';
-import { PRISMA } from '../prisma/prisma.service';
+import { Noti_PRISMA } from '../prisma/prisma.service';
 import axios from 'axios';
 import { envConfig } from 'libs/config/envConfig';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    @Inject(PRISMA) private readonly prisma,
+    @Inject(Noti_PRISMA) private readonly prisma,
     //@Inject('USER') private readonly userClient: ClientProxy,
     private readonly emailService: EmailService,
   ) {}
@@ -73,6 +73,7 @@ export class NotificationService {
   async sendOrderNotification(payload: any) {
     let { email, name, userId, orderId, totalAmount, status } = payload;
     
+    console.log("send order notif: ", payload)
     if (!email && userId) {
         const userEmail = await this.getUserEmail(userId);
         if (userEmail) email = userEmail;
@@ -131,11 +132,16 @@ export class NotificationService {
       const id = typeof userId === 'string' ? parseInt(userId, 10) : userId;
       if (isNaN(id)) return null;
       
-      const response =  { data: {email: "oakarkyaw7090@gmail.com"}}
+      const user =  await this.prisma.users.findFirst({
+        where: {
+           userId
+        }
+      })
+      console.log("email", user)
       // await firstValueFrom(
       //   // this.userClient.send('get_user', { userId: id })
       // );
-      return response?.data?.email || null;
+      return user.email || null;
     } catch (error) {
       console.error(`Failed to fetch user ${userId}`, error);
       return null;

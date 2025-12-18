@@ -69,11 +69,11 @@ export class CreateUserWithProfileDto {
   @Transform(({ value }) => (value ? String(value).trim() : null))
   readonly phone?: string;
 
-  @Expose()
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }) => (value ? String(value).trim() : null))
-  readonly photoUrl?: string;
+  // @Expose()
+  // @IsOptional()
+  // @IsString()
+  // @Transform(({ value }) => (value ? String(value).trim() : null))
+  // readonly photoUrl?: string;
 
   @Expose()
   @IsOptional()

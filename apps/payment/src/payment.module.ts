@@ -6,6 +6,10 @@ import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { Transaction, TransactionSchema } from './schemas/transaction.schema';
 import { envConfig, GlobalConfigModule } from 'libs/config/envConfig';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { PublishMessageModule } from 'libs/queue/publish.module';
+import { EventPublisherService } from './event-publisher.service';
+import { PaymentWorker } from './payment.worker';
+import { User, UserSchema } from './schemas/user.schema';
 
 @Module({
   imports: [
@@ -14,7 +18,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     MongooseModule.forFeature([
       { name: Payment.name, schema: PaymentSchema },
       { name: Transaction.name, schema: TransactionSchema },
+      { name: User.name, schema: UserSchema }  
     ]),
+    PublishMessageModule,
     ClientsModule.register([
       {
         name: 'NOTIFICATION_SERVICE',
@@ -27,6 +33,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ]),
   ],
   controllers: [PaymentController],
-  providers: [PaymentService],
+  providers: [PaymentService, EventPublisherService, PaymentWorker],
 })
 export class PaymentModule {}

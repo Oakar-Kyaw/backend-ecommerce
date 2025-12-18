@@ -2,103 +2,107 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import {
+  CREATED_USER_SERVICE_QUEUE,
   CREATED_USER_JOB,
-  CREATED_USER_QUEUE,
-  DELETED_USER_JOB,
   UPDATED_USER_JOB,
+  DELETED_USER_JOB,
 } from 'libs/queue/constant';
 import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
 
 interface UserDto {
-  userId: number;
-  email: string;
+  userId?: number;
+  email?: string;
   phone?: string;
   password?: string;
   isDeleted?: boolean;
   role?: any;
 }
 
+// ✅ Job handler type
+type JobHandler = (job: Job) => Promise<any>;
+
 class UserService {
   constructor(@Inject(AUTH_PRISMA) private readonly prisma) {}
 
   async createUser(data: UserDto) {
-    // basic validation
-    console.log('user data: ', data);
     if (!data?.email) {
       throw new Error('Missing required fields: email');
     }
-    // create user via prisma
-    return await this.prisma.user.create({ data });
+    const existingUser = await this.prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+     if (existingUser) {
+        console.log(`User with email ${data.email} already exists, skipping creation.`);
+        return;
+     }
+    const createdUser = await this.prisma.user.create({ data });
+    const { password, ...safeUser } = createdUser;
+    return safeUser;
   }
 
   async updateUser(userId: number, data: UserDto) {
-    return await this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { userId },
-      data: data,
+      data,
     });
+    const { password, ...safeUser } = updatedUser;
+    return safeUser;
   }
 
   async deleteUser(userId: number) {
-    return await this.prisma.user.update({
+    const deletedUser = await this.prisma.user.update({
       where: { userId },
       data: { isDeleted: true },
     });
+    const { password, ...safeUser } = deletedUser;
+    return safeUser;
   }
 }
 
-@Processor(CREATED_USER_QUEUE)
+@Processor(CREATED_USER_SERVICE_QUEUE)
 export class AuthWorker extends WorkerHost {
+  private readonly handlers: Record<string, JobHandler>;
+
   constructor(@Inject(AUTH_PRISMA) private readonly prisma) {
     super();
+
+    const userService = new UserService(this.prisma);
+
+    // ✅ Register job handlers
+    this.handlers = {
+      [CREATED_USER_JOB]: async (job: Job) => {
+        const payload = job.data as UserDto;
+        return await userService.createUser(payload);
+      },
+      [UPDATED_USER_JOB]: async (job: Job) => {
+        const data = job.data as UserDto;
+        if (!data.userId) throw new Error('Missing userId for update');
+        return await userService.updateUser(data.userId, data);
+      },
+      [DELETED_USER_JOB]: async (job: Job) => {
+        const { userId } = job.data as UserDto;
+        if (!userId) throw new Error('Missing userId for deletion');
+        return await userService.deleteUser(userId);
+      },
+    };
   }
 
   async process(job: Job): Promise<any> {
-    const userService = new UserService(this.prisma);
+    console.log('Processing job:', job.name, job.data);
+    const handler = this.handlers[job.name];
+    if (!handler) {
+      throw new Error(`No handler registered for job: ${job.name}`);
+    }
 
     try {
-      console.log('Processing job:', job.name, job.data);
-      switch (job.name) {
-        case CREATED_USER_JOB: {
-          const payload = job.data as UserDto;
-          const createdUser = await userService.createUser(payload);
-          // remove sensitive fields before returning/logging
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...safeUser } = createdUser;
-          return safeUser;
-        }
-        case UPDATED_USER_JOB: {
-          const data = job.data as UserDto;
-          if (!data.userId) {
-            throw new Error('Missing userId for update');
-          }
-          const updatedUser = await userService.updateUser(
-            data.userId,
-            job.data,
-          );
-          // remove sensitive fields before returning/logging
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...safeUser } = updatedUser;
-          return safeUser;
-        }
-        case DELETED_USER_JOB: {
-          const { userId } = job.data as UserDto;
-          if (!userId) {
-            throw new Error('Missing userId for deletion');
-          }
-          const deletedUser = await userService.deleteUser(userId);
-          // remove sensitive fields before returning/logging
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { password, ...safeUser } = deletedUser;
-          return safeUser;
-        }
-
-        default:
-          throw new Error(`Unknown job name: ${job.name}`);
-      }
+      await handler(job);
     } catch (err) {
-      // bubble up the error so BullMQ can handle retries/failures
-      console.error(`AuthWorker failed on job ${job.id} (${job.name}):`, err);
-      throw err;
+      console.error(
+        `AuthWorker failed on job ${job.id} (${job.name}):`,
+        err,
+      );
+      throw err; // let BullMQ handle retries
     }
   }
 }

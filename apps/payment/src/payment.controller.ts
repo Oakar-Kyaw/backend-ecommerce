@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { EventPublisherService } from './event-publisher.service';
 
 @Controller( 'api/v1/payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(private readonly paymentService: PaymentService, private readonly eventPublisher: EventPublisherService) {}
 
   @Post()
   create(@Body() createPaymentDto: CreatePaymentDto) {
