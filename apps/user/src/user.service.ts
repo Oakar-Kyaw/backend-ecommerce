@@ -393,7 +393,11 @@ export class UsersService {
       updateUserDto.password = await hashedPassword(updateUserDto.password);
 
     //console.log("update user data: ", updateUserDto)
-    const { brandId, otp, ...dto } = updateUserDto;
+    const { brandId, otp, ...rawDto } = updateUserDto;
+
+    //remove null field 
+    const dto = this.removeEmptyFields(rawDto);
+
     if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
 
     const updateRole = dto['role'] === 'USER' ? 'CUSTOMER' : dto['role'];
@@ -656,4 +660,13 @@ export class UsersService {
         monthlyRegistrations
     };
   }
+
+  removeEmptyFields<T extends Record<string, any>>(obj: T): Partial<T> {
+    return Object.fromEntries(
+      Object.entries(obj).filter(
+        ([_, value]) => value !== null && value !== undefined && value !== ''
+      )
+    ) as Partial<T>;
+}
+
 }
