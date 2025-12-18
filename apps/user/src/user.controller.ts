@@ -84,6 +84,13 @@ export class UsersController {
     return this.usersService.create(createUserWithProfileDto);
   }
 
+  @Get('analytics/admin')
+  @ApiOperation({ summary: 'Get admin analytics (monthly user registrations)' })
+  @ApiQuery({ name: 'year', required: true, type: Number })
+  getAdminAnalytics(@Query('year', ParseIntPipe) year: number) {
+    return this.usersService.getAdminAnalytics(year);
+  }
+
   @Get()
   @Serialize(UserListResponseDto)
   @ApiOperation({ summary: 'Get list of users, optionally filtered by role' })

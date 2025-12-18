@@ -7,7 +7,7 @@ class OrderItemDto {
   productId: string;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   brandId: number;
 
   @IsNumber()

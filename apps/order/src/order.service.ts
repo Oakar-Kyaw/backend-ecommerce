@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import { ShippingLocation, ShippingLocationDocument } from './schemas/shipping-location.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -23,6 +23,23 @@ export class OrderService {
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
     const { items, shippingFee = 0, tax = 0, shippingAddress, ...orderData } = createOrderDto;
+
+    // Populate brandId for items if missing
+    await Promise.all(items.map(async (item) => {
+      if (!item.brandId) {
+        try {
+          const response = await axios.get(`http://localhost:${envConfig().product_service_port}/api/v1/products/${item.productId}`);
+          if (response.data?.data?.brandId) {
+            item.brandId = response.data.data.brandId;
+          } else {
+             throw new NotFoundException(`Brand ID not found for product ${item.productId}`);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch product details for ${item.productId}:`, error.message);
+          throw new NotFoundException(`Product ${item.productId} not found or Brand ID missing`);
+        }
+      }
+    }));
 
     // Create and save shipping location
     const createdLocation = new this.shippingLocationModel(shippingAddress);
@@ -170,6 +187,210 @@ export class OrderService {
     });
 
     return savedOrder;
+  }
+
+  async getAdminAnalytics(year: number) {
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year + 1, 0, 1);
+
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          createdAt: { $gte: startOfYear, $lt: endOfYear }
+        }
+      },
+      {
+        $facet: {
+          monthlyStats: [
+            {
+              $group: {
+                _id: { $month: "$createdAt" },
+                revenue: { $sum: "$totalAmount" },
+                salesCount: { $sum: 1 }
+              }
+            },
+            { $sort: { _id: 1 } }
+          ],
+          bestSellingItems: [
+            { $unwind: "$items" },
+            {
+              $group: {
+                _id: "$items.productId",
+                name: { $first: "$items.name" },
+                totalQuantity: { $sum: "$items.quantity" }
+              }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 5 }
+          ],
+          topBrands: [
+            { $unwind: "$items" },
+            {
+              $group: {
+                _id: "$items.brandId",
+                totalSales: { $sum: "$items.quantity" }
+              }
+            },
+            { $sort: { totalSales: -1 } },
+            { $limit: 5 }
+          ]
+        }
+      }
+    ];
+
+    const [results] = await this.orderModel.aggregate(pipeline);
+    
+    // Format monthly stats
+    const monthlyStats = Array(12).fill(0).map((_, i) => ({
+        month: i + 1,
+        revenue: 0,
+        salesCount: 0
+    }));
+    
+    results.monthlyStats.forEach((stat: any) => {
+        const index = stat._id - 1;
+        monthlyStats[index].revenue = stat.revenue;
+        monthlyStats[index].salesCount = stat.salesCount;
+    });
+
+    const bestSellingItemsWithNames = await Promise.all(results.bestSellingItems.map(async (item: any) => {
+        try {
+            // productId is stored as string in Order, but Product Service expects ID
+            // Assuming productId in Order matches Product ID (which is Int)
+            const response = await axios.get(`http://localhost:${envConfig().product_service_port}/api/v1/products/${item._id}`);
+            return {
+                _id: item._id,
+                name: response.data.data?.name || 'Unknown Product',
+                totalQuantity: item.totalQuantity
+            };
+        } catch (e) {
+            return {
+                _id: item._id,
+                name: 'Unknown Product',
+                totalQuantity: item.totalQuantity
+            };
+        }
+    }));
+
+    const topBrandsWithNames = await Promise.all(results.topBrands.map(async (brand: any) => {
+        try {
+            const response = await axios.get(`http://localhost:${envConfig().user_service_port}/api/v1/brands/${brand._id}`);
+            return {
+                brandId: brand._id,
+                name: response.data.data?.name || 'Unknown',
+                totalSales: brand.totalSales
+            };
+        } catch (e) {
+            return {
+                brandId: brand._id,
+                name: 'Unknown',
+                totalSales: brand.totalSales
+            };
+        }
+    }));
+
+    return {
+        year,
+        monthlyStats,
+        bestSellingItems: bestSellingItemsWithNames,
+        topBrands: topBrandsWithNames
+    };
+  }
+
+  async getBrandAnalytics(brandId: number, year: number) {
+    const startOfYear = new Date(year, 0, 1);
+    const endOfYear = new Date(year + 1, 0, 1);
+    const bId = Number(brandId);
+
+    const [results] = await this.orderModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfYear, $lt: endOfYear },
+          "items.brandId": bId
+        }
+      },
+      {
+        $facet: {
+          monthlyRevenueAndItems: [
+             { $unwind: "$items" },
+             { $match: { "items.brandId": bId } },
+             {
+               $group: {
+                 _id: { $month: "$createdAt" },
+                 revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } },
+                 itemsSold: { $sum: "$items.quantity" }
+               }
+             },
+             { $sort: { _id: 1 } }
+          ],
+          monthlyOrderCount: [
+             {
+               $group: {
+                 _id: { $month: "$createdAt" },
+                 orderCount: { $sum: 1 }
+               }
+             },
+             { $sort: { _id: 1 } }
+          ],
+          bestSellingItems: [
+            { $unwind: "$items" },
+            { $match: { "items.brandId": bId } },
+            {
+              $group: {
+                _id: "$items.productId",
+                name: { $first: "$items.name" },
+                totalQuantity: { $sum: "$items.quantity" }
+              }
+            },
+            { $sort: { totalQuantity: -1 } },
+            { $limit: 5 }
+          ]
+        }
+      }
+    ]);
+
+    // Merge monthly stats
+    const monthlyStats = Array(12).fill(0).map((_, i) => ({
+        month: i + 1,
+        revenue: 0,
+        saleCount: 0, 
+        itemsSold: 0
+    }));
+
+    results.monthlyRevenueAndItems.forEach((stat: any) => {
+        const index = stat._id - 1;
+        monthlyStats[index].revenue = stat.revenue;
+        monthlyStats[index].itemsSold = stat.itemsSold;
+    });
+
+    results.monthlyOrderCount.forEach((stat: any) => {
+        const index = stat._id - 1;
+        monthlyStats[index].saleCount = stat.orderCount;
+    });
+
+    const bestSellingItemsWithNames = await Promise.all(results.bestSellingItems.map(async (item: any) => {
+        try {
+            const response = await axios.get(`http://localhost:${envConfig().product_service_port}/api/v1/products/${item._id}`);
+            return {
+                _id: item._id,
+                name: response.data.data?.name || 'Unknown Product',
+                totalQuantity: item.totalQuantity
+            };
+        } catch (e) {
+            return {
+                _id: item._id,
+                name: 'Unknown Product',
+                totalQuantity: item.totalQuantity
+            };
+        }
+    }));
+
+    return {
+        brandId: bId,
+        year,
+        monthlyStats,
+        bestSellingItems: bestSellingItemsWithNames
+    };
   }
 
   private async populateOrderDetails(order: any) {

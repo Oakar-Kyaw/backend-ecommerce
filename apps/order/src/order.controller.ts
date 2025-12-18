@@ -11,6 +11,19 @@ export class OrderController {
     return this.orderService.create(createOrderDto);
   }
 
+  @Get('analytics/admin')
+  getAdminAnalytics(@Query('year') year: number) {
+    return this.orderService.getAdminAnalytics(Number(year));
+  }
+
+  @Get('analytics/brand/:brandId')
+  getBrandAnalytics(
+    @Param('brandId') brandId: number,
+    @Query('year') year: number,
+  ) {
+    return this.orderService.getBrandAnalytics(Number(brandId), Number(year));
+  }
+
   @Get()
   findAll(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.orderService.findAll(page, pageSize);

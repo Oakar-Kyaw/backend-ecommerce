@@ -629,4 +629,31 @@ export class UsersService {
     
     return { success: true };
   }
+
+  async getAdminAnalytics(year: number) {
+    // Registered Users by Month
+    // PostgreSQL specific date functions
+    const usersByMonth = await this.prisma.$queryRaw`
+      SELECT 
+        EXTRACT(MONTH FROM "createdAt")::int as month, 
+        COUNT(*)::int as count 
+      FROM "User" 
+      WHERE 
+        EXTRACT(YEAR FROM "createdAt") = ${year} 
+        AND "role" = 'CUSTOMER'
+      GROUP BY month
+      ORDER BY month ASC
+    `;
+    
+    // Format to array of 12 months
+    const monthlyRegistrations = Array(12).fill(0);
+    (usersByMonth as any[]).forEach(item => {
+        monthlyRegistrations[item.month - 1] = item.count;
+    });
+
+    return {
+        year,
+        monthlyRegistrations
+    };
+  }
 }
