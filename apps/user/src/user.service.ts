@@ -138,12 +138,31 @@ export class UsersService {
       await this.eventPublisher.createUser(name, user);
     });
     //send welcome message
-    await this.eventPublisher.sendEmail({
-      to: email,
-      subject: 'Welcome to Our Platform!',
-      html: `
+    let subject = 'Welcome to Our Platform!';
+    let htmlContent = '';
+    const fullName = [createUserDto.firstName, createUserDto.lastName].filter(Boolean).join(' ') || 'User';
+
+    if (dto.role === RoleEnum.SALE) {
+      subject = 'Welcome to Our Brand Provider Network!';
+      htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <h1 style="color: #4CAF50;">Welcome, ${createUserDto.firstName} ${createUserDto.lastName}!</h1>
+          <h1 style="color: #4CAF50;">Welcome, ${fullName}!</h1>
+          <p>We are thrilled to have you join us as a Brand Provider.</p>
+          <p>Your account has been successfully created. You can now start managing your brand and products on our platform.</p>
+          <p>Here are your next steps:</p>
+          <ul>
+            <li>Complete your brand profile</li>
+            <li>Upload your product catalog</li>
+            <li>Review your dashboard</li>
+          </ul>
+          <p>We look forward to a successful partnership!</p>
+          <p style="margin-top: 20px;">— The Team</p>
+        </div>
+      `;
+    } else {
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h1 style="color: #4CAF50;">Welcome, ${fullName}!</h1>
           <p>Thank you for joining our platform. We are excited to have you on board!</p>
           <p>Here is a quick tip to get started:</p>
           <ul>
@@ -153,7 +172,13 @@ export class UsersService {
           <p>We are here to help anytime. Enjoy your journey with us!</p>
           <p style="margin-top: 20px;">— The Team</p>
         </div>
-      `,
+      `;
+    }
+
+    await this.eventPublisher.sendEmail({
+      to: email,
+      subject: subject,
+      html: htmlContent,
     });
 
     return {
