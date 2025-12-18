@@ -136,16 +136,23 @@ export class ProductService {
   async findAll({
     page = 1,
     pageSize = 10,
+    brandId,
   }: {
     page?: number;
     pageSize?: number;
+    brandId?: number;
   } = {}) {
     const skip = (page - 1) * pageSize;
     const take = pageSize;
 
+    const where: any = { isDeleted: false };
+    if (brandId) {
+      where.brandId = brandId;
+    }
+
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
-        where: { isDeleted: false },
+        where,
         include: {
           colors: true,
           sizes: true,
@@ -155,7 +162,7 @@ export class ProductService {
         take,
       }),
       this.prisma.product.count({
-        where: { isDeleted: false },
+        where,
       }),
     ]);
 

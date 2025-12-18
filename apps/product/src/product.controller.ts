@@ -53,6 +53,7 @@ export class ProductController {
   @ApiOperation({ summary: 'Get list of products' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'pageSize', required: false, description: 'Page size' })
+  @ApiQuery({ name: 'brandId', required: false, description: 'Filter by Brand ID' })
   @ApiResponse({
     status: 200,
     description: 'List of products',
@@ -61,10 +62,12 @@ export class ProductController {
   async findAll(
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
+    @Query('brandId') brandId?: number,
   ) {
     return this.productService.findAll({
       page: page ? Number(page) : 1,
       pageSize: pageSize ? Number(pageSize) : 10,
+      brandId: brandId ? Number(brandId) : undefined,
     });
   }
 

@@ -114,7 +114,9 @@
     ],
     "moduleNameMapper": {
       "^@app/hash(|/.*)$": "<rootDir>/libs/hash/src/$1",
-      "^libs/env-config(|/.*)$": "<rootDir>/libs/env-config/src/$1"
+      "^libs/env-config(|/.*)$": "<rootDir>/libs/env-config/src/$1",
+      "^apps/(.*)$": "<rootDir>/apps/$1",
+      "^libs/(.*)$": "<rootDir>/libs/$1"
     }
   }
 }
