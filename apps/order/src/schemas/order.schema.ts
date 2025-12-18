@@ -7,6 +7,7 @@ export type OrderDocument = HydratedDocument<Order>;
 export enum OrderStatus {
   PENDING = 'PENDING',
   PAID = 'PAID',
+  CONFIRMED = 'CONFIRMED',
   FAILED = 'FAILED',
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
@@ -18,8 +19,8 @@ export class Order {
   @Prop({ required: true })
   userId: string;
 
-  @Prop({ required: true, type: [{ productId: String, quantity: Number, price: Number, color: String, size: String }] })
-  items: { productId: string; quantity: number; price: number; color?: string; size?: string }[];
+  @Prop({ required: true, type: [{ productId: String, brandId: Number, quantity: Number, price: Number, color: String, size: String }] })
+  items: { productId: string; brandId: number; quantity: number; price: number; color?: string; size?: string }[];
 
   @Prop({ required: true })
   totalAmount: number;
@@ -38,6 +39,9 @@ export class Order {
 
   @Prop({ required: true, enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
+
+  @Prop({ type: [{ brandId: Number, status: { type: String, enum: OrderStatus, default: OrderStatus.PENDING } }] })
+  brandStatuses: { brandId: number; status: OrderStatus }[];
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ShippingLocation' })
   shippingLocationId: ShippingLocation;

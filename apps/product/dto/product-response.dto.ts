@@ -44,6 +44,23 @@ export class ProductSizeResponseDto {
   quantities: Record<string, number>;
 }
 
+export class BrandDto {
+  @Expose()
+  id: number;
+
+  @Expose()
+  name: string;
+
+  @Expose()
+  code: string;
+
+  @Expose()
+  description: string;
+
+  @Expose()
+  photoUrl: string;
+}
+
 export class ProductResponseDto {
   @Expose()
   id: string;
@@ -62,6 +79,13 @@ export class ProductResponseDto {
 
   @Expose()
   discountPercent: number;
+
+  @Expose()
+  brandId: number;
+
+  @Expose()
+  @Type(() => BrandDto)
+  brand: BrandDto;
 
   @Expose()
   categoryId: string;

@@ -8,6 +8,10 @@ class OrderItemDto {
 
   @IsNumber()
   @IsNotEmpty()
+  brandId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   quantity: number;
 
   @IsNumber()

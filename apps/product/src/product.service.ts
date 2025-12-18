@@ -2,6 +2,8 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'apps/product/prisma/prisma.service';
 import { CreateProductDto, ParsedColor, ParsedSize } from '../dto/create-product.dto';
 import { FileUpload } from 'libs/utils/file-upload';
+import axios from 'axios';
+import { envConfig } from 'libs/config/envConfig';
 
 @Injectable()
 export class ProductService {
@@ -39,6 +41,7 @@ export class ProductService {
         discountPercent: parseFloat(createProductDto.discountPercent),
         description: createProductDto.description,
         mainImage: mainImageUrl,
+        brandId: parseInt(createProductDto.brandId),
         categoryId: parseInt(createProductDto.categoryId),
         subCategoryId: createProductDto.subcategoryId ? parseInt(createProductDto.subcategoryId) : null,
       },
@@ -133,11 +136,18 @@ export class ProductService {
     ]);
 
     const totalPages = Math.ceil(total / pageSize);
+    const enrichedProducts = await Promise.all(
+        products.map(async (product) => {
+            const mapped = this.mapToResponse(product).data;
+            const brand = await this.fetchBrandDetails(product.brandId);
+            return { ...mapped, brand };
+        })
+    );
 
     return {
       success: true,
       message: 'LIST_OF_ITEMS',
-      data: products.map((product) => this.mapToResponse(product).data),
+      data: enrichedProducts,
       part: total,
       page,
       pageSize,
@@ -158,11 +168,14 @@ export class ProductService {
       });
       if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
 
+      const brand = await this.fetchBrandDetails(product.brandId);
+
       // Map to response format
+      const mapped = this.mapToResponse(product).data;
       return {
           success: true,
           message: 'ITEM_BY_ID',
-          ...this.mapToResponse(product)
+          data: { ...mapped, brand }
       };
   }
 
@@ -176,6 +189,25 @@ export class ProductService {
       });
 
       return { message: 'Product deleted successfully' };
+  }
+
+  private async fetchBrandDetails(brandId: number) {
+    if (!brandId) {
+      console.log('fetchBrandDetails: brandId is missing');
+      return null;
+    }
+    try {
+      const url = `http://localhost:${envConfig().user_service_port}/api/v1/brands/${brandId}`;
+      const response = await axios.get(url);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error fetching brand details for ID ${brandId}:`, error.message);
+      if (error.response) {
+        console.error('Error response status:', error.response.status);
+        console.error('Error response data:', error.response.data);
+      }
+      return null;
+    }
   }
 
   private mapToResponse(product: any) {
@@ -214,6 +246,7 @@ export class ProductService {
             type: product.type,
             weight: product.weight,
             discountPercent: product.discountPercent,
+            brandId: product.brandId,
             categoryId: product.categoryId.toString(),
             subcategoryId: product.subCategoryId?.toString(),
             description: product.description,

@@ -30,6 +30,10 @@ export class OrderService {
     // Calculate total amount
     const totalAmount = subTotal + shippingFee + tax;
 
+    // Initialize brand statuses
+    const brandIds = [...new Set(items.map(item => item.brandId))];
+    const brandStatuses = brandIds.map(brandId => ({ brandId, status: 'PENDING' }));
+
     const createdOrder = new this.orderModel({
       ...orderData,
       items,
@@ -38,6 +42,7 @@ export class OrderService {
       subTotal,
       totalAmount,
       shippingLocationId: savedLocation._id,
+      brandStatuses,
     });
     const savedOrder = await createdOrder.save();
     
@@ -50,6 +55,18 @@ export class OrderService {
         status: savedOrder.status,
         // name: user name is fetched by notification service if needed
       });
+
+      // Notify brands
+      const brandIds = [...new Set(items.map(item => item.brandId))];
+      for (const brandId of brandIds) {
+        const brandItems = items.filter(item => item.brandId === brandId);
+        this.notificationClient.emit('notify_brand_order', {
+          brandId,
+          orderId: savedOrder._id,
+          items: brandItems,
+          status: savedOrder.status,
+        });
+      }
     } catch (error) {
       console.error('Failed to emit notify_order event:', error);
     }
@@ -101,6 +118,51 @@ export class OrderService {
     });
 
     return order;
+  }
+
+  async updateBrandStatus(id: string, brandId: number, status: string): Promise<Order> {
+    const order = await this.orderModel.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Order #${id} not found`);
+    }
+
+    // Check if brand exists in order
+    const brandStatusIndex = order.brandStatuses.findIndex(bs => bs.brandId === brandId);
+    if (brandStatusIndex === -1) {
+        // If for some reason it doesn't exist (old orders), add it
+        order.brandStatuses.push({ brandId, status: status as any });
+    } else {
+        order.brandStatuses[brandStatusIndex].status = status as any;
+    }
+
+    // Check if all brands have the same status, if so update main status?
+    // Or just leave main status as is until explicit update?
+    // Let's implement logic: if all brands are DELIVERED, main order is DELIVERED.
+    // If all are CANCELLED, main is CANCELLED.
+    
+    const allStatuses = order.brandStatuses.map(bs => bs.status);
+    const uniqueStatuses = [...new Set(allStatuses)];
+    
+    if (uniqueStatuses.length === 1) {
+        order.status = uniqueStatuses[0];
+    } else if (allStatuses.every(s => s === 'DELIVERED')) {
+         order.status = 'DELIVERED' as any;
+    } else if (allStatuses.every(s => s === 'CANCELLED')) {
+         order.status = 'CANCELLED' as any;
+    }
+
+    const savedOrder = await order.save();
+    
+    // Notify user about partial/brand update
+    this.notificationClient.emit('notify_order', {
+        orderId: savedOrder._id,
+        userId: savedOrder.userId,
+        totalAmount: savedOrder.totalAmount,
+        status: `partially updated to ${status}`,
+        // name: user name is fetched by notification service if needed
+    });
+
+    return savedOrder;
   }
 
   private async populateOrderDetails(order: any) {

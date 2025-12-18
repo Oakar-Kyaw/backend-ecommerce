@@ -7,6 +7,8 @@ import admin from 'firebase-admin';
 import { EmailService } from './email.service';
 import { Role } from '@prisma/notification';
 import { PRISMA } from '../prisma/prisma.service';
+import axios from 'axios';
+import { envConfig } from 'libs/config/envConfig';
 
 @Injectable()
 export class NotificationService {
@@ -142,7 +144,11 @@ export class NotificationService {
 
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
-    const { brandId, branchId, role, title, body, icon } = data;
+    let { brandId, branchId, role, title, body, icon } = data;
+
+    // Ensure numeric types
+    if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
+    if (branchId && typeof branchId === 'string') branchId = parseInt(branchId, 10);
 
     const messageToken = await this.prisma.notificationToken.findMany({
       where: {
@@ -190,6 +196,63 @@ export class NotificationService {
       return { success: false, message: 'Failed to send notifications' };
     }
   }
+  async sendBrandOrderNotification(payload: any) {
+    const { brandId, orderId, items, status } = payload;
+    console.log(`Processing notification for Brand ${brandId} regarding Order #${orderId}`);
+    
+    // 1. Fetch Brand Details (Email)
+    const brand = await this.fetchBrandDetails(brandId);
+    
+    if (brand && brand.email) {
+        // 2. Send Email to Brand
+        const itemsListHtml = items.map((item: any) => 
+            `<li>${item.quantity}x Product ID ${item.productId} - $${item.price}</li>`
+        ).join('');
+
+        await this.emailService.sendNotificationEmail(
+            brand.email,
+            `New Order #${orderId} Received`,
+            `<h3>New Order Received</h3>
+             <p>Hello ${brand.name},</p>
+             <p>You have received a new order #${orderId}.</p>
+             <p><strong>Status:</strong> ${status}</p>
+             <ul>${itemsListHtml}</ul>
+             <p>Please log in to your dashboard to manage this order.</p>`
+        );
+        console.log(`Email sent to brand ${brand.name} at ${brand.email}`);
+    } else {
+        console.warn(`Could not fetch brand email for Brand ID ${brandId}`);
+    }
+
+    // 3. Send Push Notification to Brand Users (Admins/Staff)
+    // Assuming brand users have role 'BRAND_ADMIN' or similar and are linked via brandId
+    // Note: The current NotificationToken schema supports 'brandId'.
+    // We notify all tokens associated with this brandId.
+    
+    try {
+        await this.sendNotificationToMultipleTokens({
+            brandId: brandId.toString(),
+            title: 'New Order Received',
+            body: `Order #${orderId} has been placed containing your items.`,
+            role: undefined, // Send to all roles under this brand? Or specific? Let's assume all for now.
+        } as any);
+    } catch (e) {
+        console.log('No push tokens found for brand or error sending push:', e.message);
+    }
+  }
+
+  private async fetchBrandDetails(brandId: number) {
+    if (!brandId) return null;
+    try {
+      const url = `http://localhost:${envConfig().user_service_port}/api/v1/brands/${brandId}`;
+      const response = await axios.get(url);
+      return response.data.data;
+    } catch (error) {
+      console.error(`Error fetching brand details for ID ${brandId}:`, error.message);
+      return null;
+    }
+  }
+
   async saveNotificationToken(data: SaveNotificationTokenDto) {
     // const { userId, brandId, branchId } = data;
     const { userId } = data;

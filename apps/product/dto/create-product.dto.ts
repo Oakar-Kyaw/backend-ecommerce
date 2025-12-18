@@ -23,6 +23,10 @@ export class CreateProductDto {
 
   @IsString()
   @IsNotEmpty()
+  brandId: string;
+
+  @IsString()
+  @IsNotEmpty()
   categoryId: string;
 
   @IsString()

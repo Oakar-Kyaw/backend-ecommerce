@@ -30,4 +30,13 @@ export class OrderController {
   updateStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.orderService.updateStatus(id, status);
   }
+
+  @Patch(':id/brand-status')
+  updateBrandStatus(
+    @Param('id') id: string,
+    @Body('brandId') brandId: number,
+    @Body('status') status: string,
+  ) {
+    return this.orderService.updateBrandStatus(id, brandId, status);
+  }
 }
