@@ -19,7 +19,7 @@ import { Response, Request as ExpressRequest } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
-import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
+import { UpdateUserPassword, UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
 import {
   ApiTags,
@@ -349,4 +349,14 @@ export class UsersController {
   async deleteUserByEmail(@Query('email') email: string) {
     return this.usersService.removeByEmail(email);
   }
+
+  @Public()
+  @Patch(':id/change-password')
+  async changePassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePasswordDto: UpdateUserPassword
+  ) {
+    return this.usersService.updatePassword(id, updatePasswordDto);
+  }
+
 }

@@ -27,41 +27,10 @@ export class EventPublisherService {
       role: user.role ?? 'CUSTOMER',
     });
   }
-  // async createUser(user) {
-  //   // 1️⃣ Publish to user service queue
-  //   await this.publishMessage.publish(CREATED_USER_SERVICE_QUEUE, CREATED_USER_JOB, {
-  //     userId: user.id,
-  //     email: user.email,
-  //     phone: user.phone ?? null,
-  //     password: user.password ?? null,
-  //     role: user.role ?? 'CUSTOMER',
-  //   });
-  // }
 
-  async createUserForNotiFicationService(user){
-    // 1️⃣ Publish to user service queue
-     await this.publishMessage.publish(CREATED_NOTIFICATION_SERVICE_QUEUE, CREATED_USER_JOB, {
-      userId: user.id,
-      email: user.email,
-      phone: user.phone ?? null,
-      role: user.role ?? 'CUSTOMER',
-    });
-  }
-  
-  //push to order service
-  async createUserForOrderService(user){
-    console.log("user")
-    // 1️⃣ Publish to order service queue
-     await this.publishMessage.publish(CREATED_ORDER_SERVICE_QUEUE, CREATED_USER_JOB, {
-      userId: user.id,
-      email: user.email,
-      phone: user.phone ?? null,
-      role: user.role ?? 'CUSTOMER',
-    });
-  }
-
-  userUpdated(user) {
-    return this.publishMessage.publish(CREATED_USER_SERVICE_QUEUE, UPDATED_USER_JOB, {
+  async userUpdated(service_queue, user) {
+    console.log("event to: ", service_queue, UPDATED_USER_JOB)
+    await this.publishMessage.publish(service_queue, UPDATED_USER_JOB, {
       userId: user.id,
       email: user.email,
       phone: user.phone ?? null,
@@ -70,8 +39,8 @@ export class EventPublisherService {
     });
   }
 
-  userDeleted(userId: number) {
-    return this.publishMessage.publish(CREATED_USER_SERVICE_QUEUE, DELETED_USER_JOB, {
+  async userDeleted(service_queue, userId: number) {
+    await this.publishMessage.publish(service_queue, DELETED_USER_JOB, {
       userId,
     });
   }

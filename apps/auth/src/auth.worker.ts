@@ -42,6 +42,7 @@ class UserService {
   }
 
   async updateUser(userId: number, data: UserDto) {
+    console.log("update user", userId,data)
     const updatedUser = await this.prisma.user.update({
       where: { userId },
       data,

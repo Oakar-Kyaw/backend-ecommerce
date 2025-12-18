@@ -28,6 +28,7 @@ model User {
   role       String
   phone      String
   userId     Int
+  isDeleted  Boolean                @default(false)
 }
 
 enum Role {

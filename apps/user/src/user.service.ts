@@ -11,7 +11,7 @@ import {
   getPagination,
   buildPaginationResponse,
 } from '../../../libs/utils/pagination';
-import { UpdateUserWithProfileDto } from '../dto/update-user.dto';
+import { UpdateUserPassword, UpdateUserWithProfileDto } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import {
   CREATED_NOTIFICATION_SERVICE_QUEUE,
@@ -106,9 +106,9 @@ export class UsersService {
     // 4️link brand if provided
    if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
-    QueueServices.map(async (name)=>{
+   QueueServices.map((name)=>{
       console.log("sending data to ", name)
-      await this.eventPublisher.createUser(name, user);
+      this.eventPublisher.createUser(name, user);
     })
     //send welcome message
     await this.eventPublisher.sendEmail({
@@ -411,7 +411,20 @@ export class UsersService {
       include: { brandUserRelationship: { include: { brand: true } } },
     });
     console.log("updated user :", updateUser, dto, imageUrl)
-    this.eventPublisher.userUpdated(updateUser);
+    
+    //publish event update user to all server
+    QueueServices.map((name)=>{
+      console.log("name", name)
+      this.eventPublisher.userUpdated(name, {
+            id: updateUser.id,
+            email: updateUser.email,
+            phone: updateUser.phone ?? null,
+            password: updateUser.password ?? null,
+            role: updateUser.role ?? 'CUSTOMER',
+      })
+    })
+   
+
     return {
       success: true,
       message: 'UPDATED_USER',
@@ -443,8 +456,14 @@ export class UsersService {
         where: { id },
         data: { isDeleted: true },
       });
-      // this.eventPublisher.userUpdated(deletedUser);
-      this.eventPublisher.userDeleted(id);
+
+      //publish event delete user to all server
+      // await Promise.all(
+        QueueServices.map( async (name) => {
+          console.log("sending data to", name);
+          await this.eventPublisher.userDeleted(name, id);
+        })
+      // );
 
       return {
         success: true,
@@ -661,6 +680,31 @@ export class UsersService {
     };
   }
 
+  async updatePassword(id: number, body: UpdateUserPassword ){
+    const { password } = body;
+    console.log("password", UpdateUserPassword, password)
+    const hashPassword = await hashedPassword(password);
+    const updateUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        password: hashPassword
+      },
+      include: { brandUserRelationship: { include: { brand: true } } },
+    });
+
+    //publish to auth server
+    this.eventPublisher.userUpdated(CREATED_USER_SERVICE_QUEUE, {
+       id: updateUser.id,
+       email: updateUser.email,
+       phone: updateUser.phone ?? null,
+       password: hashPassword ?? null,
+       role: updateUser.role ?? 'CUSTOMER',
+    })
+    return {
+      success: true,
+      message: "PASSWORD_UPDATED_SUCCESSFULLY"
+    }
+  }
   removeEmptyFields<T extends Record<string, any>>(obj: T): Partial<T> {
     return Object.fromEntries(
       Object.entries(obj).filter(

@@ -10,7 +10,7 @@ export class PublishMessage {
   constructor(
     @InjectQueue(CREATED_USER_SERVICE_QUEUE) private readonly userQueue: Queue,
     @InjectQueue(CREATED_NOTIFICATION_SERVICE_QUEUE) private readonly notificationQueue: Queue,
-    @InjectQueue(CREATED_NOTIFICATION_SERVICE_QUEUE) private readonly authQueue: Queue,
+    @InjectQueue(CREATED_AUTH_SERVICE_QUEUE) private readonly authQueue: Queue,
     @InjectQueue(CREATED_ORDER_SERVICE_QUEUE) private readonly orderQueue: Queue,
     @InjectQueue(CREATED_PRODUCT_SERVICE_QUEUE) private readonly productQueue: Queue,
     @InjectQueue(CREATED_PAYMENT_SERVICE_QUEUE) private readonly paymentQueue: Queue,
@@ -38,9 +38,11 @@ export class PublishMessage {
     jobName: string,
     data: T,
     opts: JobsOptions = {
-      attempts: 10,
-      backoff: { type: 'exponential', delay: 2000 },
+      priority: 1,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
       removeOnComplete: true,
+      removeOnFail: true
     },
   ): Promise<void> {
     const queue = this.queues.get(queueName);
