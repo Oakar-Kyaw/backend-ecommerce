@@ -6,6 +6,7 @@ import {
   CREATED_USER_JOB,
   UPDATED_USER_JOB,
   DELETED_USER_JOB,
+  CREATED_AUTH_SERVICE_QUEUE,
 } from 'libs/queue/constant';
 import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
 
@@ -62,7 +63,7 @@ class UserService {
   }
 }
 
-@Processor(CREATED_USER_SERVICE_QUEUE)
+@Processor(CREATED_AUTH_SERVICE_QUEUE)
 export class AuthWorker extends WorkerHost {
   private readonly handlers: Record<string, JobHandler>;
 

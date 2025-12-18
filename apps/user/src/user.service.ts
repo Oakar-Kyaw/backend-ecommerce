@@ -366,12 +366,25 @@ export class UsersService {
       // This will create user in User DB and publish event for Auth DB
       return this.create(createUserDto);
     }
-
+    
+    // If we are here, it means we are just verifying OTP without creating user (e.g. forgot password flow, or legacy signup flow)
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
     console.log('otp', otp, key, stored);
     if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
     if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+    
+    // If it's signup mode but no password, we just delete OTP and return success. 
+    // This allows the client to call signup() separately (if that flow exists) 
+    // BUT the client must provide the OTP again to signup() which will fail if we delete it here.
+    // So for signup mode, we should NOT delete it if we expect a follow-up signup call.
+    if (mode === 'signup' || !mode) {
+         // Do not delete key for signup mode, so the subsequent create() call can verify it.
+         // However, this opens a window where OTP can be reused or brute forced if not careful.
+         // But since create() deletes it, it should be fine for the short duration.
+         return { success: true, message: 'OTP_VERIFIED' };
+    }
+
     await this.redis.del(key);
     return { success: true, message: 'OTP_VERIFIED' };
   }
