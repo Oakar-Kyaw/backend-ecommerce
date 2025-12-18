@@ -45,9 +45,8 @@ export class OrderService {
         if (!item.brandId || true) {
           // Always fetch for name
           try {
-            const response = await axios.get(
-              `http://localhost:${envConfig().product_service_port}/api/v1/products/${item.productId}`,
-            );
+            const baseUrl = envConfig().product_service_url;
+            const response = await axios.get(`${baseUrl}/products/${item.productId}`);
             if (response.data?.data) {
               const product = response.data.data;
               productName = product.name || 'Product';
@@ -338,15 +337,15 @@ export class OrderService {
         try {
           // productId is stored as string in Order, but Product Service expects ID
           // Assuming productId in Order matches Product ID (which is Int)
-          const response = await axios.get(
-            `http://localhost:${envConfig().product_service_port}/api/v1/products/${item._id}`,
-          );
+          const baseUrl = envConfig().product_service_url;
+          const response = await axios.get(`${baseUrl}/products/${item._id}`);
           return {
             _id: item._id,
             name: response.data.data?.name || 'Unknown Product',
             totalQuantity: item.totalQuantity,
           };
         } catch (e) {
+          console.error(`Error fetching product name for ID ${item._id}:`, e.message);
           return {
             _id: item._id,
             name: 'Unknown Product',
@@ -359,15 +358,26 @@ export class OrderService {
     const topBrandsWithNames = await Promise.all(
       results.topBrands.map(async (brand: any) => {
         try {
-          const response = await axios.get(
-            `http://localhost:${envConfig().user_service_port}/api/v1/brands/${brand._id}`,
-          );
+          const baseUrl = envConfig().user_service_url;
+          const url = `${baseUrl}/brands/${brand._id}`;
+          // console.log(`Fetching brand from: ${url}`);
+          const response = await axios.get(url);
           return {
             brandId: brand._id,
             name: response.data.data?.name || 'Unknown',
             totalSales: brand.totalSales,
           };
         } catch (e) {
+          console.error(
+            `Error fetching brand name for ID ${brand._id}. URL: ${envConfig().user_service_url}/brands/${brand._id}. Message: ${e.message}`,
+          );
+          if (axios.isAxiosError(e)) {
+             if (e.response) {
+                 console.error(`Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`);
+             } else {
+                 console.error(`Code: ${e.code}`);
+             }
+          }
           return {
             brandId: brand._id,
             name: 'Unknown',
@@ -463,15 +473,26 @@ export class OrderService {
     const bestSellingItemsWithNames = await Promise.all(
       results.bestSellingItems.map(async (item: any) => {
         try {
-          const response = await axios.get(
-            `http://localhost:${envConfig().product_service_port}/api/v1/products/${item._id}`,
-          );
+          const baseUrl = envConfig().product_service_url;
+          const url = `${baseUrl}/products/${item._id}`;
+          // console.log(`Fetching product from: ${url}`);
+          const response = await axios.get(url);
           return {
             _id: item._id,
             name: response.data.data?.name || 'Unknown Product',
             totalQuantity: item.totalQuantity,
           };
         } catch (e) {
+          console.error(
+            `Error fetching product name for ID ${item._id}. URL: ${envConfig().product_service_url}/products/${item._id}. Message: ${e.message}`,
+          );
+          if (axios.isAxiosError(e)) {
+             if (e.response) {
+                 console.error(`Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`);
+             } else {
+                 console.error(`Code: ${e.code}`);
+             }
+          }
           return {
             _id: item._id,
             name: 'Unknown Product',
@@ -499,9 +520,8 @@ export class OrderService {
 
   private async fetchPaymentDetails(orderId: string) {
     try {
-      const response = await axios.get(
-        `http://localhost:${envConfig().payment_service_port}/api/v1/payments/order/${orderId}`,
-      );
+      const baseUrl = envConfig().payment_service_url;
+      const response = await axios.get(`${baseUrl}/payments/order/${orderId}`);
       return response.data;
     } catch (error) {
       return null;
@@ -510,9 +530,8 @@ export class OrderService {
 
   private async fetchUserDetails(userId: string) {
     try {
-      const response = await axios.get(
-        `http://localhost:${envConfig().user_service_port}/api/v1/users/${userId}`,
-      );
+      const baseUrl = envConfig().user_service_url;
+      const response = await axios.get(`${baseUrl}/users/${userId}`);
       return response.data.data;
     } catch (error) {
       console.error('Error fetching user details for:', userId, error.message);

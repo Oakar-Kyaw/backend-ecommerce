@@ -20,16 +20,20 @@ export const envConfig = () => ({
   user_service_port: parseInt(process.env.USER_SERVER_PORT ?? '5001', 10),
   user_service_tcp: parseInt(process.env.USER_TCP_PORT ?? '5011', 10),
   user_service_url:
-    process.env.USER_SERVER_URL ?? 'http://localhost:4000/api/v1',
+    process.env.USER_SERVER_URL ?? 'http://localhost:5001/api/v1',
   auth_service_port: parseInt(process.env.AUTH_SERVER_PORT ?? '5003', 10),
   auth_service_url:
     process.env.AUTH_SERVER_URL ?? 'http://localhost:5000/api/v1',
   auth_service_db: process.env.AUTH_DB_URL,
   product_service_port: parseInt(process.env.PRODUCT_SERVER_PORT ?? '5004', 10),
+  product_service_url:
+    process.env.PRODUCT_SERVER_URL ?? 'http://localhost:5004/api/v1',
   product_service_db: process.env.PRODUCT_DB_URL,
   order_service_port: parseInt(process.env.ORDER_SERVER_PORT ?? '5006', 10),
   order_service_db: process.env.ORDER_DB_URL || '',
   payment_service_port: parseInt(process.env.PAYMENT_SERVER_PORT ?? '5007', 10),
+  payment_service_url:
+    process.env.PAYMENT_SERVER_URL ?? 'http://localhost:5007/api/v1',
   payment_service_db: process.env.PAYMENT_DB_URL || '',
   stripe_secret_key: process.env.STRIPE_SECRET_KEY || '',
   chat_service_port: parseInt(process.env.CHAT_SERVER_PORT ?? '5005', 10),

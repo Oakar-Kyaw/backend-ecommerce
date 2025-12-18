@@ -338,7 +338,8 @@ export class NotificationService {
   private async fetchBrandDetails(brandId: number) {
     if (!brandId) return null;
     try {
-      const url = `http://localhost:${envConfig().user_service_port}/api/v1/brands/${brandId}`;
+      const baseUrl = envConfig().user_service_url;
+      const url = `${baseUrl}/brands/${brandId}`;
       const response = await axios.get(url);
       return response.data.data;
     } catch (error) {
