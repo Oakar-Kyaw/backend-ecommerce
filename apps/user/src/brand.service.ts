@@ -25,7 +25,7 @@ export class BrandService {
     @Inject(PRISMA) private readonly prisma,
     private readonly uploadFile: FileUpload,
     private readonly usersService: UsersService,
-    private readonly eventPublisherService: EventPublisherService
+    private readonly eventPublisherService: EventPublisherService,
   ) {}
 
   // ===== CREATE BRAND =====
@@ -53,7 +53,7 @@ export class BrandService {
         photoUrl,
       },
     });
-    console.log("brand user", createBrandDto)
+    console.log('brand user', createBrandDto);
 
     // Create User if email is provided
     if (createBrandDto.email) {
@@ -67,25 +67,25 @@ export class BrandService {
           phone: createBrandDto.phone,
         } as CreateUserWithProfileDto);
 
-        console.log("user")
+        console.log('user');
         //write user to auth db
-        QueueServices.map(async(name)=>{
-          await this.eventPublisherService.createUser(name,{
+        QueueServices.map(async (name) => {
+          await this.eventPublisherService.createUser(name, {
             email: createBrandDto.email,
-            password: "Brand123@",
+            password: 'Brand123@',
             role: RoleEnum.SALE,
             brandId: brand.id,
             firstName: createBrandDto.name,
             phone: createBrandDto.phone,
-          })
-        })
-        console.log("end")
+          });
+        });
+        console.log('end');
       } catch (error) {
         // Log error but don't fail the brand creation?
         // Or rethrow? If we rethrow, the client sees an error even though brand is created.
-        // Given the requirement is strict ("it should create user account"), 
+        // Given the requirement is strict ("it should create user account"),
         // failure to create user might be considered a failure of the operation.
-        // However, since we can't rollback brand creation easily here without transaction, 
+        // However, since we can't rollback brand creation easily here without transaction,
         // we'll log it.
         console.error('Failed to create user for brand:', error);
         // We could also throw a warning or return it in the message.

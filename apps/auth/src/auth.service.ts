@@ -47,7 +47,7 @@ export class AuthService {
     const passwordComparison = await comparePassword(password, user.password);
     if (!passwordComparison)
       throw new UnauthorizedException(`Password was wrong.`);
-    
+
     // Handle Device Token
     if (datas.deviceToken) {
       const tokens = user.device_tokens || [];
@@ -70,7 +70,10 @@ export class AuthService {
           },
         );
       } catch (e) {
-        console.error('Failed to sync device token with User Service', e.message);
+        console.error(
+          'Failed to sync device token with User Service',
+          e.message,
+        );
       }
     }
 
@@ -162,7 +165,8 @@ export class AuthService {
           } catch (e) {
             console.error('Failed to sync device token removal', e.message);
           }
-        }      } catch (e) {
+        }
+      } catch (e) {
         console.error('Error removing device token on logout:', e);
       }
     }

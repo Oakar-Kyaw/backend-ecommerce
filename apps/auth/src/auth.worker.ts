@@ -6,6 +6,7 @@ import {
   CREATED_USER_JOB,
   UPDATED_USER_JOB,
   DELETED_USER_JOB,
+  CREATED_AUTH_SERVICE_QUEUE,
 } from 'libs/queue/constant';
 import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
 
@@ -29,13 +30,15 @@ class UserService {
       throw new Error('Missing required fields: email');
     }
     const existingUser = await this.prisma.user.findUnique({
-        where: { email: data.email },
-      });
+      where: { email: data.email },
+    });
 
-     if (existingUser) {
-        console.log(`User with email ${data.email} already exists, skipping creation.`);
-        return;
-     }
+    if (existingUser) {
+      console.log(
+        `User with email ${data.email} already exists, skipping creation.`,
+      );
+      return;
+    }
     const createdUser = await this.prisma.user.create({ data });
     const { password, ...safeUser } = createdUser;
     return safeUser;
@@ -61,7 +64,7 @@ class UserService {
   }
 }
 
-@Processor(CREATED_USER_SERVICE_QUEUE)
+@Processor(CREATED_AUTH_SERVICE_QUEUE)
 export class AuthWorker extends WorkerHost {
   private readonly handlers: Record<string, JobHandler>;
 
@@ -99,10 +102,7 @@ export class AuthWorker extends WorkerHost {
     try {
       await handler(job);
     } catch (err) {
-      console.error(
-        `AuthWorker failed on job ${job.id} (${job.name}):`,
-        err,
-      );
+      console.error(`AuthWorker failed on job ${job.id} (${job.name}):`, err);
       throw err; // let BullMQ handle retries
     }
   }

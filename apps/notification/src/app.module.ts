@@ -9,11 +9,8 @@ import { CREATED_NOTIFICATION_SERVICE_QUEUE } from 'libs/queue/constant';
 import { envConfig } from 'libs/config/envConfig';
 
 @Module({
-  imports: [
-    PublishMessageModule,
-    NotificationModule, 
-    EmailModule],
+  imports: [PublishMessageModule, NotificationModule, EmailModule],
   controllers: [],
-  providers: [ NotificationWorker, PrismaService],
+  providers: [NotificationWorker, PrismaService],
 })
 export class AppModule {}

@@ -76,7 +76,7 @@ export class NotificationWorker extends WorkerHost {
   constructor(
     private readonly emailService: EmailService,
     private readonly notificationService: NotificationService,
-    @Inject(Noti_PRISMA) private readonly prisma
+    @Inject(Noti_PRISMA) private readonly prisma,
   ) {
     super();
     const userService = new UserService(this.prisma);
@@ -116,7 +116,7 @@ export class NotificationWorker extends WorkerHost {
         `Notification Worker failed on job ${job.id} (${job.name}):`,
         err,
       );
-      throw err; 
+      throw err;
     }
   }
 
@@ -124,8 +124,8 @@ export class NotificationWorker extends WorkerHost {
     await this.notificationService.sendOrderNotification(job.data);
   }
 
-  private async sendPaymentNotification(job: Job): Promise<void>{
-    await this.notificationService.sendPaymentNotification(job.data)
+  private async sendPaymentNotification(job: Job): Promise<void> {
+    await this.notificationService.sendPaymentNotification(job.data);
   }
 
   private async sendEmail(job: Job): Promise<void> {
@@ -134,7 +134,7 @@ export class NotificationWorker extends WorkerHost {
 
   private async saveUser(job: Job): Promise<void> {
     const data: UserType = job.data as UserType;
-    console.log("data is: ", data);
+    console.log('data is: ', data);
 
     await this.prisma.user.create({
       data: {
@@ -148,4 +148,3 @@ export class NotificationWorker extends WorkerHost {
   
 
 }
-

@@ -8,6 +8,6 @@ async function bootstrap() {
   const app = await NestFactory.create(PaymentModule);
   serversetup(app, envConfig().payment_service_port);
   await app.listen(envConfig().payment_service_port ?? 3000);
-  console.log("server is running: ", envConfig().payment_service_port);
+  console.log('server is running: ', envConfig().payment_service_port);
 }
 bootstrap();

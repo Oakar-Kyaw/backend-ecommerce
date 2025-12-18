@@ -1,5 +1,11 @@
 import { Expose, Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString, Min, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+  Min,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateShippingFeeDto {
   @Expose()
@@ -25,6 +31,8 @@ export class CreateShippingFeeDto {
   @Expose()
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (value ? String(value).trim().toUpperCase() : 'MMK'))
+  @Transform(({ value }) =>
+    value ? String(value).trim().toUpperCase() : 'MMK',
+  )
   currency?: string;
 }

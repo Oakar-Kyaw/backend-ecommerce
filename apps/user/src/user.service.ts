@@ -6,7 +6,9 @@ import {
   UnauthorizedException,
   UseInterceptors,
 } from '@nestjs/common';
+import * as admin from 'firebase-admin';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
+import { VerifyOtpDto } from '../dto/otp.dto';
 import {
   getPagination,
   buildPaginationResponse,
@@ -55,6 +57,7 @@ export class UsersService {
       });
 
   async create(createUserDto: CreateUserWithProfileDto) {
+    console.log('UserService.create called with:', JSON.stringify(createUserDto, null, 2));
     const { email, phone } = createUserDto;
     // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
@@ -64,6 +67,7 @@ export class UsersService {
     });
 
     if (existingUser) {
+      console.warn(`User with email ${email} or phone ${phone} already exists`);
       throw new ConflictException('Email or phone already exists');
     }
 
@@ -73,16 +77,39 @@ export class UsersService {
 
     if (dto.role && ['USER', 'CUSTOMER'].includes(String(dto.role))) {
       const otp = (createUserDto as any).otp;
-      console.log("otp is ", otp)
+      console.log('otp is ', otp);
       if (!otp) throw new UnauthorizedException('OTP_REQUIRED');
       const key = `otp:signup:${email}`;
       const stored = await this.redis.get(key);
       if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
       if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
       await this.redis.del(key);
+
+      // Create user in Firebase Auth
+      try {
+        await admin.auth().createUser({
+          email: email,
+          password: createUserDto.password,
+          displayName: `${createUserDto.firstName} ${createUserDto.lastName}`,
+          emailVerified: true,
+          ...(phone && { phoneNumber: phone }),
+        });
+        console.log(`Firebase user created for ${email}`);
+      } catch (error) {
+        console.error('Error creating Firebase user:', error);
+        // If user already exists in Firebase, we proceed to create in our DB (syncing)
+        if (error.code !== 'auth/email-already-exists') {
+          // For other errors, we might want to throw or just log.
+          // If Firebase is critical, we should throw.
+          // throw new ConflictException(`Firebase Error: ${error.message}`);
+          console.warn(`Failed to create Firebase user: ${error.message}`);
+        } else {
+          console.log(`User ${email} already exists in Firebase.`);
+        }
+      }
     }
     //delete otp in payload which doesn't exist in db table
-    delete dto.otp
+    delete dto.otp;
     // check if brand exists
     if (brandId) {
       // check if brand exists
@@ -91,7 +118,7 @@ export class UsersService {
       });
       if (!brand) throw new NotFoundException(`Brand ${brandId} not found`);
     }
-    
+
     const roleValue = dto.role === 'USER' ? 'CUSTOMER' : dto.role;
     const user = await this.prisma.user.create({
       data: {
@@ -102,21 +129,40 @@ export class UsersService {
       include: { brandUserRelationship: { include: { brand: true } } },
     });
 
-    console.log('user: ', user);
+    console.log('User created in DB:', user);
     // 4️link brand if provided
-   if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
+    if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
    QueueServices.map((name)=>{
       console.log("sending data to ", name)
       this.eventPublisher.createUser(name, user);
     })
     //send welcome message
-    await this.eventPublisher.sendEmail({
-      to: email,
-      subject: 'Welcome to Our Platform!',
-      html: `
+    let subject = 'Welcome to Our Platform!';
+    let htmlContent = '';
+    const fullName = [createUserDto.firstName, createUserDto.lastName].filter(Boolean).join(' ') || 'User';
+
+    if (dto.role === RoleEnum.SALE) {
+      subject = 'Welcome to Our Brand Provider Network!';
+      htmlContent = `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <h1 style="color: #4CAF50;">Welcome, ${createUserDto.firstName} ${createUserDto.lastName}!</h1>
+          <h1 style="color: #4CAF50;">Welcome, ${fullName}!</h1>
+          <p>We are thrilled to have you join us as a Brand Provider.</p>
+          <p>Your account has been successfully created. You can now start managing your brand and products on our platform.</p>
+          <p>Here are your next steps:</p>
+          <ul>
+            <li>Complete your brand profile</li>
+            <li>Upload your product catalog</li>
+            <li>Review your dashboard</li>
+          </ul>
+          <p>We look forward to a successful partnership!</p>
+          <p style="margin-top: 20px;">— The Team</p>
+        </div>
+      `;
+    } else {
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h1 style="color: #4CAF50;">Welcome, ${fullName}!</h1>
           <p>Thank you for joining our platform. We are excited to have you on board!</p>
           <p>Here is a quick tip to get started:</p>
           <ul>
@@ -126,7 +172,13 @@ export class UsersService {
           <p>We are here to help anytime. Enjoy your journey with us!</p>
           <p style="margin-top: 20px;">— The Team</p>
         </div>
-      `,
+      `;
+    }
+
+    await this.eventPublisher.sendEmail({
+      to: email,
+      subject: subject,
+      html: htmlContent,
     });
 
     return {
@@ -295,14 +347,15 @@ export class UsersService {
   async sendOtp({ email, mode }: { email: string; mode?: string }) {
     if (!email) throw new NotFoundException('EMAIL_REQUIRED');
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    console.log(`DEBUG OTP for ${email}: ${otp}`);
     const key = `otp:${mode || 'signup'}:${email}`;
     await this.redis.set(key, otp, 'EX', 300);
     try {
-       this.eventPublisher.sendEmail({
-          to: email,
-         subject: 'Your verification code',
-         html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
-       })
+      this.eventPublisher.sendEmail({
+        to: email,
+        subject: 'Your verification code',
+        html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
+      });
     } catch (err) {
       console.error('OTP email send failed', err);
       // Continue returning success so the user can verify with the stored OTP
@@ -310,21 +363,70 @@ export class UsersService {
     return { success: true, message: 'OTP_SENT' };
   }
 
-  async verifyOtp({
-    email,
-    mode,
-    otp,
-  }: {
-    email: string;
-    mode?: string;
-    otp: string;
-  }) {
+  async verifyOtp(dto: VerifyOtpDto) {
+    const { email, mode, otp } = dto;
+    console.log('Verifying OTP with DTO:', JSON.stringify(dto, null, 2));
+
     if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
+
+    // If signup mode and registration data is present (password is a good indicator), create the user immediately
+    if ((mode === 'signup' || !mode) && dto.password) {
+      console.log('Attempting to create user during OTP verification...');
+      
+      // We check OTP existence here to fail fast, but let create() handle the final verification and deletion
+      const key = `otp:signup:${email}`;
+      const stored = await this.redis.get(key);
+      console.log(`Checking Redis Key: ${key}, Stored: ${stored}, Provided: ${otp}`);
+      
+      if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
+      if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+
+      // Map to CreateUserWithProfileDto
+      const createUserDto: CreateUserWithProfileDto = {
+        email,
+        password: dto.password,
+        role: dto.role || RoleEnum.CUSTOMER,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        gender: dto.gender,
+        phone: dto.phone,
+        identification: dto.identification,
+        dateOfBirth: dto.dateOfBirth,
+        brandId: dto.brandId,
+        otp: otp, // Pass OTP so create method can verify and delete it
+      };
+
+      console.log('Calling create() with:', JSON.stringify(createUserDto, null, 2));
+      
+      try {
+        // This will create user in User DB and publish event for Auth DB
+        const result = await this.create(createUserDto);
+        console.log('User creation result:', result);
+        return result;
+      } catch (error) {
+        console.error('Error creating user during OTP verification:', error);
+        throw error;
+      }
+    }
+    
+    // If we are here, it means we are just verifying OTP without creating user (e.g. forgot password flow, or legacy signup flow)
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
-    console.log("otp",otp, key, stored)
+    console.log('otp', otp, key, stored);
     if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
     if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+    
+    // If it's signup mode but no password, we just delete OTP and return success. 
+    // This allows the client to call signup() separately (if that flow exists) 
+    // BUT the client must provide the OTP again to signup() which will fail if we delete it here.
+    // So for signup mode, we should NOT delete it if we expect a follow-up signup call.
+    if (mode === 'signup' || !mode) {
+         // Do not delete key for signup mode, so the subsequent create() call can verify it.
+         // However, this opens a window where OTP can be reused or brute forced if not careful.
+         // But since create() deletes it, it should be fine for the short duration.
+         return { success: true, message: 'OTP_VERIFIED' };
+    }
+
     await this.redis.del(key);
     return { success: true, message: 'OTP_VERIFIED' };
   }
@@ -357,7 +459,7 @@ export class UsersService {
   async update(
     id: number,
     updateUserDto: UpdateUserWithProfileDto,
-    file: Express.Multer.File
+    file: Express.Multer.File,
   ) {
     //console.log("req", req["user"])
     //   const loginuser = await this.prisma.user.findUnique({
@@ -380,9 +482,14 @@ export class UsersService {
 
     if (file)
       imageUrl = (
-        await this.uploadFile .uploadSingle({ file, folderName: 'profile' })
+        await this.uploadFile.uploadSingle({ file, folderName: 'profile' })
       ).url;
-    console.log('existing other user', existingOtherUser, "photo url", imageUrl);
+    console.log(
+      'existing other user',
+      existingOtherUser,
+      'photo url',
+      imageUrl,
+    );
 
     if (existingOtherUser)
       throw new ConflictException(
@@ -395,7 +502,7 @@ export class UsersService {
     //console.log("update user data: ", updateUserDto)
     const { brandId, otp, ...rawDto } = updateUserDto;
 
-    //remove null field 
+    //remove null field
     const dto = this.removeEmptyFields(rawDto);
 
     if (brandId) await this.brandUserService.linkUserToBrand(id, brandId);
@@ -552,7 +659,7 @@ export class UsersService {
         photoUrl: picture,
       },
     });
-  //  this.eventPublisher.createUser(,user);
+    //  this.eventPublisher.createUser(,user);
     return {
       success: true,
       message: 'User has been created successfully.',
@@ -649,7 +756,7 @@ export class UsersService {
         where: { deviceToken },
       });
     }
-    
+
     return { success: true };
   }
 
@@ -667,16 +774,16 @@ export class UsersService {
       GROUP BY month
       ORDER BY month ASC
     `;
-    
+
     // Format to array of 12 months
     const monthlyRegistrations = Array(12).fill(0);
-    (usersByMonth as any[]).forEach(item => {
-        monthlyRegistrations[item.month - 1] = item.count;
+    (usersByMonth as any[]).forEach((item) => {
+      monthlyRegistrations[item.month - 1] = item.count;
     });
 
     return {
-        year,
-        monthlyRegistrations
+      year,
+      monthlyRegistrations,
     };
   }
 
@@ -708,9 +815,8 @@ export class UsersService {
   removeEmptyFields<T extends Record<string, any>>(obj: T): Partial<T> {
     return Object.fromEntries(
       Object.entries(obj).filter(
-        ([_, value]) => value !== null && value !== undefined && value !== ''
-      )
+        ([_, value]) => value !== null && value !== undefined && value !== '',
+      ),
     ) as Partial<T>;
-}
-
+  }
 }

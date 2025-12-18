@@ -9,21 +9,19 @@ import { Inject } from '@nestjs/common';
 // ✅ Correct handler type
 type JobHandler = (job: Job) => Promise<void>;
 type UserType = {
-    email: string,
-    phone: string,
-    userId: number,
-    role: string
-}
+  email: string;
+  phone: string;
+  userId: number;
+  role: string;
+};
 
 @Processor(CREATED_ORDER_SERVICE_QUEUE)
 export class OrderWorker extends WorkerHost {
   private readonly handlers: Record<string, JobHandler>;
 
-  constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) {
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {
     super();
-    
+
     // ✅ Register job handlers
     this.handlers = {
       [CREATED_USER_JOB]: this.saveUser.bind(this),
@@ -44,23 +42,20 @@ export class OrderWorker extends WorkerHost {
     try {
       await handler(job);
     } catch (err) {
-      console.error(
-        `Order Worker failed on job ${job.id} (${job.name}):`,
-        err,
-      );
-      throw err; 
+      console.error(`Order Worker failed on job ${job.id} (${job.name}):`, err);
+      throw err;
     }
   }
 
   private async saveUser(job: Job): Promise<void> {
     const data: UserType = job.data as UserType;
-    console.log("data is: ", data);
+    console.log('data is: ', data);
     const createUser = new this.userModel({
-        userId: data.userId,
-        email: data.email,
-        phone: data.phone,
-        role: data.role
-    })
+      userId: data.userId,
+      email: data.email,
+      phone: data.phone,
+      role: data.role,
+    });
     await createUser.save();
   }
 

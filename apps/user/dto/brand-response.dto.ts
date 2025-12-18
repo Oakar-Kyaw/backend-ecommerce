@@ -90,6 +90,7 @@ export class BrandByIdResponseDto extends BaseBrandResponseDto<BrandResponseDto>
   message: string = 'BRAND_BY_ID';
 
   @Expose()
+  @Type(() => BrandResponseDto)
   declare data: BrandResponseDto;
 }
 

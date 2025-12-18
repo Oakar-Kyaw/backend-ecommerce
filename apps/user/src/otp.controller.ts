@@ -1,4 +1,10 @@
-import { Body, Controller, Post, BadRequestException, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  BadRequestException,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './user.service';

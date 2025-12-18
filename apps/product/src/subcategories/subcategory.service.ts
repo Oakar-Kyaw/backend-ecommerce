@@ -70,7 +70,7 @@ export class SubCategoryService {
         description: { contains: query.description, mode: 'insensitive' },
       });
     if (query?.categoryId) {
-        and.push({ categoryId: Number(query.categoryId) });
+      and.push({ categoryId: Number(query.categoryId) });
     }
     if (query?.search)
       and.push({
@@ -133,27 +133,32 @@ export class SubCategoryService {
       throw new NotFoundException(`SubCategory with ID ${id} not found`);
 
     if (updateSubCategoryDto.title) {
-        const categoryId = updateSubCategoryDto.categoryId || subCategory.categoryId;
-        const existing = await this.prisma.subCategory.findFirst({
-            where: {
-                title: updateSubCategoryDto.title,
-                categoryId: categoryId,
-                isDeleted: false,
-                NOT: { id },
-            }
-        });
-        if (existing) {
-             throw new ConflictException('SubCategory title already exists in this category');
-        }
+      const categoryId =
+        updateSubCategoryDto.categoryId || subCategory.categoryId;
+      const existing = await this.prisma.subCategory.findFirst({
+        where: {
+          title: updateSubCategoryDto.title,
+          categoryId: categoryId,
+          isDeleted: false,
+          NOT: { id },
+        },
+      });
+      if (existing) {
+        throw new ConflictException(
+          'SubCategory title already exists in this category',
+        );
+      }
     }
 
     if (updateSubCategoryDto.categoryId) {
-         const category = await this.prisma.category.findUnique({
-            where: { id: updateSubCategoryDto.categoryId, isDeleted: false },
-         });
-         if (!category) {
-             throw new NotFoundException(`Category with ID ${updateSubCategoryDto.categoryId} not found`);
-         }
+      const category = await this.prisma.category.findUnique({
+        where: { id: updateSubCategoryDto.categoryId, isDeleted: false },
+      });
+      if (!category) {
+        throw new NotFoundException(
+          `Category with ID ${updateSubCategoryDto.categoryId} not found`,
+        );
+      }
     }
 
     const updatedSubCategory = await this.prisma.subCategory.update({

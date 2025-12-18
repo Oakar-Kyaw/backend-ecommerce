@@ -24,6 +24,9 @@ export class LoginDto {
   deviceToken?: string;
 
   @IsOptional()
-  @ApiProperty({ example: { deviceType: 'ios', deviceName: 'iPhone 13' }, required: false })
+  @ApiProperty({
+    example: { deviceType: 'ios', deviceName: 'iPhone 13' },
+    required: false,
+  })
   deviceInfo?: any;
 }

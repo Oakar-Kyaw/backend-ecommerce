@@ -17,7 +17,7 @@ import { PublishMessage } from 'libs/queue/publish';
 export class EventPublisherService {
   constructor(private readonly publishMessage: PublishMessage) {}
 
-  async createUser(service_queue,user) {
+  async createUser(service_queue, user) {
     // 1️⃣ Publish to user service queue
     await this.publishMessage.publish(service_queue, CREATED_USER_JOB, {
       userId: user.id,
@@ -45,27 +45,31 @@ export class EventPublisherService {
     });
   }
 
-  brandCreated(brand){
-      this.publishMessage.publish(CREATED_BRAND_QUEUE, CREATED_BRAND, {
-        brandId: brand.id,
-        brandName: brand.name,
-        brandImage: brand.imageUrl
-      })
+  brandCreated(brand) {
+    this.publishMessage.publish(CREATED_BRAND_QUEUE, CREATED_BRAND, {
+      brandId: brand.id,
+      brandName: brand.name,
+      brandImage: brand.imageUrl,
+    });
   }
 
-  brandUpdated(brand){
-      this.publishMessage.publish(CREATED_BRAND_QUEUE, UPDATED_BRAND, {
-        brandId: brand.id,
-        brandName: brand.name,
-        brandImage: brand.imageUrl
-      })
+  brandUpdated(brand) {
+    this.publishMessage.publish(CREATED_BRAND_QUEUE, UPDATED_BRAND, {
+      brandId: brand.id,
+      brandName: brand.name,
+      brandImage: brand.imageUrl,
+    });
   }
 
-  sendEmail(data: {to: string, subject: string, html: string}){
-     this.publishMessage.publish(CREATED_NOTIFICATION_SERVICE_QUEUE, SEND_EMAIL, {
+  sendEmail(data: { to: string; subject: string; html: string }) {
+    this.publishMessage.publish(
+      CREATED_NOTIFICATION_SERVICE_QUEUE,
+      SEND_EMAIL,
+      {
         to: data.to,
         subject: data.subject,
-        html: data.html
-      })
+        html: data.html,
+      },
+    );
   }
 }

@@ -24,4 +24,5 @@ export class ShippingLocation {
   placeId?: string;
 }
 
-export const ShippingLocationSchema = SchemaFactory.createForClass(ShippingLocation);
+export const ShippingLocationSchema =
+  SchemaFactory.createForClass(ShippingLocation);

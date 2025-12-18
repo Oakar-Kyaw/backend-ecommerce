@@ -14,7 +14,7 @@ export class User {
   @Prop({ required: true })
   phone: string;
 
-  @Prop({ required: true, default: "CUSTOMER" })
+  @Prop({ required: true, default: 'CUSTOMER' })
   role: string;
 
   @Prop({ default: false })

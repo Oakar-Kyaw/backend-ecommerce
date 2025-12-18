@@ -7,7 +7,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   serversetup(app, envConfig().user_service_port);
-  
+
   // Enable TCP Microservice
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.TCP,

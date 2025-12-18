@@ -18,7 +18,7 @@ import { User, UserSchema } from './schemas/user.schema';
     MongooseModule.forFeature([
       { name: Payment.name, schema: PaymentSchema },
       { name: Transaction.name, schema: TransactionSchema },
-      { name: User.name, schema: UserSchema }  
+      { name: User.name, schema: UserSchema },
     ]),
     PublishMessageModule,
     ClientsModule.register([

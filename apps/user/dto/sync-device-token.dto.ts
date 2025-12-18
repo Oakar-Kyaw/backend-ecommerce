@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export enum SyncAction {
   ADD = 'add',
@@ -39,7 +45,7 @@ export class DeviceInfoDto {
 
   @IsOptional()
   @IsNumber()
-  @ApiProperty({ example: -74.0060, required: false })
+  @ApiProperty({ example: -74.006, required: false })
   longitude?: number;
 
   @IsOptional()
