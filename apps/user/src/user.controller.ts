@@ -350,12 +350,11 @@ export class UsersController {
   }
 
   @Public()
-  @Patch(':id/change-password')
+  @Patch('password/change')
   async changePassword(
-    @Param('id', ParseIntPipe) id: number,
     @Body() updatePasswordDto: UpdateUserPassword
   ) {
-    return this.usersService.updatePassword(id, updatePasswordDto);
+    return this.usersService.updatePassword(updatePasswordDto);
   }
 
 }

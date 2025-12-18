@@ -787,12 +787,12 @@ export class UsersService {
     };
   }
 
-  async updatePassword(id: number, body: UpdateUserPassword ){
-    const { password } = body;
+  async updatePassword(body: UpdateUserPassword ){
+    const { id, password } = body;
     console.log("password", UpdateUserPassword, password)
     const hashPassword = await hashedPassword(password);
     const updateUser = await this.prisma.user.update({
-      where: { id },
+      where: { id: Number(id) },
       data: {
         password: hashPassword
       },
