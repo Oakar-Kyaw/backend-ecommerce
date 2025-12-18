@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
+import { VerifyOtpDto } from '../dto/otp.dto';
 import {
   getPagination,
   buildPaginationResponse,
@@ -335,16 +336,37 @@ export class UsersService {
     return { success: true, message: 'OTP_SENT' };
   }
 
-  async verifyOtp({
-    email,
-    mode,
-    otp,
-  }: {
-    email: string;
-    mode?: string;
-    otp: string;
-  }) {
+  async verifyOtp(dto: VerifyOtpDto) {
+    const { email, mode, otp } = dto;
     if (!email || !otp) throw new NotFoundException('EMAIL_AND_OTP_REQUIRED');
+
+    // If signup mode and registration data is present (password is a good indicator), create the user immediately
+    if ((mode === 'signup' || !mode) && dto.password) {
+      // We check OTP existence here to fail fast, but let create() handle the final verification and deletion
+      const key = `otp:signup:${email}`;
+      const stored = await this.redis.get(key);
+      if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
+      if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
+
+      // Map to CreateUserWithProfileDto
+      const createUserDto: CreateUserWithProfileDto = {
+        email,
+        password: dto.password,
+        role: dto.role || RoleEnum.CUSTOMER,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        gender: dto.gender,
+        phone: dto.phone,
+        identification: dto.identification,
+        dateOfBirth: dto.dateOfBirth,
+        brandId: dto.brandId,
+        otp: otp, // Pass OTP so create method can verify and delete it
+      };
+
+      // This will create user in User DB and publish event for Auth DB
+      return this.create(createUserDto);
+    }
+
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
     console.log('otp', otp, key, stored);
