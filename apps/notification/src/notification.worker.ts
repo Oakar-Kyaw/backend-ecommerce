@@ -8,6 +8,7 @@ import {
   SEND_EMAIL,
   SEND_ORDER_NOTIFICATION,
   SEND_PAYMENT_NOTIFICATION,
+  SEND_BRAND_STATUS_UPDATE_NOTIFICATION,
   UPDATED_USER_JOB,
 } from 'libs/queue/constant';
 import { EmailService } from './email.service';
@@ -85,6 +86,7 @@ export class NotificationWorker extends WorkerHost {
       [SEND_EMAIL]: this.sendEmail.bind(this),
       [SEND_ORDER_NOTIFICATION]: this.sendOrderNotification.bind(this),
       [SEND_PAYMENT_NOTIFICATION]: this.sendPaymentNotification.bind(this),
+      [SEND_BRAND_STATUS_UPDATE_NOTIFICATION]: this.sendBrandStatusUpdateNotification.bind(this),
       [CREATED_USER_JOB]: this.saveUser.bind(this),
       [UPDATED_USER_JOB]: async (job: Job) => {
           console.log("update job: ", job)
@@ -122,6 +124,10 @@ export class NotificationWorker extends WorkerHost {
 
   private async sendOrderNotification(job: Job): Promise<void> {
     await this.notificationService.sendOrderNotification(job.data);
+  }
+
+  private async sendBrandStatusUpdateNotification(job: Job): Promise<void> {
+    await this.notificationService.sendBrandStatusUpdateNotification(job.data);
   }
 
   private async sendPaymentNotification(job: Job): Promise<void> {

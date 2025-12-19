@@ -10,6 +10,7 @@ import {
   CREATED_NOTIFICATION_SERVICE_QUEUE,
   SEND_EMAIL,
   SEND_ORDER_NOTIFICATION,
+  SEND_BRAND_STATUS_UPDATE_NOTIFICATION,
 } from 'libs/queue/constant';
 import { PublishMessage } from 'libs/queue/publish';
 
@@ -46,7 +47,7 @@ export class EventPublisherService {
   async sendBrandStatusUpdateNotification(payload: any) {
     await this.publishMessage.publish(
       CREATED_NOTIFICATION_SERVICE_QUEUE,
-      'notify_brand_status_update',
+      SEND_BRAND_STATUS_UPDATE_NOTIFICATION,
       payload,
     );
   }

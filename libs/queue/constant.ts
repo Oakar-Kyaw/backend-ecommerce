@@ -12,6 +12,7 @@ export const CREATED_AUTH_SERVICE_QUEUE = 'auth';
 
 export const CREATED_ORDER_SERVICE_QUEUE = 'order';
 export const SEND_ORDER_NOTIFICATION = 'send_order_notification';
+export const SEND_BRAND_STATUS_UPDATE_NOTIFICATION = 'notify_brand_status_update';
 
 export const CREATED_PRODUCT_SERVICE_QUEUE = 'product';
 export const CREATED_PAYMENT_SERVICE_QUEUE = 'payment';
