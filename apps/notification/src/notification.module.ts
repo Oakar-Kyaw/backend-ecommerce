@@ -44,7 +44,7 @@ export class NotificationModule {
       credential: admin.credential.cert({
         projectId: envConfig().firebase_projectId,
         clientEmail: envConfig().firebase_clientEmail,
-        privateKey: envConfig().firebase_privateKey,
+        privateKey: envConfig().firebase_privateKey?.replace(/\\n/g, '\n'),
       }),
     });
   }
