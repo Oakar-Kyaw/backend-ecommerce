@@ -19,7 +19,17 @@ export class NotificationService {
   ) {}
 
   async sendNotification(data: NotificationDto) {
-    let { userId, brandId, branchId, role, title, body, icon, type, data: extraData } = data;
+    let {
+      userId,
+      brandId,
+      branchId,
+      role,
+      title,
+      body,
+      icon,
+      type,
+      data: extraData,
+    } = data;
     console.log('data', data);
 
     // Ensure numeric types
@@ -66,23 +76,65 @@ export class NotificationService {
     console.log('notification data: ', notificationTokenData);
     const token = notificationTokenData.token.trim();
     try {
-      const response = await admin.messaging().send({
+      const message: admin.messaging.Message = {
         token,
+        notification: {
+          title,
+          body,
+        },
         webpush: {
           headers: {
-            TTL: '86400', // 24 hours TTL
+            TTL: '86400',
+          },
+          notification: {
+            title,
+            body,
           },
         },
         data: {
-          title: title,
-          body: body,
           icon: icon || '',
+          type: type || 'GENERAL',
+          ...(extraData || {}),
         },
-      });
+      };
+      const hasValidIcon =
+        typeof icon === 'string' &&
+        /^https?:\/\//.test(icon) &&
+        icon.length > 5;
+      if (hasValidIcon) {
+        message.notification = {
+          title,
+          body,
+          imageUrl: icon,
+        };
+        message.android = {
+          notification: {
+            imageUrl: icon,
+          },
+        };
+        message.webpush = {
+          headers: {
+            TTL: '86400',
+          },
+          notification: {
+            title,
+            body,
+            image: icon,
+          },
+        };
+      }
+      const response = await admin.messaging().send(message);
       console.log('response', response);
       return { success: true, message: 'Notification sent successfully' };
     } catch (error) {
       console.error('FCM Error:', error);
+      const code = String((error as any)?.errorInfo?.code || '');
+      if (code.includes('registration-token-not-registered')) {
+        await this.prisma.notificationToken.deleteMany({
+          where: { token },
+        });
+        console.log('Removed invalid token', token);
+      }
       return { success: false, message: 'FCM Error', error };
     }
   }
@@ -177,8 +229,10 @@ export class NotificationService {
     // 2. Send Push
     if (userId) {
       const firstItem = items && items.length > 0 ? items[0] : null;
-      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
-      
+      const image = firstItem
+        ? firstItem.image || firstItem.mainImage || ''
+        : '';
+
       await this.sendNotification({
         userId,
         title: `Order ${status}`,
@@ -241,7 +295,17 @@ export class NotificationService {
   }
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
-    let { brandId, branchId, role, title, body, icon, type, data: extraData, tokens: explicitTokens } = data;
+    let {
+      brandId,
+      branchId,
+      role,
+      title,
+      body,
+      icon,
+      type,
+      data: extraData,
+      tokens: explicitTokens,
+    } = data;
 
     // Ensure numeric types
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
@@ -287,24 +351,68 @@ export class NotificationService {
     console.log('unique tokens', tokens);
 
     const message: admin.messaging.MulticastMessage = {
-      data: {
+      notification: {
         title,
         body,
+      },
+      webpush: {
+        notification: {
+          title,
+          body,
+        },
+      },
+      data: {
         icon: icon || '',
+        type: type || 'GENERAL',
+        ...(extraData || {}),
       },
       tokens,
     };
+    const hasValidIcon =
+      typeof icon === 'string' && /^https?:\/\//.test(icon) && icon.length > 5;
+    if (hasValidIcon) {
+      message.notification = {
+        title,
+        body,
+        imageUrl: icon,
+      };
+      message.android = {
+        notification: {
+          imageUrl: icon,
+        },
+      };
+      message.webpush = {
+        notification: {
+          title,
+          body,
+          image: icon,
+        },
+      };
+    }
 
     try {
       const response = await admin.messaging().sendEachForMulticast(message);
       console.log('Successfully sent messages:', response);
 
-      // Log specific errors
-      response.responses.forEach((resp, index) => {
-        if (!resp.success) {
-          console.error(`Token ${tokens[index]} failed:`, resp.error);
-        }
-      });
+      const invalidTokenIndices = response.responses
+        .map((resp, index) =>
+          !resp.success &&
+          String((resp.error as any)?.code).includes(
+            'registration-token-not-registered',
+          )
+            ? index
+            : -1,
+        )
+        .filter((i) => i >= 0);
+      if (invalidTokenIndices.length > 0) {
+        const invalids = invalidTokenIndices.map((i) => tokens[i]);
+        await this.prisma.notificationToken.deleteMany({
+          where: {
+            token: { in: invalids },
+          },
+        });
+        console.log('Removed invalid tokens', invalids);
+      }
 
       return {
         success: true,
@@ -373,24 +481,46 @@ export class NotificationService {
     try {
       const users = await this.fetchBrandUsers(brandId);
       if (users && users.length > 0) {
-        explicitTokens = users
+        // Collect user IDs to fetch tokens from Auth Service
+        const userIds = users
+          .map((u: any) => u.user?.id || u.user?.userId)
+          .filter((id: any) => id);
+
+        // Fetch tokens from Auth Service
+        const authUsers = await this.fetchTokensFromAuth(userIds);
+
+        // Combine tokens from Auth Service
+        const authTokens = authUsers
+          .map((u: any) => u.device_tokens || [])
+          .flat();
+
+        // Also keep tokens from User Service just in case
+        const userTokens = users
           .map((u: any) => u.user?.device_tokens || [])
-          .flat()
-          .filter((t: string) => t);
+          .flat();
+
+        explicitTokens = [...authTokens, ...userTokens].filter(
+          (t: string) => t,
+        );
       }
     } catch (error) {
-      console.error('Failed to fetch brand users for push notification:', error);
+      console.error(
+        'Failed to fetch brand users for push notification:',
+        error,
+      );
     }
 
     try {
       const firstItem = items && items.length > 0 ? items[0] : null;
-      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
+      const image = firstItem
+        ? firstItem.image || firstItem.mainImage || ''
+        : '';
 
       await this.sendNotificationToMultipleTokens({
         brandId: brandId.toString(),
         title: 'New Order Received',
         body: `Order #${orderId} has been placed containing your items.`,
-        role: undefined, 
+        role: undefined,
         icon: image,
         type: 'ORDER_CREATED',
         data: { orderId },
@@ -442,7 +572,9 @@ export class NotificationService {
     // 2. Send Push Notification to User
     try {
       const firstItem = items && items.length > 0 ? items[0] : null;
-      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
+      const image = firstItem
+        ? firstItem.image || firstItem.mainImage || ''
+        : '';
 
       await this.sendNotification({
         userId,
@@ -489,6 +621,21 @@ export class NotificationService {
         error.message,
       );
       return null;
+    }
+  }
+
+  private async fetchTokensFromAuth(userIds: number[]) {
+    if (!userIds || userIds.length === 0) return [];
+    try {
+      const authUrl = envConfig().auth_service_url;
+      const baseUrl = authUrl.replace(/\/api\/v1\/?$/, '');
+      const finalUrl = `${baseUrl}/api/auth/device-tokens`;
+
+      const response = await axios.post(finalUrl, { userIds });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch tokens from Auth Service:', error.message);
+      return [];
     }
   }
 

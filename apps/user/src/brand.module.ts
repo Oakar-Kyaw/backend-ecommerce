@@ -12,6 +12,12 @@ import { BrandUserService } from './brand-user.service';
 @Module({
   imports: [GlobalConfigModule, UserModule, PublishMessageModule],
   controllers: [BrandController],
-  providers: [BrandService, PrismaService, BrandUserService, FileUpload, EventPublisherService],
+  providers: [
+    BrandService,
+    PrismaService,
+    BrandUserService,
+    FileUpload,
+    EventPublisherService,
+  ],
 })
 export class BrandModule {}

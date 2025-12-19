@@ -44,7 +44,7 @@ export class AuthController {
   googleLogin(@Body() data: GoogleLoginDto) {
     return this.authService.googleLogin(data);
   }
-  
+
   @HttpCode(HttpStatus.OK)
   @Public()
   @Post('facebook')
@@ -82,5 +82,16 @@ export class AuthController {
   refreshToken(@Headers('Authorization') authorizationHeader: string) {
     const token = authorizationHeader.split(' ')[1];
     return this.authService.refreshToken(token);
+  }
+
+  @Post('device-tokens')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { userIds: { type: 'array', items: { type: 'number' } } },
+    },
+  })
+  async getDeviceTokens(@Body() body: { userIds: number[] }) {
+    return this.authService.getDeviceTokens(body.userIds);
   }
 }

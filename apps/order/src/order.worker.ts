@@ -3,7 +3,12 @@ import { Job } from 'bullmq';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema';
 import { Model } from 'mongoose';
-import { CREATED_ORDER_SERVICE_QUEUE, CREATED_USER_JOB, DELETED_USER_JOB, UPDATED_USER_JOB } from 'libs/queue/constant';
+import {
+  CREATED_ORDER_SERVICE_QUEUE,
+  CREATED_USER_JOB,
+  DELETED_USER_JOB,
+  UPDATED_USER_JOB,
+} from 'libs/queue/constant';
 import { Inject } from '@nestjs/common';
 
 // ✅ Correct handler type
@@ -26,7 +31,7 @@ export class OrderWorker extends WorkerHost {
     this.handlers = {
       [CREATED_USER_JOB]: this.saveUser.bind(this),
       [UPDATED_USER_JOB]: this.updateUser.bind(this),
-      [DELETED_USER_JOB]: this.deleteUser.bind(this)
+      [DELETED_USER_JOB]: this.deleteUser.bind(this),
     };
   }
 
@@ -61,25 +66,22 @@ export class OrderWorker extends WorkerHost {
 
   private async updateUser(job: Job): Promise<void> {
     const data: UserType = job.data as UserType;
-    console.log("data is: ", data);
+    console.log('data is: ', data);
     const updateData = {
-        userId: data.userId,
-        email: data.email,
-        phone: data.phone,
-        role: data.role
-    }
-    await this.userModel.findOneAndUpdate(
-      {userId: data.userId},
-      updateData
-   );
+      userId: data.userId,
+      email: data.email,
+      phone: data.phone,
+      role: data.role,
+    };
+    await this.userModel.findOneAndUpdate({ userId: data.userId }, updateData);
   }
 
   private async deleteUser(job: Job): Promise<void> {
     const data: UserType = job.data as UserType;
-    console.log("data is: ", data);
+    console.log('data is: ', data);
     await this.userModel.findOneAndUpdate(
-      {userId: data.userId},
-      { isDeleted: true }
-   );
-}
+      { userId: data.userId },
+      { isDeleted: true },
+    );
+  }
 }

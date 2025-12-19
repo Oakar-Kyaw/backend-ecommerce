@@ -2,7 +2,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class GoogleLoginDto {
-  @ApiProperty({ example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmYifQ...' })
+  @ApiProperty({
+    example:
+      'eyJhbGciOiJSUzI1NiIsImtpZCI6ImZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmYifQ...',
+  })
   @IsString()
   @IsNotEmpty()
   idToken: string;

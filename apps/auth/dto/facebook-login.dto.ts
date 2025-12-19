@@ -17,4 +17,3 @@ export class FacebookLoginDto {
   @IsOptional()
   deviceInfo?: any;
 }
-

@@ -19,7 +19,10 @@ import { Response, Request as ExpressRequest } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './user.service';
 import { CreateUserWithProfileDto, RoleEnum } from '../dto/create-user.dto';
-import { UpdateUserPassword, UpdateUserWithProfileDto } from '../dto/update-user.dto';
+import {
+  UpdateUserPassword,
+  UpdateUserWithProfileDto,
+} from '../dto/update-user.dto';
 import { Public } from '../../../libs/decorator/public.decorators';
 import {
   ApiTags,
@@ -351,10 +354,7 @@ export class UsersController {
 
   @Public()
   @Patch('password/change')
-  async changePassword(
-    @Body() updatePasswordDto: UpdateUserPassword
-  ) {
+  async changePassword(@Body() updatePasswordDto: UpdateUserPassword) {
     return this.usersService.updatePassword(updatePasswordDto);
   }
-
 }

@@ -8,7 +8,6 @@ export class UpdateUserWithProfileDto extends PartialType(
 ) {}
 
 export class UpdateUserPassword {
-
   @Expose()
   @IsNotEmpty()
   @Transform(({ value }) => (value ? Number(value) : null))
