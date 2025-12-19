@@ -183,6 +183,8 @@ export class AuthService {
       }
     }
 
+    const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
+
     // 5. Generate Tokens
     const payload = {
       id: user.userId,
@@ -190,6 +192,8 @@ export class AuthService {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      brandId,
+      brandName,
     };
 
     console.log('🎫 Generating tokens for Google user:', user.id);
@@ -314,12 +318,15 @@ export class AuthService {
         console.error('Failed to sync device token with User Service', e.message);
       }
     }
+    const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
     const payload = {
       id: user.userId,
       userId: user.userId,
       email: user.email,
       phone: user.phone,
       role: user.role,
+      brandId,
+      brandName,
     };
     const access_token = await this.jwtService.signAsync(payload);
     const refresh_token = await this.jwtService.signAsync(payload, {
@@ -437,12 +444,15 @@ export class AuthService {
         console.error('Failed to sync device token with User Service', e.message);
       }
     }
+    const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
     const payload = {
       id: user.userId,
       userId: user.userId,
       email: user.email,
       phone: user.phone,
       role: user.role,
+      brandId,
+      brandName,
     };
     const access_token = await this.jwtService.signAsync(payload);
     const refresh_token = await this.jwtService.signAsync(payload, {
@@ -515,12 +525,16 @@ export class AuthService {
       }
     }
 
+    const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
+
     const payload = {
       id: user.userId,
       userId: user.userId,
       email: user.email,
       phone: user.phone,
       role: user.role,
+      brandId,
+      brandName,
     };
 
     console.log('🎫 Generating tokens for user:', user.id);
@@ -652,6 +666,8 @@ export class AuthService {
       throw new ForbiddenException('Invalid refresh token - user not found');
     }
 
+    const { brandId, brandName } = await this.fetchBrandInfo(data.userId);
+
     console.log('🎫 Generating new access token...');
     const newAccessToken = await this.jwtService.signAsync({
       id: data.userId,
@@ -659,6 +675,8 @@ export class AuthService {
       email: data.email,
       phone: data.phone,
       role: data.role,
+      brandId,
+      brandName,
     });
 
     console.log('✅ New access token generated successfully');
@@ -688,6 +706,8 @@ export class AuthService {
 
       if (!user) throw new NotFoundException('User not found');
 
+      const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
+
       return {
         success: true,
         message: 'Session Valid',
@@ -697,10 +717,35 @@ export class AuthService {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          brandId,
+          brandName,
         },
       };
     } catch (error) {
       throw new UnauthorizedException('Invalid or expired token');
     }
+  }
+
+  private async fetchBrandInfo(userId: number) {
+    let brandId = null;
+    let brandName = null;
+    try {
+      const userServiceUrl = envConfig().user_service_url;
+      const userResponse = await axios.get(
+        `${userServiceUrl}/users/${userId}`,
+      );
+      const userData = userResponse.data?.data;
+      if (userData?.brandUserRelationship?.length > 0) {
+        const rel = userData.brandUserRelationship[0];
+        brandId = rel.brandId;
+        brandName = rel.brand?.name;
+      }
+    } catch (error) {
+      console.error(
+        'Failed to fetch user details for brand info',
+        error.message,
+      );
+    }
+    return { brandId, brandName };
   }
 }

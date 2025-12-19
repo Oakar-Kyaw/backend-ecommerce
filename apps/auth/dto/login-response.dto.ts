@@ -32,6 +32,14 @@ export class LoginUserResponseDto {
   @ApiProperty({ example: 'ADMIN' })
   @Expose()
   role: Role;
+
+  @ApiProperty({ example: 1, required: false })
+  @Expose()
+  brandId?: number;
+
+  @ApiProperty({ example: 'Brand Name', required: false })
+  @Expose()
+  brandName?: string;
 }
 
 export class LoginResponseDto {
