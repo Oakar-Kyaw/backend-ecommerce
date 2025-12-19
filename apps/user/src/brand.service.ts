@@ -17,16 +17,22 @@ import * as XLSX from 'xlsx';
 import { UsersService } from './user.service';
 import { RoleEnum, CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { EventPublisherService } from './event-publisher.service';
+import { BrandUserService } from './brand-user.service';
 import { QueueServices } from 'libs/queue/constant';
 
 @Injectable()
 export class BrandService {
   constructor(
-    @Inject(PRISMA) private readonly prisma,
     private readonly uploadFile: FileUpload,
+    @Inject(PRISMA) private readonly prisma,
     private readonly usersService: UsersService,
     private readonly eventPublisherService: EventPublisherService,
+    private readonly brandUserService: BrandUserService,
   ) {}
+
+  async getUsersByBrand(brandId: number) {
+    return this.brandUserService.getUsersByBrand(brandId);
+  }
 
   // ===== CREATE BRAND =====
   async create(createBrandDto: CreateBrandDto, file: Express.Multer.File) {

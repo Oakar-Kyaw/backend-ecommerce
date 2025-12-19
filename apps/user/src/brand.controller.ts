@@ -524,12 +524,13 @@ export class BrandController {
     return this.brandService.update(id, updateBrandDto, file);
   }
 
-  // ===== DELETE BRAND (SOFT DELETE) =====
-  @Serialize(DeletedBrandResponseDto)
+  // ===== SOFT DELETE BRAND =====
   @Delete(':id')
+  @Serialize(DeletedBrandResponseDto)
+  @ApiOperation({ summary: 'Soft delete a brand' })
   @ApiResponse({
     status: 200,
-    description: 'Soft delete brand by ID',
+    description: 'Brand deleted successfully',
     type: DeletedBrandResponseDto,
   })
   @ApiResponse({
@@ -542,7 +543,13 @@ export class BrandController {
     description: 'Internal Server Error',
     type: ServerErrorResponseDto,
   })
-  remove(@Param('id', ParseIntPipe) id: number) {
+  softDelete(@Param('id', ParseIntPipe) id: number) {
     return this.brandService.softDelete(id);
+  }
+
+  @Get(':id/users')
+  @ApiOperation({ summary: 'Get all users linked to a brand' })
+  async getBrandUsers(@Param('id', ParseIntPipe) id: number) {
+    return this.brandService.getUsersByBrand(id);
   }
 }

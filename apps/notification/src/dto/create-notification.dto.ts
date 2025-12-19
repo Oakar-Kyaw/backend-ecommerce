@@ -90,6 +90,9 @@ export class NotificationDto {
 
   @IsOptional()
   data?: any;
+
+  @IsOptional()
+  tokens?: string[];
 }
 
 export class SaveNotificationTokenDto {

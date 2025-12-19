@@ -29,4 +29,20 @@ export class BrandUserService {
       },
     });
   }
+
+  async getUsersByBrand(brandId: number) {
+    return this.prisma.brandUserRelationship.findMany({
+      where: { brandId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            userId: true,
+            email: true,
+            device_tokens: true,
+          },
+        },
+      },
+    });
+  }
 }

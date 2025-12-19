@@ -241,7 +241,7 @@ export class NotificationService {
   }
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
-    let { brandId, branchId, role, title, body, icon, type, data: extraData } = data;
+    let { brandId, branchId, role, title, body, icon, type, data: extraData, tokens: explicitTokens } = data;
 
     // Ensure numeric types
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
@@ -273,13 +273,17 @@ export class NotificationService {
       },
     });
 
-    if (messageToken.length === 0)
-      throw new NotFoundException(`Tokens don't exist.`);
+    // Combine DB tokens with explicit tokens
+    const dbTokens = messageToken.map((t: any) => String(t.token).trim());
+    const allTokens = [...dbTokens, ...(explicitTokens || [])];
+
+    if (allTokens.length === 0) {
+      console.log(`No tokens found for notification: ${title}`);
+      return { success: false, message: 'No tokens found' };
+    }
 
     // Remove duplicates and ensure proper typing
-    const tokens = Array.from(
-      new Set<string>(messageToken.map((t: any) => String(t.token).trim())),
-    );
+    const tokens = Array.from(new Set<string>(allTokens));
     console.log('unique tokens', tokens);
 
     const message: admin.messaging.MulticastMessage = {
@@ -361,9 +365,19 @@ export class NotificationService {
     }
 
     // 3. Send Push Notification to Brand Users (Admins/Staff)
-    // Assuming brand users have role 'BRAND_ADMIN' or similar and are linked via brandId
-    // Note: The current NotificationToken schema supports 'brandId'.
-    // We notify all tokens associated with this brandId.
+    // Fetch users linked to the brand from User Service
+    let explicitTokens: string[] = [];
+    try {
+      const users = await this.fetchBrandUsers(brandId);
+      if (users && users.length > 0) {
+        explicitTokens = users
+          .map((u: any) => u.user?.device_tokens || [])
+          .flat()
+          .filter((t: string) => t);
+      }
+    } catch (error) {
+      console.error('Failed to fetch brand users for push notification:', error);
+    }
 
     try {
       const firstItem = items && items.length > 0 ? items[0] : null;
@@ -373,16 +387,33 @@ export class NotificationService {
         brandId: brandId.toString(),
         title: 'New Order Received',
         body: `Order #${orderId} has been placed containing your items.`,
-        role: undefined, // Send to all roles under this brand? Or specific? Let's assume all for now.
+        role: undefined, 
         icon: image,
         type: 'ORDER_CREATED',
         data: { orderId },
+        tokens: explicitTokens,
       } as any);
     } catch (e) {
       console.log(
         'No push tokens found for brand or error sending push:',
         e.message,
       );
+    }
+  }
+
+  private async fetchBrandUsers(brandId: number) {
+    if (!brandId) return [];
+    try {
+      const baseUrl = envConfig().user_service_url;
+      const url = `${baseUrl}/brands/${brandId}/users`;
+      const response = await axios.get(url);
+      return response.data; // Assuming returns array of BrandUserRelationship with user included
+    } catch (error) {
+      console.error(
+        `Error fetching brand users for ID ${brandId}:`,
+        error.message,
+      );
+      return [];
     }
   }
 
