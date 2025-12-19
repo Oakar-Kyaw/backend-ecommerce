@@ -29,7 +29,7 @@ export class EventPublisherService {
   }
 
   async userUpdated(service_queue, user) {
-    console.log("event to: ", service_queue, UPDATED_USER_JOB)
+    console.log('event to: ', service_queue, UPDATED_USER_JOB);
     await this.publishMessage.publish(service_queue, UPDATED_USER_JOB, {
       userId: user.id,
       email: user.email,

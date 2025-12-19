@@ -17,4 +17,3 @@ export class AppleLoginDto {
   @IsOptional()
   deviceInfo?: any;
 }
-

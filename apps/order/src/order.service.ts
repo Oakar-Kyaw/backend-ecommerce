@@ -374,7 +374,10 @@ export class OrderService {
             totalQuantity: item.totalQuantity,
           };
         } catch (e) {
-          console.error(`Error fetching product name for ID ${item._id}:`, e.message);
+          console.error(
+            `Error fetching product name for ID ${item._id}:`,
+            e.message,
+          );
           return {
             _id: item._id,
             name: 'Unknown Product',
@@ -401,11 +404,13 @@ export class OrderService {
             `Error fetching brand name for ID ${brand._id}. URL: ${envConfig().user_service_url}/brands/${brand._id}. Message: ${e.message}`,
           );
           if (axios.isAxiosError(e)) {
-             if (e.response) {
-                 console.error(`Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`);
-             } else {
-                 console.error(`Code: ${e.code}`);
-             }
+            if (e.response) {
+              console.error(
+                `Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`,
+              );
+            } else {
+              console.error(`Code: ${e.code}`);
+            }
           }
           return {
             brandId: brand._id,
@@ -516,11 +521,13 @@ export class OrderService {
             `Error fetching product name for ID ${item._id}. URL: ${envConfig().product_service_url}/products/${item._id}. Message: ${e.message}`,
           );
           if (axios.isAxiosError(e)) {
-             if (e.response) {
-                 console.error(`Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`);
-             } else {
-                 console.error(`Code: ${e.code}`);
-             }
+            if (e.response) {
+              console.error(
+                `Status: ${e.response.status}, Data: ${JSON.stringify(e.response.data)}`,
+              );
+            } else {
+              console.error(`Code: ${e.code}`);
+            }
           }
           return {
             _id: item._id,

@@ -23,7 +23,7 @@ export const envConfig = () => ({
     process.env.USER_SERVER_URL ?? 'http://localhost:5001/api/v1',
   auth_service_port: parseInt(process.env.AUTH_SERVER_PORT ?? '5003', 10),
   auth_service_url:
-    process.env.AUTH_SERVER_URL ?? 'http://localhost:5000/api/v1',
+    process.env.AUTH_SERVER_URL ?? 'http://localhost:5003/api/v1',
   auth_service_db: process.env.AUTH_DB_URL,
   product_service_port: parseInt(process.env.PRODUCT_SERVER_PORT ?? '5004', 10),
   product_service_url:

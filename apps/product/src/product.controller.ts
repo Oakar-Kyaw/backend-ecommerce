@@ -59,7 +59,11 @@ export class ProductController {
   @ApiOperation({ summary: 'Get list of products' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'pageSize', required: false, description: 'Page size' })
-  @ApiQuery({ name: 'brandId', required: false, description: 'Filter by Brand ID' })
+  @ApiQuery({
+    name: 'brandId',
+    required: false,
+    description: 'Filter by Brand ID',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of products',

@@ -13,7 +13,10 @@ import {
   getPagination,
   buildPaginationResponse,
 } from '../../../libs/utils/pagination';
-import { UpdateUserPassword, UpdateUserWithProfileDto } from '../dto/update-user.dto';
+import {
+  UpdateUserPassword,
+  UpdateUserWithProfileDto,
+} from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import {
   CREATED_NOTIFICATION_SERVICE_QUEUE,
@@ -57,7 +60,10 @@ export class UsersService {
       });
 
   async create(createUserDto: CreateUserWithProfileDto) {
-    console.log('UserService.create called with:', JSON.stringify(createUserDto, null, 2));
+    console.log(
+      'UserService.create called with:',
+      JSON.stringify(createUserDto, null, 2),
+    );
     const { email, phone } = createUserDto;
     // Check if email already exists
     const existingUser = await this.prisma.user.findFirst({
@@ -140,14 +146,17 @@ export class UsersService {
     // 4️link brand if provided
     if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
-   QueueServices.map((name)=>{
-      console.log("sending data to ", name)
+    QueueServices.map((name) => {
+      console.log('sending data to ', name);
       this.eventPublisher.createUser(name, user);
-    })
+    });
     //send welcome message
     let subject = 'Welcome to Our Platform!';
     let htmlContent = '';
-    const fullName = [createUserDto.firstName, createUserDto.lastName].filter(Boolean).join(' ') || 'User';
+    const fullName =
+      [createUserDto.firstName, createUserDto.lastName]
+        .filter(Boolean)
+        .join(' ') || 'User';
 
     if (dto.role === RoleEnum.SALE) {
       subject = 'Welcome to Our Brand Provider Network!';
@@ -379,12 +388,14 @@ export class UsersService {
     // If signup mode and registration data is present (password is a good indicator), create the user immediately
     if ((mode === 'signup' || !mode) && dto.password) {
       console.log('Attempting to create user during OTP verification...');
-      
+
       // We check OTP existence here to fail fast, but let create() handle the final verification and deletion
       const key = `otp:signup:${email}`;
       const stored = await this.redis.get(key);
-      console.log(`Checking Redis Key: ${key}, Stored: ${stored}, Provided: ${otp}`);
-      
+      console.log(
+        `Checking Redis Key: ${key}, Stored: ${stored}, Provided: ${otp}`,
+      );
+
       if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
       if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
 
@@ -403,8 +414,11 @@ export class UsersService {
         otp: otp, // Pass OTP so create method can verify and delete it
       };
 
-      console.log('Calling create() with:', JSON.stringify(createUserDto, null, 2));
-      
+      console.log(
+        'Calling create() with:',
+        JSON.stringify(createUserDto, null, 2),
+      );
+
       try {
         // This will create user in User DB and publish event for Auth DB
         const result = await this.create(createUserDto);
@@ -415,23 +429,23 @@ export class UsersService {
         throw error;
       }
     }
-    
+
     // If we are here, it means we are just verifying OTP without creating user (e.g. forgot password flow, or legacy signup flow)
     const key = `otp:${mode || 'signup'}:${email}`;
     const stored = await this.redis.get(key);
     console.log('otp', otp, key, stored);
     if (!stored) throw new NotFoundException('OTP_EXPIRED_OR_NOT_FOUND');
     if (stored !== otp) throw new UnauthorizedException('INVALID_OTP');
-    
-    // If it's signup mode but no password, we just delete OTP and return success. 
-    // This allows the client to call signup() separately (if that flow exists) 
+
+    // If it's signup mode but no password, we just delete OTP and return success.
+    // This allows the client to call signup() separately (if that flow exists)
     // BUT the client must provide the OTP again to signup() which will fail if we delete it here.
     // So for signup mode, we should NOT delete it if we expect a follow-up signup call.
     if (mode === 'signup' || !mode) {
-         // Do not delete key for signup mode, so the subsequent create() call can verify it.
-         // However, this opens a window where OTP can be reused or brute forced if not careful.
-         // But since create() deletes it, it should be fine for the short duration.
-         return { success: true, message: 'OTP_VERIFIED' };
+      // Do not delete key for signup mode, so the subsequent create() call can verify it.
+      // However, this opens a window where OTP can be reused or brute forced if not careful.
+      // But since create() deletes it, it should be fine for the short duration.
+      return { success: true, message: 'OTP_VERIFIED' };
     }
 
     await this.redis.del(key);
@@ -524,20 +538,19 @@ export class UsersService {
       },
       include: { brandUserRelationship: { include: { brand: true } } },
     });
-    console.log("updated user :", updateUser, dto, imageUrl)
-    
+    console.log('updated user :', updateUser, dto, imageUrl);
+
     //publish event update user to all server
-    QueueServices.map((name)=>{
-      console.log("name", name)
+    QueueServices.map((name) => {
+      console.log('name', name);
       this.eventPublisher.userUpdated(name, {
-            id: updateUser.id,
-            email: updateUser.email,
-            phone: updateUser.phone ?? null,
-            password: updateUser.password ?? null,
-            role: updateUser.role ?? 'CUSTOMER',
-      })
-    })
-   
+        id: updateUser.id,
+        email: updateUser.email,
+        phone: updateUser.phone ?? null,
+        password: updateUser.password ?? null,
+        role: updateUser.role ?? 'CUSTOMER',
+      });
+    });
 
     return {
       success: true,
@@ -573,10 +586,10 @@ export class UsersService {
 
       //publish event delete user to all server
       // await Promise.all(
-        QueueServices.map( async (name) => {
-          console.log("sending data to", name);
-          await this.eventPublisher.userDeleted(name, id);
-        })
+      QueueServices.map(async (name) => {
+        console.log('sending data to', name);
+        await this.eventPublisher.userDeleted(name, id);
+      });
       // );
 
       return {
@@ -794,30 +807,30 @@ export class UsersService {
     };
   }
 
-  async updatePassword(body: UpdateUserPassword ){
+  async updatePassword(body: UpdateUserPassword) {
     const { id, password } = body;
-    console.log("password", UpdateUserPassword, password)
+    console.log('password', UpdateUserPassword, password);
     const hashPassword = await hashedPassword(password);
     const updateUser = await this.prisma.user.update({
       where: { id: Number(id) },
       data: {
-        password: hashPassword
+        password: hashPassword,
       },
       include: { brandUserRelationship: { include: { brand: true } } },
     });
 
     //publish to auth server
     this.eventPublisher.userUpdated(CREATED_USER_SERVICE_QUEUE, {
-       id: updateUser.id,
-       email: updateUser.email,
-       phone: updateUser.phone ?? null,
-       password: hashPassword ?? null,
-       role: updateUser.role ?? 'CUSTOMER',
-    })
+      id: updateUser.id,
+      email: updateUser.email,
+      phone: updateUser.phone ?? null,
+      password: hashPassword ?? null,
+      role: updateUser.role ?? 'CUSTOMER',
+    });
     return {
       success: true,
-      message: "PASSWORD_UPDATED_SUCCESSFULLY"
-    }
+      message: 'PASSWORD_UPDATED_SUCCESSFULLY',
+    };
   }
   removeEmptyFields<T extends Record<string, any>>(obj: T): Partial<T> {
     return Object.fromEntries(

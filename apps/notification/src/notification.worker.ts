@@ -19,11 +19,11 @@ import { Inject } from '@nestjs/common';
 // ✅ Correct handler type
 type JobHandler = (job: Job) => Promise<void>;
 type UserType = {
-    email: string,
-    phone: string,
-    userId: number,
-    role: string
-}
+  email: string;
+  phone: string;
+  userId: number;
+  role: string;
+};
 
 class UserService {
   constructor(@Inject(Noti_PRISMA) private readonly prisma) {}
@@ -46,7 +46,7 @@ class UserService {
   // }
 
   async updateUser(userId: number, data: UserType) {
-    console.log("updat user notification: ",userId, data)
+    console.log('updat user notification: ', userId, data);
     const updatedUser = await this.prisma.user.updateMany({
       where: { userId: Number(userId) },
       data: {
@@ -86,18 +86,19 @@ export class NotificationWorker extends WorkerHost {
       [SEND_EMAIL]: this.sendEmail.bind(this),
       [SEND_ORDER_NOTIFICATION]: this.sendOrderNotification.bind(this),
       [SEND_PAYMENT_NOTIFICATION]: this.sendPaymentNotification.bind(this),
-      [SEND_BRAND_STATUS_UPDATE_NOTIFICATION]: this.sendBrandStatusUpdateNotification.bind(this),
+      [SEND_BRAND_STATUS_UPDATE_NOTIFICATION]:
+        this.sendBrandStatusUpdateNotification.bind(this),
       [CREATED_USER_JOB]: this.saveUser.bind(this),
       [UPDATED_USER_JOB]: async (job: Job) => {
-          console.log("update job: ", job)
-          const data = job.data as UserType;
-          if (!data.userId) throw new Error('Missing userId for update');
-          return await userService.updateUser(data.userId, data);
-       },
+        console.log('update job: ', job);
+        const data = job.data as UserType;
+        if (!data.userId) throw new Error('Missing userId for update');
+        return await userService.updateUser(data.userId, data);
+      },
       [DELETED_USER_JOB]: async (job: Job) => {
-          const { userId } = job.data as UserType;
-          if (!userId) throw new Error('Missing userId for deletion');
-          return await userService.deleteUser(userId);
+        const { userId } = job.data as UserType;
+        if (!userId) throw new Error('Missing userId for deletion');
+        return await userService.deleteUser(userId);
       },
     };
   }
@@ -151,6 +152,4 @@ export class NotificationWorker extends WorkerHost {
       },
     });
   }
-  
-
 }

@@ -78,52 +78,70 @@ export class AuthService {
 
         const userServiceUrl = envConfig().user_service_url;
         console.log(`Creating user in User Service at ${userServiceUrl}/users`);
-        
-        const response = await axios.post(`${userServiceUrl}/users`, createUserPayload);
-        
+
+        const response = await axios.post(
+          `${userServiceUrl}/users`,
+          createUserPayload,
+        );
+
         // Handle response structure. It might be { data: user } or just user.
         // Based on typical NestJS response with interceptors, it's often nested.
         const createdUser = response.data.data || response.data;
-        
+
         if (!createdUser || !createdUser.id) {
-            console.error('Invalid response from User Service:', JSON.stringify(response.data));
-            throw new InternalServerErrorException('Invalid response from User Service');
+          console.error(
+            'Invalid response from User Service:',
+            JSON.stringify(response.data),
+          );
+          throw new InternalServerErrorException(
+            'Invalid response from User Service',
+          );
         }
 
         userId = createdUser.id;
         // userRole = createdUser.role || 'CUSTOMER'; // User Service response might not include role in some DTOs
-        
       } catch (error) {
         if (error.response?.status === 409) {
-          console.log(`User ${email} already exists in User Service. Fetching details...`);
+          console.log(
+            `User ${email} already exists in User Service. Fetching details...`,
+          );
           // User already exists in User Service. Fetch details.
           try {
-             const userServiceUrl = envConfig().user_service_url;
-             // Search by email
-             const searchResponse = await axios.get(`${userServiceUrl}/users`, {
-               params: { search: email }
-             });
-             
-             const usersData = searchResponse.data.data || searchResponse.data;
-             // Ensure it's an array
-             const users = Array.isArray(usersData) ? usersData : [];
-             
-             const existingUser = users.find((u: any) => u.email === email);
-             if (!existingUser) {
-               throw new InternalServerErrorException('User exists but cannot be found via search');
-             }
-             userId = existingUser.id;
-             userRole = existingUser.role;
+            const userServiceUrl = envConfig().user_service_url;
+            // Search by email
+            const searchResponse = await axios.get(`${userServiceUrl}/users`, {
+              params: { search: email },
+            });
+
+            const usersData = searchResponse.data.data || searchResponse.data;
+            // Ensure it's an array
+            const users = Array.isArray(usersData) ? usersData : [];
+
+            const existingUser = users.find((u: any) => u.email === email);
+            if (!existingUser) {
+              throw new InternalServerErrorException(
+                'User exists but cannot be found via search',
+              );
+            }
+            userId = existingUser.id;
+            userRole = existingUser.role;
           } catch (findErr) {
-             console.error('Error finding existing user:', findErr.message);
-             throw new InternalServerErrorException('Failed to retrieve existing user from User Service');
+            console.error('Error finding existing user:', findErr.message);
+            throw new InternalServerErrorException(
+              'Failed to retrieve existing user from User Service',
+            );
           }
         } else {
           console.error('Error creating user in User Service:', error.message);
-           if (error.response) {
-              console.error('Response data:', JSON.stringify(error.response.data));
-           }
-          throw new InternalServerErrorException('Failed to create user in User Service');
+          if (error.response) {
+            console.error(
+              'Response data:',
+              JSON.stringify(error.response.data),
+            );
+          }
+          throw new InternalServerErrorException(
+            'Failed to create user in User Service',
+          );
         }
       }
 
@@ -133,7 +151,7 @@ export class AuthService {
           email,
           userId,
           role: userRole as any,
-          password: null, 
+          password: null,
           device_tokens: [],
           provider: 'GOOGLE',
           providerUserId: uid,
@@ -169,17 +187,17 @@ export class AuthService {
 
       // Sync with User Service
       try {
-        await axios.post(
-          `${envConfig().user_service_url}/users/device-token`,
-          {
-            userId: user.userId,
-            deviceToken: deviceToken,
-            action: 'add',
-            deviceInfo: deviceInfo,
-          },
-        );
+        await axios.post(`${envConfig().user_service_url}/users/device-token`, {
+          userId: user.userId,
+          deviceToken: deviceToken,
+          action: 'add',
+          deviceInfo: deviceInfo,
+        });
       } catch (e) {
-        console.error('Failed to sync device token with User Service', e.message);
+        console.error(
+          'Failed to sync device token with User Service',
+          e.message,
+        );
       }
     }
 
@@ -211,10 +229,11 @@ export class AuthService {
       refresh_token,
     };
   }
-  
+
   async facebookLogin(dto: FacebookLoginDto) {
     const { accessToken, deviceToken, deviceInfo } = dto;
-    if (!accessToken) throw new BadRequestException('Facebook access token is required');
+    if (!accessToken)
+      throw new BadRequestException('Facebook access token is required');
     let fbUser: any;
     try {
       const fields = 'id,name,email,picture';
@@ -230,48 +249,63 @@ export class AuthService {
     const name = fbUser.name;
     const picture = fbUser.picture?.data?.url;
     const uid = fbUser.id;
-    if (!email) throw new BadRequestException('Email not found in Facebook profile');
+    if (!email)
+      throw new BadRequestException('Email not found in Facebook profile');
     let user = await this.prisma.user.findFirst({
       where: { email, isDeleted: false },
     });
     if (!user) {
-      const [firstName, ...lastNameParts] = (name || 'Facebook User').split(' ');
+      const [firstName, ...lastNameParts] = (name || 'Facebook User').split(
+        ' ',
+      );
       const lastName = lastNameParts.join(' ') || '';
       let userId: number;
       let userRole = 'CUSTOMER';
       try {
-        const response = await axios.post(`${envConfig().user_service_url}/users`, {
-          email,
-          firstName,
-          lastName,
-          password: crypto.randomBytes(16).toString('hex'),
-          role: 'CUSTOMER',
-          photoUrl: picture,
-          identification: '',
-          phone: '',
-          isSocialLogin: true,
-        });
+        const response = await axios.post(
+          `${envConfig().user_service_url}/users`,
+          {
+            email,
+            firstName,
+            lastName,
+            password: crypto.randomBytes(16).toString('hex'),
+            role: 'CUSTOMER',
+            photoUrl: picture,
+            identification: '',
+            phone: '',
+            isSocialLogin: true,
+          },
+        );
         const createdUser = response.data.data || response.data;
         if (!createdUser || !createdUser.id) {
-          throw new InternalServerErrorException('Invalid response from User Service');
+          throw new InternalServerErrorException(
+            'Invalid response from User Service',
+          );
         }
         userId = createdUser.id;
       } catch (error) {
         if (error.response?.status === 409) {
-          const searchResponse = await axios.get(`${envConfig().user_service_url}/users`, {
-            params: { search: email },
-          });
+          const searchResponse = await axios.get(
+            `${envConfig().user_service_url}/users`,
+            {
+              params: { search: email },
+            },
+          );
           const usersData = searchResponse.data.data || searchResponse.data;
           const users = Array.isArray(usersData) ? usersData : [];
           const existingUser = users.find((u: any) => u.email === email);
           if (!existingUser) {
-            throw new InternalServerErrorException('User exists but cannot be found via search');
+            throw new InternalServerErrorException(
+              'User exists but cannot be found via search',
+            );
           }
           userId = existingUser.id;
           userRole = existingUser.role;
         } else {
           console.error('Error creating user in User Service:', error.message);
-          throw new InternalServerErrorException('Failed to create user in User Service');
+          throw new InternalServerErrorException(
+            'Failed to create user in User Service',
+          );
         }
       }
       user = await this.prisma.user.create({
@@ -315,7 +349,10 @@ export class AuthService {
           deviceInfo,
         });
       } catch (e) {
-        console.error('Failed to sync device token with User Service', e.message);
+        console.error(
+          'Failed to sync device token with User Service',
+          e.message,
+        );
       }
     }
     const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
@@ -341,10 +378,11 @@ export class AuthService {
       refresh_token,
     };
   }
-  
+
   async appleLogin(dto: AppleLoginDto) {
     const { identityToken, deviceToken, deviceInfo } = dto;
-    if (!identityToken) throw new BadRequestException('Apple identity token is required');
+    if (!identityToken)
+      throw new BadRequestException('Apple identity token is required');
     const clientId = process.env.APPLE_CLIENT_ID;
     if (!clientId) {
       throw new BadRequestException('APPLE_CLIENT_ID not configured');
@@ -352,10 +390,15 @@ export class AuthService {
     // Minimal decode without signature verification to extract email/sub.
     // For production, verify with Apple JWKS. Here we enforce single provider flow and require email.
     const parts = identityToken.split('.');
-    if (parts.length < 2) throw new UnauthorizedException('Invalid Apple identity token');
+    if (parts.length < 2)
+      throw new UnauthorizedException('Invalid Apple identity token');
     const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
     let claims: any = {};
-    try { claims = JSON.parse(payloadJson); } catch { throw new UnauthorizedException('Invalid Apple token payload'); }
+    try {
+      claims = JSON.parse(payloadJson);
+    } catch {
+      throw new UnauthorizedException('Invalid Apple token payload');
+    }
     const email = claims.email;
     const uid = claims.sub;
     const name = ''; // Apple may not include name
@@ -367,37 +410,49 @@ export class AuthService {
       let userId: number;
       let userRole = 'CUSTOMER';
       try {
-        const response = await axios.post(`${envConfig().user_service_url}/users`, {
-          email,
-          firstName: name || 'Apple',
-          lastName: '',
-          password: undefined,
-          role: 'CUSTOMER',
-          photoUrl: '',
-          identification: '',
-          phone: '',
-        });
+        const response = await axios.post(
+          `${envConfig().user_service_url}/users`,
+          {
+            email,
+            firstName: name || 'Apple',
+            lastName: '',
+            password: undefined,
+            role: 'CUSTOMER',
+            photoUrl: '',
+            identification: '',
+            phone: '',
+          },
+        );
         const createdUser = response.data.data || response.data;
         if (!createdUser || !createdUser.id) {
-          throw new InternalServerErrorException('Invalid response from User Service');
+          throw new InternalServerErrorException(
+            'Invalid response from User Service',
+          );
         }
         userId = createdUser.id;
       } catch (error) {
         if (error.response?.status === 409) {
-          const searchResponse = await axios.get(`${envConfig().user_service_url}/users`, {
-            params: { search: email },
-          });
+          const searchResponse = await axios.get(
+            `${envConfig().user_service_url}/users`,
+            {
+              params: { search: email },
+            },
+          );
           const usersData = searchResponse.data.data || searchResponse.data;
           const users = Array.isArray(usersData) ? usersData : [];
           const existingUser = users.find((u: any) => u.email === email);
           if (!existingUser) {
-            throw new InternalServerErrorException('User exists but cannot be found via search');
+            throw new InternalServerErrorException(
+              'User exists but cannot be found via search',
+            );
           }
           userId = existingUser.id;
           userRole = existingUser.role;
         } else {
           console.error('Error creating user in User Service:', error.message);
-          throw new InternalServerErrorException('Failed to create user in User Service');
+          throw new InternalServerErrorException(
+            'Failed to create user in User Service',
+          );
         }
       }
       user = await this.prisma.user.create({
@@ -441,7 +496,10 @@ export class AuthService {
           deviceInfo,
         });
       } catch (e) {
-        console.error('Failed to sync device token with User Service', e.message);
+        console.error(
+          'Failed to sync device token with User Service',
+          e.message,
+        );
       }
     }
     const { brandId, brandName } = await this.fetchBrandInfo(user.userId);
@@ -508,15 +566,12 @@ export class AuthService {
 
       // Sync with User Service (Always sync to ensure consistency and update device info)
       try {
-        await axios.post(
-          `${envConfig().user_service_url}/users/device-token`,
-          {
-            userId: user.userId,
-            deviceToken: datas.deviceToken,
-            action: 'add',
-            deviceInfo: datas.deviceInfo,
-          },
-        );
+        await axios.post(`${envConfig().user_service_url}/users/device-token`, {
+          userId: user.userId,
+          deviceToken: datas.deviceToken,
+          action: 'add',
+          deviceInfo: datas.deviceInfo,
+        });
       } catch (e) {
         console.error(
           'Failed to sync device token with User Service',
@@ -731,9 +786,7 @@ export class AuthService {
     let brandName = null;
     try {
       const userServiceUrl = envConfig().user_service_url;
-      const userResponse = await axios.get(
-        `${userServiceUrl}/users/${userId}`,
-      );
+      const userResponse = await axios.get(`${userServiceUrl}/users/${userId}`);
       const userData = userResponse.data?.data;
       if (userData?.brandUserRelationship?.length > 0) {
         const rel = userData.brandUserRelationship[0];
@@ -747,5 +800,19 @@ export class AuthService {
       );
     }
     return { brandId, brandName };
+  }
+
+  async getDeviceTokens(userIds: number[]) {
+    const users = await this.prisma.user.findMany({
+      where: {
+        userId: { in: userIds },
+        isDeleted: false,
+      },
+      select: {
+        userId: true,
+        device_tokens: true,
+      },
+    });
+    return users;
   }
 }

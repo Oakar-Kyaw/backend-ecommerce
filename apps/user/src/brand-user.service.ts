@@ -1,6 +1,7 @@
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PRISMA } from '../prisma/prisma.service';
 
+@Injectable()
 export class BrandUserService {
   constructor(@Inject(PRISMA) private prisma) {}
 
@@ -37,7 +38,6 @@ export class BrandUserService {
         user: {
           select: {
             id: true,
-            userId: true,
             email: true,
             device_tokens: true,
           },
