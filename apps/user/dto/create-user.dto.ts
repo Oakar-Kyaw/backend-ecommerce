@@ -57,11 +57,15 @@ export class CreateUserWithProfileDto {
   readonly gender?: GenderEnum;
 
   @Expose()
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @MinLength(6)
   @Transform(({ value }) => (value ? String(value).trim() : null))
-  password: string;
+  password?: string;
+
+  @Expose()
+  @IsOptional()
+  readonly isSocialLogin?: boolean;
 
   @Expose()
   @IsOptional()

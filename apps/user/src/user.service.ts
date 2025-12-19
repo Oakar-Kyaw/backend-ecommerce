@@ -71,11 +71,18 @@ export class UsersService {
       throw new ConflictException('Email or phone already exists');
     }
 
-    const hashPassword = await hashedPassword(createUserDto.password);
+    let hashPassword = '';
+    if (createUserDto.password) {
+      hashPassword = await hashedPassword(createUserDto.password);
+    }
 
-    const { brandId, ...dto } = createUserDto;
+    const { brandId, isSocialLogin, ...dto } = createUserDto;
 
-    if (dto.role && ['USER', 'CUSTOMER'].includes(String(dto.role))) {
+    if (
+      dto.role &&
+      ['USER', 'CUSTOMER'].includes(String(dto.role)) &&
+      !isSocialLogin
+    ) {
       const otp = (createUserDto as any).otp;
       console.log('otp is ', otp);
       if (!otp) throw new UnauthorizedException('OTP_REQUIRED');

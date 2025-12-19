@@ -68,11 +68,12 @@ export class AuthService {
           email,
           firstName,
           lastName,
-          password: undefined,
+          password: crypto.randomBytes(16).toString('hex'),
           role: 'CUSTOMER',
           photoUrl: picture,
           identification: '', // Optional
           phone: '', // Optional
+          isSocialLogin: true,
         };
 
         const userServiceUrl = envConfig().user_service_url;
@@ -239,11 +240,12 @@ export class AuthService {
           email,
           firstName,
           lastName,
-          password: undefined,
+          password: crypto.randomBytes(16).toString('hex'),
           role: 'CUSTOMER',
           photoUrl: picture,
           identification: '',
           phone: '',
+          isSocialLogin: true,
         });
         const createdUser = response.data.data || response.data;
         if (!createdUser || !createdUser.id) {
