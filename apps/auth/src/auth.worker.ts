@@ -64,7 +64,7 @@ class UserService {
   }
 }
 
-@Processor(CREATED_AUTH_SERVICE_QUEUE)
+@Processor(CREATED_USER_SERVICE_QUEUE)
 export class AuthWorker extends WorkerHost {
   private readonly handlers: Record<string, JobHandler>;
 
