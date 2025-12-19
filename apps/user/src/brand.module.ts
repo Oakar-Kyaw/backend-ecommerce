@@ -7,10 +7,11 @@ import { FileUpload } from 'libs/utils/file-upload';
 import { UserModule } from './user.module';
 import { EventPublisherService } from './event-publisher.service';
 import { PublishMessageModule } from 'libs/queue/publish.module';
+import { BrandUserService } from './brand-user.service';
 
 @Module({
   imports: [GlobalConfigModule, UserModule, PublishMessageModule],
   controllers: [BrandController],
-  providers: [BrandService, PrismaService, FileUpload, EventPublisherService],
+  providers: [BrandService, PrismaService, BrandUserService, FileUpload, EventPublisherService],
 })
 export class BrandModule {}
