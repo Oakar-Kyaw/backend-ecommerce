@@ -157,6 +157,11 @@ export class ProductService {
           colors: true,
           sizes: true,
           variants: true,
+          userFavorites: {
+            include: {
+              user: true
+            }
+          }
         },
         skip,
         take,
@@ -201,6 +206,11 @@ export class ProductService {
       throw new NotFoundException(`Product with ID ${id} not found`);
 
     const brand = await this.fetchBrandDetails(product.brandId);
+    
+    //add user count 
+    await this.prisma.product.update({where: { id }, data: { userCount: {
+      increment: 1
+    }}});
 
     // Map to response format
     const mapped = this.mapToResponse(product).data;
@@ -290,6 +300,7 @@ export class ProductService {
         mainImage: product.mainImage,
         colors,
         sizes,
+        userFavorites: product.userFavorites
       },
     };
   }

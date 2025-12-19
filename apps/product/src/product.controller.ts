@@ -27,11 +27,17 @@ import {
   ProductItemResponseDto,
 } from '../dto/product-response.dto';
 import { Serialize } from 'libs/interceptor/response.interceptor';
+import { CreateAddToCartDto, CreateUserFavoriteDto } from '../dto/user-data.dto';
+import { UserData } from './user/user.data';
+import { AddToCartListResponseDto, CreatedAddToCartResponseDto, CreatedUserFavoriteResponseDto, DeletedAddToCartResponseDto, DeletedUserFavoriteResponseDto, UserFavoriteListResponseDto } from '../dto/user-data-response.dto';
 
 @ApiTags('Items')
-@Controller(['api/products', 'api/v1/products', 'api/v1/items'])
+@Controller(['api/products', 'api/v1/products', 'api/v1/items', 'api/v1/product'])
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly userData: UserData
+  ) {}
 
   @Post()
   @ApiConsumes('multipart/form-data')
@@ -87,4 +93,84 @@ export class ProductController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.productService.remove(id);
   }
+
+  @Post(":id/favorite")
+  @Serialize(CreatedUserFavoriteResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'User favorite created successfully',
+    type: CreatedUserFavoriteResponseDto,
+  })
+  async createFavorite(
+    @Body() data: CreateUserFavoriteDto,
+  ) {
+    return this.userData.createFavorite(data);
+  }
+
+  @Post(":id/add-to-cart")
+  @Serialize(CreatedAddToCartResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'User Add To Cart created successfully',
+    type: CreatedAddToCartResponseDto,
+  })
+  async createAddtoCart(
+    @Body() data: CreateAddToCartDto,
+  ) {
+    return this.userData.createAddToCart(data);
+  }
+
+  @Get(":id/favorite")
+  @Serialize(UserFavoriteListResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'User favorite List',
+    type: UserFavoriteListResponseDto,
+  })
+  async getFavorite(
+    @Body("userId") userId: number
+  ) {
+    return this.userData.getUserFavorite(userId);
+  }
+
+  @Get(":id/add-to-cart")
+  @Serialize(AddToCartListResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'User Add To Cart successfully',
+    type: AddToCartListResponseDto,
+  })
+  async getAddtoCart(
+    //@Param('id', ParseIntPipe) id: number,
+    @Body("userId") userId: number
+  ) {
+    return this.userData.getAddToCart(userId);
+  }
+
+  @Delete(":id/favorite")
+  @Serialize(DeletedUserFavoriteResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'Deleted User favorite successfully',
+    type: DeletedUserFavoriteResponseDto,
+  })
+  async deleteFavorite(
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.userData.deleteFavorite(id);
+  }
+
+  @Delete(":id/add-to-cart")
+  @Serialize(DeletedAddToCartResponseDto)
+  @ApiResponse({
+    status: 201,
+    description: 'Delete Add To Cart successfully',
+    type: DeletedAddToCartResponseDto,
+  })
+  async deleteAddtoCart(
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.userData.deleteAddToCart(id);
+  }
+  
 }

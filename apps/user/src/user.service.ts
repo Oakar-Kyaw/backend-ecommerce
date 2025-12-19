@@ -177,7 +177,7 @@ export class UsersService {
             <li>Check out the latest features</li>
           </ul>
           <p>We are here to help anytime. Enjoy your journey with us!</p>
-          <p style="margin-top: 20px;">— The Team</p>
+          <p style="margin-top: 20px;">— Mega Smart Cart Team</p>
         </div>
       `;
     }

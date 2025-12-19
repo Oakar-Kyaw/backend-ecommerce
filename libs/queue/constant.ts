@@ -30,4 +30,5 @@ export const QueueServices: string[] = [
   'payment',
   'notification',
   'auth',
+  "product"
 ];

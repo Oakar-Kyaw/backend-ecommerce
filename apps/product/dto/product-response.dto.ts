@@ -1,4 +1,5 @@
 import { Expose, Type, Transform } from 'class-transformer';
+import { UserFavoriteResponseDto } from './user-data-response.dto';
 
 export class ProductColorImagesDto {
   @Expose()
@@ -106,6 +107,10 @@ export class ProductResponseDto {
   @Expose()
   @Type(() => ProductSizeResponseDto)
   sizes: ProductSizeResponseDto[];
+
+  @Expose()
+  @Type(() => UserFavoriteResponseDto)
+  userFavorites: UserFavoriteResponseDto[];
 }
 
 export class ProductItemResponseDto {
