@@ -83,6 +83,13 @@ export class NotificationDto {
     return value;
   })
   branchId?: number;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  data?: any;
 }
 
 export class SaveNotificationTokenDto {

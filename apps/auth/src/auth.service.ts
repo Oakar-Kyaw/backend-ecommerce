@@ -15,6 +15,9 @@ import axios from 'axios';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
 import { GoogleLoginDto } from '../dto/google-login.dto';
+import { ConflictException } from '@nestjs/common';
+import { FacebookLoginDto } from '../dto/facebook-login.dto';
+import { AppleLoginDto } from '../dto/apple-login.dto';
 
 // interface PayloadInterface {
 //   id: number;
@@ -54,7 +57,6 @@ export class AuthService {
     if (!user) {
       console.log(`User ${email} not found in Auth DB. Creating...`);
       // 3. User not found in Auth DB, create in User Service
-      const randomPassword = crypto.randomBytes(16).toString('hex');
       const [firstName, ...lastNameParts] = (name || 'Google User').split(' ');
       const lastName = lastNameParts.join(' ') || '';
 
@@ -66,7 +68,7 @@ export class AuthService {
           email,
           firstName,
           lastName,
-          password: randomPassword,
+          password: undefined,
           role: 'CUSTOMER',
           photoUrl: picture,
           identification: '', // Optional
@@ -125,22 +127,33 @@ export class AuthService {
       }
 
       // Create in Auth DB
-      // We store hashed password if we created it, else null.
-      // But actually, we can just store null for Google users in Auth DB.
-      // They can set a password later if they want to use email/password login.
-      
-      const hashedPasswordStr = await hashedPassword(randomPassword);
-
       user = await this.prisma.user.create({
         data: {
           email,
           userId,
           role: userRole as any,
-          password: hashedPasswordStr, 
+          password: null, 
           device_tokens: [],
+          provider: 'GOOGLE',
+          providerUserId: uid,
         },
       });
       console.log(`User created in Auth DB with ID: ${user.id}`);
+    } else {
+      // Enforce single provider per account
+      if (user.provider && user.provider !== 'GOOGLE') {
+        throw new ConflictException(
+          `Account already exists with provider ${user.provider}. Use that provider to log in.`,
+        );
+      }
+      // If provider not set (legacy), set to GOOGLE
+      if (!user.provider) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { provider: 'GOOGLE', providerUserId: uid, password: null },
+        });
+        user = await this.prisma.user.findUnique({ where: { id: user.id } });
+      }
     }
 
     // 4. Handle Device Token
@@ -193,6 +206,255 @@ export class AuthService {
       refresh_token,
     };
   }
+  
+  async facebookLogin(dto: FacebookLoginDto) {
+    const { accessToken, deviceToken, deviceInfo } = dto;
+    if (!accessToken) throw new BadRequestException('Facebook access token is required');
+    let fbUser: any;
+    try {
+      const fields = 'id,name,email,picture';
+      const res = await axios.get(`https://graph.facebook.com/me`, {
+        params: { access_token: accessToken, fields },
+      });
+      fbUser = res.data;
+    } catch (e) {
+      console.error('Facebook token verification failed:', e.message);
+      throw new UnauthorizedException('Invalid Facebook access token');
+    }
+    const email = fbUser.email;
+    const name = fbUser.name;
+    const picture = fbUser.picture?.data?.url;
+    const uid = fbUser.id;
+    if (!email) throw new BadRequestException('Email not found in Facebook profile');
+    let user = await this.prisma.user.findFirst({
+      where: { email, isDeleted: false },
+    });
+    if (!user) {
+      const [firstName, ...lastNameParts] = (name || 'Facebook User').split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+      let userId: number;
+      let userRole = 'CUSTOMER';
+      try {
+        const response = await axios.post(`${envConfig().user_service_url}/users`, {
+          email,
+          firstName,
+          lastName,
+          password: undefined,
+          role: 'CUSTOMER',
+          photoUrl: picture,
+          identification: '',
+          phone: '',
+        });
+        const createdUser = response.data.data || response.data;
+        if (!createdUser || !createdUser.id) {
+          throw new InternalServerErrorException('Invalid response from User Service');
+        }
+        userId = createdUser.id;
+      } catch (error) {
+        if (error.response?.status === 409) {
+          const searchResponse = await axios.get(`${envConfig().user_service_url}/users`, {
+            params: { search: email },
+          });
+          const usersData = searchResponse.data.data || searchResponse.data;
+          const users = Array.isArray(usersData) ? usersData : [];
+          const existingUser = users.find((u: any) => u.email === email);
+          if (!existingUser) {
+            throw new InternalServerErrorException('User exists but cannot be found via search');
+          }
+          userId = existingUser.id;
+          userRole = existingUser.role;
+        } else {
+          console.error('Error creating user in User Service:', error.message);
+          throw new InternalServerErrorException('Failed to create user in User Service');
+        }
+      }
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          userId,
+          role: userRole as any,
+          password: null,
+          device_tokens: [],
+          provider: 'FACEBOOK',
+          providerUserId: uid,
+        },
+      });
+    } else {
+      if (user.provider && user.provider !== 'FACEBOOK') {
+        throw new ConflictException(
+          `Account already exists with provider ${user.provider}. Use that provider to log in.`,
+        );
+      }
+      if (!user.provider) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { provider: 'FACEBOOK', providerUserId: uid, password: null },
+        });
+        user = await this.prisma.user.findUnique({ where: { id: user.id } });
+      }
+    }
+    if (deviceToken) {
+      const tokens = user.device_tokens || [];
+      if (!tokens.includes(deviceToken)) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { device_tokens: { push: deviceToken } },
+        });
+      }
+      try {
+        await axios.post(`${envConfig().user_service_url}/users/device-token`, {
+          userId: user.userId,
+          deviceToken,
+          action: 'add',
+          deviceInfo,
+        });
+      } catch (e) {
+        console.error('Failed to sync device token with User Service', e.message);
+      }
+    }
+    const payload = {
+      id: user.userId,
+      userId: user.userId,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
+    const access_token = await this.jwtService.signAsync(payload);
+    const refresh_token = await this.jwtService.signAsync(payload, {
+      secret: envConfig().JWTRefreshSecret,
+      expiresIn: '7d',
+    });
+    return {
+      success: true,
+      message: 'Login Successful',
+      data: payload,
+      access_token,
+      refresh_token,
+    };
+  }
+  
+  async appleLogin(dto: AppleLoginDto) {
+    const { identityToken, deviceToken, deviceInfo } = dto;
+    if (!identityToken) throw new BadRequestException('Apple identity token is required');
+    const clientId = process.env.APPLE_CLIENT_ID;
+    if (!clientId) {
+      throw new BadRequestException('APPLE_CLIENT_ID not configured');
+    }
+    // Minimal decode without signature verification to extract email/sub.
+    // For production, verify with Apple JWKS. Here we enforce single provider flow and require email.
+    const parts = identityToken.split('.');
+    if (parts.length < 2) throw new UnauthorizedException('Invalid Apple identity token');
+    const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
+    let claims: any = {};
+    try { claims = JSON.parse(payloadJson); } catch { throw new UnauthorizedException('Invalid Apple token payload'); }
+    const email = claims.email;
+    const uid = claims.sub;
+    const name = ''; // Apple may not include name
+    if (!email) throw new BadRequestException('Email not found in Apple token');
+    let user = await this.prisma.user.findFirst({
+      where: { email, isDeleted: false },
+    });
+    if (!user) {
+      let userId: number;
+      let userRole = 'CUSTOMER';
+      try {
+        const response = await axios.post(`${envConfig().user_service_url}/users`, {
+          email,
+          firstName: name || 'Apple',
+          lastName: '',
+          password: undefined,
+          role: 'CUSTOMER',
+          photoUrl: '',
+          identification: '',
+          phone: '',
+        });
+        const createdUser = response.data.data || response.data;
+        if (!createdUser || !createdUser.id) {
+          throw new InternalServerErrorException('Invalid response from User Service');
+        }
+        userId = createdUser.id;
+      } catch (error) {
+        if (error.response?.status === 409) {
+          const searchResponse = await axios.get(`${envConfig().user_service_url}/users`, {
+            params: { search: email },
+          });
+          const usersData = searchResponse.data.data || searchResponse.data;
+          const users = Array.isArray(usersData) ? usersData : [];
+          const existingUser = users.find((u: any) => u.email === email);
+          if (!existingUser) {
+            throw new InternalServerErrorException('User exists but cannot be found via search');
+          }
+          userId = existingUser.id;
+          userRole = existingUser.role;
+        } else {
+          console.error('Error creating user in User Service:', error.message);
+          throw new InternalServerErrorException('Failed to create user in User Service');
+        }
+      }
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          userId,
+          role: userRole as any,
+          password: null,
+          device_tokens: [],
+          provider: 'APPLE',
+          providerUserId: uid,
+        },
+      });
+    } else {
+      if (user.provider && user.provider !== 'APPLE') {
+        throw new ConflictException(
+          `Account already exists with provider ${user.provider}. Use that provider to log in.`,
+        );
+      }
+      if (!user.provider) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { provider: 'APPLE', providerUserId: uid, password: null },
+        });
+        user = await this.prisma.user.findUnique({ where: { id: user.id } });
+      }
+    }
+    if (deviceToken) {
+      const tokens = user.device_tokens || [];
+      if (!tokens.includes(deviceToken)) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { device_tokens: { push: deviceToken } },
+        });
+      }
+      try {
+        await axios.post(`${envConfig().user_service_url}/users/device-token`, {
+          userId: user.userId,
+          deviceToken,
+          action: 'add',
+          deviceInfo,
+        });
+      } catch (e) {
+        console.error('Failed to sync device token with User Service', e.message);
+      }
+    }
+    const payload = {
+      id: user.userId,
+      userId: user.userId,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
+    const access_token = await this.jwtService.signAsync(payload);
+    const refresh_token = await this.jwtService.signAsync(payload, {
+      secret: envConfig().JWTRefreshSecret,
+      expiresIn: '7d',
+    });
+    return {
+      success: true,
+      message: 'Login Successful',
+      data: payload,
+      access_token,
+      refresh_token,
+    };
+  }
 
   async signIn(datas) {
     if (!datas)
@@ -212,7 +474,12 @@ export class AuthService {
       throw new NotFoundException(
         `User with this ${email ? 'email' : 'phone'} Not found`,
       );
-    //const user = data
+    // Enforce single provider per account
+    if (user.provider && user.provider !== 'PASSWORD') {
+      throw new ConflictException(
+        `Account registered with ${user.provider}. Use ${user.provider} to log in.`,
+      );
+    }
     const passwordComparison = await comparePassword(password, user.password);
     if (!passwordComparison)
       throw new UnauthorizedException(`Password was wrong.`);

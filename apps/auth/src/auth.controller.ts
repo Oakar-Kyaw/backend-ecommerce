@@ -15,6 +15,8 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import { LoginDto } from '../dto/login.dto';
 import { GoogleLoginDto } from '../dto/google-login.dto';
+import { FacebookLoginDto } from '../dto/facebook-login.dto';
+import { AppleLoginDto } from '../dto/apple-login.dto';
 import { LoginResponseDto, LogOutResponseDto } from '../dto/login-response.dto';
 import { envConfig } from 'libs/config/envConfig';
 
@@ -41,6 +43,26 @@ export class AuthController {
   @Serialize(LoginResponseDto)
   googleLogin(@Body() data: GoogleLoginDto) {
     return this.authService.googleLogin(data);
+  }
+  
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('facebook')
+  @ApiBody({ type: FacebookLoginDto })
+  @ApiResponse({ type: LoginResponseDto })
+  @Serialize(LoginResponseDto)
+  facebookLogin(@Body() data: FacebookLoginDto) {
+    return this.authService.facebookLogin(data);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('apple')
+  @ApiBody({ type: AppleLoginDto })
+  @ApiResponse({ type: LoginResponseDto })
+  @Serialize(LoginResponseDto)
+  appleLogin(@Body() data: AppleLoginDto) {
+    return this.authService.appleLogin(data);
   }
 
   @Post('logout')

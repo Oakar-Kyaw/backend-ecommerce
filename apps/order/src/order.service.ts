@@ -42,14 +42,18 @@ export class OrderService {
     const enrichedItems = await Promise.all(
       items.map(async (item) => {
         let productName = 'Product';
+        let productImage = '';
         if (!item.brandId || true) {
           // Always fetch for name
           try {
             const baseUrl = envConfig().product_service_url;
-            const response = await axios.get(`${baseUrl}/products/${item.productId}`);
+            const response = await axios.get(
+              `${baseUrl}/products/${item.productId}`,
+            );
             if (response.data?.data) {
               const product = response.data.data;
               productName = product.name || 'Product';
+              productImage = product.mainImage || '';
               if (!item.brandId) {
                 item.brandId = product.brandId;
               }
@@ -64,13 +68,22 @@ export class OrderService {
               `Failed to fetch product details for ${item.productId}:`,
               error.message,
             );
+            if (axios.isAxiosError(error)) {
+              if (error.response) {
+                console.error(
+                  `Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`,
+                );
+              } else {
+                console.error(`Code: ${error.code}`);
+              }
+            }
             if (!item.brandId)
               throw new NotFoundException(
                 `Product ${item.productId} not found or Brand ID missing`,
               );
           }
         }
-        return { ...item, name: productName };
+        return { ...item, name: productName, image: productImage };
       }),
     );
 

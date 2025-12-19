@@ -19,7 +19,7 @@ export class NotificationService {
   ) {}
 
   async sendNotification(data: NotificationDto) {
-    let { userId, brandId, branchId, role, title, body, icon } = data;
+    let { userId, brandId, branchId, role, title, body, icon, type, data: extraData } = data;
     console.log('data', data);
 
     // Ensure numeric types
@@ -27,6 +27,22 @@ export class NotificationService {
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
     if (branchId && typeof branchId === 'string')
       branchId = parseInt(branchId, 10);
+
+    // Save to Notification Table
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId: userId || null,
+          brandId: brandId || null,
+          title,
+          body,
+          type: type || 'GENERAL',
+          data: extraData || {},
+        },
+      });
+    } catch (error) {
+      console.error('Error saving notification to DB:', error);
+    }
 
     const notificationTokenData = await this.prisma.notificationToken.findFirst(
       {
@@ -97,7 +113,10 @@ export class NotificationService {
               .map(
                 (item: any) => `
             <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.name || item.productId}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                  ${item.image ? `<img src="${item.image}" alt="${item.name}" width="50" style="vertical-align: middle; margin-right: 10px;">` : ''}
+                  ${item.name || item.productId}
+                </td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">${item.quantity}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #eee;">$${item.price * item.quantity}</td>
@@ -157,11 +176,17 @@ export class NotificationService {
 
     // 2. Send Push
     if (userId) {
+      const firstItem = items && items.length > 0 ? items[0] : null;
+      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
+      
       await this.sendNotification({
         userId,
         title: `Order ${status}`,
         body: `Your order #${orderId} is ${status}.`,
         role: Role.CUSTOMER,
+        icon: image,
+        type: 'ORDER_STATUS_UPDATE',
+        data: { orderId, status },
       } as any);
     }
   }
@@ -216,12 +241,29 @@ export class NotificationService {
   }
 
   async sendNotificationToMultipleTokens(data: NotificationDto) {
-    let { brandId, branchId, role, title, body, icon } = data;
+    let { brandId, branchId, role, title, body, icon, type, data: extraData } = data;
 
     // Ensure numeric types
     if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
     if (branchId && typeof branchId === 'string')
       branchId = parseInt(branchId, 10);
+
+    // Save to Notification Table
+    try {
+      if (brandId) {
+        await this.prisma.notification.create({
+          data: {
+            brandId: brandId || null,
+            title,
+            body,
+            type: type || 'GENERAL',
+            data: extraData || {},
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error saving notification to DB:', error);
+    }
 
     const messageToken = await this.prisma.notificationToken.findMany({
       where: {
@@ -244,7 +286,7 @@ export class NotificationService {
       data: {
         title,
         body,
-        icon,
+        icon: icon || '',
       },
       tokens,
     };
@@ -283,7 +325,10 @@ export class NotificationService {
       const itemsListHtml = items
         .map(
           (item: any) =>
-            `<li>${item.quantity}x ${item.name || item.productId} - $${item.price}</li>`,
+            `<li>
+              ${item.image ? `<img src="${item.image}" alt="${item.name}" width="30" style="vertical-align: middle; margin-right: 5px;">` : ''}
+              ${item.quantity}x ${item.name || item.productId} - $${item.price}
+            </li>`,
         )
         .join('');
 
@@ -321,11 +366,17 @@ export class NotificationService {
     // We notify all tokens associated with this brandId.
 
     try {
+      const firstItem = items && items.length > 0 ? items[0] : null;
+      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
+
       await this.sendNotificationToMultipleTokens({
         brandId: brandId.toString(),
         title: 'New Order Received',
         body: `Order #${orderId} has been placed containing your items.`,
         role: undefined, // Send to all roles under this brand? Or specific? Let's assume all for now.
+        icon: image,
+        type: 'ORDER_CREATED',
+        data: { orderId },
       } as any);
     } catch (e) {
       console.log(

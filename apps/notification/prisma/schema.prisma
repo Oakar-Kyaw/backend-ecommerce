@@ -20,6 +20,19 @@ model NotificationToken {
   role       Role   @default(CUSTOMER)
   userId     Int
   brandId    Int?
+  branchId   Int?
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  brandId     Int?
+  title       String
+  body        String
+  type        String?
+  data        Json?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
 }
 
 model User {

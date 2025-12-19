@@ -29,6 +29,8 @@ export class Order {
         price: Number,
         color: String,
         size: String,
+        name: String,
+        image: String,
       },
     ],
   })
@@ -39,6 +41,8 @@ export class Order {
     price: number;
     color?: string;
     size?: string;
+    name?: string;
+    image?: string;
   }[];
 
   @Prop({ required: true })

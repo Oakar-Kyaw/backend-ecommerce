@@ -23,10 +23,19 @@ model User {
   isDeleted               Boolean                @default(false)
   role                    Role                   @default(CUSTOMER)
   device_tokens           String[]
+  provider                Provider               @default(PASSWORD)
+  providerUserId          String?                @unique
 }
 
 enum Role {
   CUSTOMER
   ADMIN
   SALE
+}
+
+enum Provider {
+  PASSWORD
+  GOOGLE
+  FACEBOOK
+  APPLE
 }
