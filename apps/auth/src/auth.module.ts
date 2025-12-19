@@ -8,6 +8,7 @@ import { AuthWorker } from './auth.worker';
 import { PublishMessageModule } from 'libs/queue/publish.module';
 import { AuthPrismaService } from '../prisma/auth.prisma.service';
 import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
+import * as admin from 'firebase-admin';
 
 @Module({
   imports: [
@@ -23,6 +24,23 @@ import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementati
   providers: [AuthService, AuthWorker, AuthPrismaService],
 })
 export class AuthModule {
+  constructor() {
+    // Initialize Firebase only if not already initialized
+    if (admin.apps.length === 0) {
+      console.log(
+        'Initializing Firebase with Project ID:',
+        envConfig().firebase_projectId,
+      );
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: envConfig().firebase_projectId,
+          clientEmail: envConfig().firebase_clientEmail,
+          privateKey: envConfig().firebase_privateKey,
+        }),
+      });
+    }
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(RequestLoggerMiddleware).forRoutes('*');
   }

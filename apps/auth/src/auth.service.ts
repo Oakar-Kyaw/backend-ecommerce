@@ -5,12 +5,16 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { comparePassword } from '../../../libs/utils/hash';
+import { comparePassword, hashedPassword } from '../../../libs/utils/hash';
 import { envConfig } from 'libs/config/envConfig';
 import { AUTH_PRISMA } from '../prisma/auth.prisma.service';
 import axios from 'axios';
+import * as admin from 'firebase-admin';
+import * as crypto from 'crypto';
+import { GoogleLoginDto } from '../dto/google-login.dto';
 
 // interface PayloadInterface {
 //   id: number;
@@ -24,6 +28,171 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @Inject(AUTH_PRISMA) private readonly prisma,
   ) {}
+
+  async googleLogin(dto: GoogleLoginDto) {
+    const { idToken, deviceToken, deviceInfo } = dto;
+
+    // 1. Verify ID Token
+    let decodedToken;
+    try {
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+    } catch (error) {
+      console.error('Google ID Token Verification Error:', error.message);
+      throw new UnauthorizedException('Invalid Firebase ID Token');
+    }
+
+    const { email, name, picture, uid } = decodedToken;
+    if (!email) {
+      throw new BadRequestException('Email not found in Google Token');
+    }
+
+    // 2. Check if user exists in Auth DB
+    let user = await this.prisma.user.findFirst({
+      where: { email, isDeleted: false },
+    });
+
+    if (!user) {
+      console.log(`User ${email} not found in Auth DB. Creating...`);
+      // 3. User not found in Auth DB, create in User Service
+      const randomPassword = crypto.randomBytes(16).toString('hex');
+      const [firstName, ...lastNameParts] = (name || 'Google User').split(' ');
+      const lastName = lastNameParts.join(' ') || '';
+
+      let userId: number;
+      let userRole = 'CUSTOMER';
+
+      try {
+        const createUserPayload = {
+          email,
+          firstName,
+          lastName,
+          password: randomPassword,
+          role: 'CUSTOMER',
+          photoUrl: picture,
+          identification: '', // Optional
+          phone: '', // Optional
+        };
+
+        const userServiceUrl = envConfig().user_service_url;
+        console.log(`Creating user in User Service at ${userServiceUrl}/users`);
+        
+        const response = await axios.post(`${userServiceUrl}/users`, createUserPayload);
+        
+        // Handle response structure. It might be { data: user } or just user.
+        // Based on typical NestJS response with interceptors, it's often nested.
+        const createdUser = response.data.data || response.data;
+        
+        if (!createdUser || !createdUser.id) {
+            console.error('Invalid response from User Service:', JSON.stringify(response.data));
+            throw new InternalServerErrorException('Invalid response from User Service');
+        }
+
+        userId = createdUser.id;
+        // userRole = createdUser.role || 'CUSTOMER'; // User Service response might not include role in some DTOs
+        
+      } catch (error) {
+        if (error.response?.status === 409) {
+          console.log(`User ${email} already exists in User Service. Fetching details...`);
+          // User already exists in User Service. Fetch details.
+          try {
+             const userServiceUrl = envConfig().user_service_url;
+             // Search by email
+             const searchResponse = await axios.get(`${userServiceUrl}/users`, {
+               params: { search: email }
+             });
+             
+             const usersData = searchResponse.data.data || searchResponse.data;
+             // Ensure it's an array
+             const users = Array.isArray(usersData) ? usersData : [];
+             
+             const existingUser = users.find((u: any) => u.email === email);
+             if (!existingUser) {
+               throw new InternalServerErrorException('User exists but cannot be found via search');
+             }
+             userId = existingUser.id;
+             userRole = existingUser.role;
+          } catch (findErr) {
+             console.error('Error finding existing user:', findErr.message);
+             throw new InternalServerErrorException('Failed to retrieve existing user from User Service');
+          }
+        } else {
+          console.error('Error creating user in User Service:', error.message);
+           if (error.response) {
+              console.error('Response data:', JSON.stringify(error.response.data));
+           }
+          throw new InternalServerErrorException('Failed to create user in User Service');
+        }
+      }
+
+      // Create in Auth DB
+      // We store hashed password if we created it, else null.
+      // But actually, we can just store null for Google users in Auth DB.
+      // They can set a password later if they want to use email/password login.
+      
+      const hashedPasswordStr = await hashedPassword(randomPassword);
+
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          userId,
+          role: userRole as any,
+          password: hashedPasswordStr, 
+          device_tokens: [],
+        },
+      });
+      console.log(`User created in Auth DB with ID: ${user.id}`);
+    }
+
+    // 4. Handle Device Token
+    if (deviceToken) {
+      const tokens = user.device_tokens || [];
+      if (!tokens.includes(deviceToken)) {
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { device_tokens: { push: deviceToken } },
+        });
+      }
+
+      // Sync with User Service
+      try {
+        await axios.post(
+          `${envConfig().user_service_url}/users/device-token`,
+          {
+            userId: user.userId,
+            deviceToken: deviceToken,
+            action: 'add',
+            deviceInfo: deviceInfo,
+          },
+        );
+      } catch (e) {
+        console.error('Failed to sync device token with User Service', e.message);
+      }
+    }
+
+    // 5. Generate Tokens
+    const payload = {
+      id: user.userId,
+      userId: user.userId,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
+
+    console.log('🎫 Generating tokens for Google user:', user.id);
+    const access_token = await this.jwtService.signAsync(payload);
+    const refresh_token = await this.jwtService.signAsync(payload, {
+      secret: envConfig().JWTRefreshSecret,
+      expiresIn: '7d',
+    });
+
+    return {
+      success: true,
+      message: 'Login Successful',
+      data: payload,
+      access_token,
+      refresh_token,
+    };
+  }
 
   async signIn(datas) {
     if (!datas)
@@ -61,7 +230,7 @@ export class AuthService {
       // Sync with User Service (Always sync to ensure consistency and update device info)
       try {
         await axios.post(
-          `http://localhost:${envConfig().user_service_port}/api/v1/users/device-token`,
+          `${envConfig().user_service_url}/users/device-token`,
           {
             userId: user.userId,
             deviceToken: datas.deviceToken,

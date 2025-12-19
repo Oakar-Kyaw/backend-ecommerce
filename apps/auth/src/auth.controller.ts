@@ -14,6 +14,7 @@ import { ApiBody, ApiResponse } from '@nestjs/swagger';
 //import { LoginResponseDto } from './dto/login-response.dto';
 import { Serialize } from '../../../libs/interceptor/response.interceptor';
 import { LoginDto } from '../dto/login.dto';
+import { GoogleLoginDto } from '../dto/google-login.dto';
 import { LoginResponseDto, LogOutResponseDto } from '../dto/login-response.dto';
 import { envConfig } from 'libs/config/envConfig';
 
@@ -30,6 +31,16 @@ export class AuthController {
   login(@Body() data: LoginDto) {
     console.log('log', data);
     return this.authService.signIn(data);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('google')
+  @ApiBody({ type: GoogleLoginDto })
+  @ApiResponse({ type: LoginResponseDto })
+  @Serialize(LoginResponseDto)
+  googleLogin(@Body() data: GoogleLoginDto) {
+    return this.authService.googleLogin(data);
   }
 
   @Post('logout')
