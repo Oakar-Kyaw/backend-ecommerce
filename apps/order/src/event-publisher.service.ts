@@ -42,4 +42,12 @@ export class EventPublisherService {
       },
     );
   }
+
+  async sendBrandStatusUpdateNotification(payload: any) {
+    await this.publishMessage.publish(
+      CREATED_NOTIFICATION_SERVICE_QUEUE,
+      'notify_brand_status_update',
+      payload,
+    );
+  }
 }

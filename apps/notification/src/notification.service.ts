@@ -316,7 +316,10 @@ export class NotificationService {
     }
   }
   async sendBrandOrderNotification(payload: any) {
-    const { brandId, orderId, items, status, shippingAddress } = payload;
+    let { brandId, orderId, items, status, shippingAddress } = payload;
+
+    // Ensure numeric types
+    if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
     console.log(
       `Processing notification for Brand ${brandId} regarding Order #${orderId}`,
     );
@@ -396,6 +399,62 @@ export class NotificationService {
     } catch (e) {
       console.log(
         'No push tokens found for brand or error sending push:',
+        e.message,
+      );
+    }
+  }
+
+  async sendBrandStatusUpdateNotification(payload: any) {
+    let { orderId, userId, brandId, status, email, items } = payload;
+    console.log(
+      `Processing status update notification for Order #${orderId}, Brand ${brandId} -> ${status}`,
+    );
+
+    // Ensure numeric types
+    if (brandId && typeof brandId === 'string') brandId = parseInt(brandId, 10);
+    if (userId && typeof userId === 'string') userId = parseInt(userId, 10);
+
+    // 1. Send Email to User
+    if (email) {
+      const itemsListHtml = items
+        .map(
+          (item: any) =>
+            `<li>
+              ${item.image ? `<img src="${item.image}" alt="${item.name}" width="30" style="vertical-align: middle; margin-right: 5px;">` : ''}
+              ${item.quantity}x ${item.name || item.productId} - $${item.price}
+            </li>`,
+        )
+        .join('');
+
+      await this.emailService.sendNotificationEmail(
+        email,
+        `Order Status Update #${orderId}`,
+        `<h3>Order Status Updated</h3>
+         <p>Your order #${orderId} has been updated.</p>
+         <p><strong>New Status:</strong> ${status}</p>
+         <p>Items in this update:</p>
+         <ul>${itemsListHtml}</ul>
+         <p>Thank you for shopping with us!</p>`,
+      );
+      console.log(`Status update email sent to user ${email}`);
+    }
+
+    // 2. Send Push Notification to User
+    try {
+      const firstItem = items && items.length > 0 ? items[0] : null;
+      const image = firstItem ? firstItem.image || firstItem.mainImage || '' : '';
+
+      await this.sendNotification({
+        userId,
+        title: 'Order Status Updated',
+        body: `Your order #${orderId} is now ${status}.`,
+        icon: image,
+        type: 'ORDER_STATUS_UPDATE',
+        data: { orderId, status, brandId },
+      } as any);
+    } catch (e) {
+      console.log(
+        'No push token found for user or error sending push:',
         e.message,
       );
     }

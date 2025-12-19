@@ -268,12 +268,28 @@ export class OrderService {
     const savedOrder = await order.save();
 
     // Notify user about partial/brand update
-    this.notificationClient.emit('notify_order', {
-      orderId: savedOrder._id,
+    // this.notificationClient.emit('notify_order', {
+    //   orderId: savedOrder._id,
+    //   userId: savedOrder.userId,
+    //   totalAmount: savedOrder.totalAmount,
+    //   status: `partially updated to ${status}`,
+    //   // name: user name is fetched by notification service if needed
+    // });
+
+    const userData = await this.userModel.findOne({
       userId: savedOrder.userId,
-      totalAmount: savedOrder.totalAmount,
-      status: `partially updated to ${status}`,
-      // name: user name is fetched by notification service if needed
+    });
+
+    const brandItems = order.items.filter((item) => item.brandId === brandId);
+
+    await this.eventPublisher.sendBrandStatusUpdateNotification({
+      orderId: String(savedOrder._id),
+      userId: savedOrder.userId,
+      brandId: brandId,
+      status: status,
+      email: userData?.email || null,
+      items: brandItems,
+      shippingAddress: savedOrder.shippingLocationId, // Assuming this is populated or available
     });
 
     return savedOrder;
