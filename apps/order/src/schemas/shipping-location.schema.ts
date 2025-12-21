@@ -23,7 +23,7 @@ export class ShippingLocation {
   email: string;
 
   @Prop({ required: true })
-  address1: string;
+  address: string;
 
   @Prop()
   address2?: string;

@@ -23,19 +23,23 @@ export class ShippingAddressService {
 
   // 🔹 Create shipping address
   async create(dto: CreateShippingAddressDto) {
+    console.log("dto, ",dto)
     const { userId, ...addressData } = dto;
-    let user;
+    let user = await this.userModel.findOne({ userId });
+    
+    if (!user) {
+        throw new NotFoundException(`User Id ${userId} not found`);
+    }
+    
+    //if there is no shipping info or first created related to this user then mark default to true
+    const checkCreated = await this.shippingAddressModel.findOne({user: user._id})
+    if(!checkCreated) dto.markDefault = true
 
     if(dto.markDefault === true){
-         user = await this.userModel.findOne({ userId });
-    if (!user) {
-      throw new NotFoundException(`User Id ${userId} not found`);
-    }
-
-    await this.shippingAddressModel.updateMany(
-      { user: user._id },
-      { markDefault: false },
-    );
+        await this.shippingAddressModel.updateMany(
+        { user: user._id },
+        { markDefault: false },
+        );
     }
 
 
@@ -63,7 +67,7 @@ export class ShippingAddressService {
             filter.user = user._id;
         }
 
-        const query = this.shippingAddressModel.find(filter).populate('user').sort({createdAt: -1});
+        const query = this.shippingAddressModel.find(filter).populate('user').sort({ markDefault: -1, createdAt: -1 });
 
         if (page && pageSize) {
             query.skip((page - 1) * pageSize).limit(pageSize);
@@ -145,6 +149,7 @@ export class ShippingAddressService {
 
   // 🔹 Set default address
   async setDefault(addressId: string, userId: string) {
+    console.log("user Id", addressId, userId)
     const user = await this.userModel.findOne({ userId });
     if (!user) {
       throw new NotFoundException(`User Id ${userId} not found`);

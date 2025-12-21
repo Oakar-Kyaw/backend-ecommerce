@@ -34,7 +34,7 @@ export class CreateShippingAddressDto {
 
   @IsString()
   @IsNotEmpty()
-  address1: string;
+  address: string;
 
   @IsString()
   @IsOptional()
@@ -57,5 +57,9 @@ export class CreateShippingAddressDto {
   @IsOptional()
   @Type(() => Number)
   longitude?: number;
+
+  @IsString()
+  @IsOptional()
+  ward?: string;
 
 }
