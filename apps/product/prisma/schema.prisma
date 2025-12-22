@@ -23,6 +23,7 @@ model Category {
   isDeleted   Boolean                @default(false)
   subCategories           SubCategory[]
   products                Product[]
+  photoUrl                String?
 
   @@unique([title, isDeleted])
   @@index([isDeleted])

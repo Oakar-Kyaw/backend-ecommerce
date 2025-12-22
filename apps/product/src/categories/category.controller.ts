@@ -8,6 +8,8 @@ import {
   Delete,
   Query,
   ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from '../../dto/create-category.dto';
@@ -31,6 +33,7 @@ import {
   NotFoundResponseDto,
   ServerErrorResponseDto,
 } from 'libs/interceptor/error-response';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Categories')
 @Controller('api/v1/categories')
@@ -51,8 +54,12 @@ export class CategoryController {
     description: 'Internal Server Error',
     type: ServerErrorResponseDto,
   })
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
+  @UseInterceptors(FileInterceptor('photo'))
+  create(
+    @Body() createCategoryDto: CreateCategoryDto, 
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.categoryService.create(createCategoryDto, file);
   }
 
   // ===== GET ALL CATEGORIES =====
@@ -142,11 +149,13 @@ export class CategoryController {
     description: 'Internal Server Error',
     type: ServerErrorResponseDto,
   })
+  @UseInterceptors(FileInterceptor('photo'))
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCategoryDto: UpdateCategoryDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.categoryService.update(id, updateCategoryDto);
+    return this.categoryService.update(id, updateCategoryDto, file);
   }
 
   // ===== DELETE CATEGORY (SOFT DELETE) =====

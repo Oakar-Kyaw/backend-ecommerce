@@ -11,15 +11,22 @@ import {
   getPagination,
   buildPaginationResponse,
 } from '../../../../libs/utils/pagination';
+import { FileUpload } from 'libs/utils/file-upload';
 
 @Injectable()
 export class CategoryService {
-  constructor(@Inject(PRISMA) private readonly prisma) {}
+  constructor(
+    private readonly uploadFile: FileUpload,
+    @Inject(PRISMA) private readonly prisma
+  ) {}
 
   // ===== CREATE CATEGORY =====
-  async create(createCategoryDto: CreateCategoryDto) {
+  async create(
+    createCategoryDto: CreateCategoryDto,
+    file: Express.Multer.File
+  ) {
     const { title } = createCategoryDto;
-
+   let photoUrl: string = '';
     // Check duplicate title
     const existingCategory = await this.prisma.category.findFirst({
       where: { title, isDeleted: false },
@@ -29,8 +36,13 @@ export class CategoryService {
       throw new ConflictException('Category title already exists');
     }
 
+    if (file)
+      photoUrl = (
+        await this.uploadFile.uploadSingle({ file, folderName: 'categories' })
+      ).url;
+
     const category = await this.prisma.category.create({
-      data: { ...createCategoryDto },
+      data: { ...createCategoryDto, photoUrl },
     });
 
     return {
@@ -107,7 +119,9 @@ export class CategoryService {
   }
 
   // ===== UPDATE CATEGORY =====
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
+  async update(id: number, updateCategoryDto: UpdateCategoryDto, file: Express.Multer.File) {
+    let photoUrl = "";
+
     const existingCategory = await this.prisma.category.findUnique({
       where: { id, isDeleted: false },
     });
@@ -129,10 +143,20 @@ export class CategoryService {
         'Category title already exists in another category',
       );
     }
+    if (file) {
+      if (photoUrl) {
+        const deleteKey = photoUrl.split('.com/')[1];
+        this.uploadFile.deleteFile(deleteKey);
+      }
+
+      photoUrl = (
+        await this.uploadFile.uploadSingle({ file, folderName: 'categories' })
+      ).url;
+    }
 
     const updatedCategory = await this.prisma.category.update({
       where: { id },
-      data: { ...updateCategoryDto },
+      data: { ...updateCategoryDto, photoUrl },
     });
 
     return {

@@ -12,6 +12,9 @@ export class CategoryResponseDto {
   readonly description?: string;
 
   @Expose()
+  photoUrl?: string
+
+  @Expose()
   readonly createdAt?: Date;
 
   @Expose()
@@ -106,4 +109,7 @@ export class ICategoryInfoDto {
 
   @Expose()
   description?: string;
+
+  @Expose()
+  photoUrl?: string
 }
