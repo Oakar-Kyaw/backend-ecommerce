@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PipelineStage } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
 import {
   ShippingLocation,
@@ -17,12 +17,16 @@ import {
 import { User, UserDocument } from './schemas/user.schema';
 import { publishEvent } from 'libs/queue/redis/redis.producer';
 import { EVENTS, TYPES } from 'libs/queue/constant';
+import { BrandDocument, BrandMeta } from './schemas/brand.shema';
+import { ProductDocument, ProductMeta } from './schemas/product.schema';
 
 @Injectable()
 export class OrderService {
   constructor(
   //  private readonly eventPublisher: EventPublisherService,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(BrandMeta.name) private brandMetaModel: Model<BrandDocument>,
+    @InjectModel(ProductMeta.name) private productModel: Model<ProductDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(ShippingLocation.name)
     private shippingLocationModel: Model<ShippingLocationDocument>,
@@ -30,16 +34,20 @@ export class OrderService {
     private readonly notificationClient: ClientProxy,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto) :Promise<Order> 
+  async create(createOrderDto: CreateOrderDto) 
+  //:Promise<Order> 
   {
     const {
       items,
       shippingFee = 0,
       tax = 0,
       shippingAddress,
+      existShippingAddress,
+      shippingId,
       ...orderData
     } = createOrderDto;
-
+   let ShippingInfoId: string | Types.ObjectId | undefined = shippingId
+   let savedLocation
     console.log("create order dto is: ", createOrderDto)
 
    // return {};
@@ -52,23 +60,29 @@ export class OrderService {
         if (!item.brandId || true) {
           // Always fetch for name
           try {
-            const baseUrl = envConfig().product_service_url;
-            const response = await axios.get(
-              `${baseUrl}/products/${item.productId}`,
-            );
-            if (response.data?.data) {
-              const product = response.data.data;
-              productName = product.name || 'Product';
-              productImage = product.mainImage || '';
-              if (!item.brandId) {
-                item.brandId = product.brandId;
-              }
-            } else {
-              if (!item.brandId)
-                throw new NotFoundException(
-                  `Brand ID not found for product ${item.productId}`,
-                );
-            }
+          //  const baseUrl = envConfig().product_service_url;
+            // const response = await axios.get(
+            //   `${baseUrl}/products/${item.productId}`,
+            // );
+            // if (response.data?.data) {
+              //const product = response.data.data;
+              const product = await this.productModel.findOne({productId: item.productId}).populate("brandId")
+              console.log("product", product)
+              if(!product) throw new NotFoundException(`Product not found. productId=${item.productId}`)
+              productName = product.productName || 'Product';
+              productImage = product.productMainImage || '';
+            //  const productBrandId = product.brandId
+            //  console.log("product brand id is: ", productBrandId)
+              // if (!item.brandId) {
+              //   item.brandId = productBrandId.brandId;
+              // }
+            // } 
+            // else {
+            //   if (!item.brandId)
+            //     throw new NotFoundException(
+            //       `Brand ID not found for product ${item.productId}`,
+            //     );
+            // }
           } catch (error) {
             console.error(
               `Failed to fetch product details for ${item.productId}:`,
@@ -92,11 +106,14 @@ export class OrderService {
         return { ...item, name: productName, image: productImage };
       }),
     );
-
+    console.log("enrich item is: ", enrichedItems)
     // Create and save shipping location
-    const createdLocation = new this.shippingLocationModel(shippingAddress);
-    const savedLocation = await createdLocation.save();
-
+    if(!existShippingAddress){
+      const createdLocation = new this.shippingLocationModel(shippingAddress);
+      savedLocation = await createdLocation.save();
+      ShippingInfoId = savedLocation._id
+    }
+    
     // Calculate subtotal from items
     const subTotal = enrichedItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
@@ -112,7 +129,9 @@ export class OrderService {
       brandId,
       status: 'PENDING',
     }));
-
+    
+    console.log("brandIds , brandStatuses: ", brandIds, brandStatuses)
+    // return 
     const createdOrder = new this.orderModel({
       ...orderData,
       items: enrichedItems,
@@ -120,7 +139,7 @@ export class OrderService {
       tax,
       subTotal,
       totalAmount,
-      shippingLocationId: savedLocation._id,
+      shippingLocationId: ShippingInfoId,
       brandStatuses,
     });
     const savedOrder = await createdOrder.save();
@@ -131,6 +150,16 @@ export class OrderService {
         userId: savedOrder.userId,
       });
 
+       await publishEvent(EVENTS.NOTI_EVENT,{
+        type: TYPES.SEND_ORDER_NOTIFICATION,
+        orderId: String(savedOrder._id),
+        userId: savedOrder.userId,
+        totalAmount: savedOrder.totalAmount,
+        status: savedOrder.status,
+        email: userData?.email || null,
+        items: enrichedItems,
+        shippingAddress: savedLocation,
+      });
       // await this.eventPublisher.sendOrderNotification({
       //   orderId: String(savedOrder._id),
       //   userId: savedOrder.userId,

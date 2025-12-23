@@ -104,6 +104,10 @@ export class CreateOrderDto {
   existShippingAddress?: boolean;
 
   @IsOptional()
+  @IsString()
+  shippingId?: string;
+
+  @IsOptional()
   @IsEnum(PaymentType)
   paymentType?: PaymentType;
 
