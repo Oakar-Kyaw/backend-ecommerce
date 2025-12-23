@@ -14,6 +14,19 @@ export enum OrderStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  PAID = 'PAID',
+  FAILED = 'FAILED'
+}
+
+export enum PaymentType {
+  COD = 'COD',
+  KPAY = 'KPAY',
+  WAVEPAY = 'WAVEPAY',
+  CREDIT_CARD = 'CREDIT_CARD'
+}
+
 @Schema({ timestamps: true })
 export class Order {
   @Prop({ required: true })
@@ -62,6 +75,12 @@ export class Order {
 
   @Prop({ required: true, enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
+
+  @Prop({ required: false, enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
+  @Prop({ required: false, enum: PaymentType, default: PaymentType.COD })
+  paymentType: PaymentType;
 
   @Prop({
     type: [

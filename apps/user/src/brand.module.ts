@@ -5,19 +5,17 @@ import { BrandController } from './brand.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { FileUpload } from 'libs/utils/file-upload';
 import { UserModule } from './user.module';
-import { EventPublisherService } from './event-publisher.service';
-import { PublishMessageModule } from 'libs/queue/publish.module';
 import { BrandUserService } from './brand-user.service';
 
 @Module({
-  imports: [GlobalConfigModule, UserModule, PublishMessageModule],
+  imports: [GlobalConfigModule, UserModule, 
+],
   controllers: [BrandController],
   providers: [
     BrandService,
     PrismaService,
     BrandUserService,
     FileUpload,
-    EventPublisherService,
   ],
 })
 export class BrandModule {}

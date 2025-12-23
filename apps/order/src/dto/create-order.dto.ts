@@ -1,5 +1,7 @@
 import {
   IsArray,
+  IsBoolean,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -7,6 +9,13 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export enum PaymentType {
+  COD = 'COD',
+  KPAY = 'KPAY',
+  WAVEPAY = 'WAVEPAY',
+  CREDIT_CARD = 'CREDIT_CARD'
+}
 
 class OrderItemDto {
   @IsString()
@@ -90,7 +99,16 @@ export class CreateOrderDto {
   @IsOptional()
   currency?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @IsBoolean()
+  existShippingAddress?: boolean;
+
+  @IsOptional()
+  @IsEnum(PaymentType)
+  paymentType?: PaymentType;
+
+  @IsOptional()
+  // @IsNotEmpty()
   @ValidateNested()
   @Type(() => ShippingAddressDto)
   shippingAddress: ShippingAddressDto;

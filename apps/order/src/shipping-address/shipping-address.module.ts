@@ -9,8 +9,6 @@ import {
   ShippingLocation,
   ShippingLocationSchema,
 } from '../schemas/shipping-location.schema';
-
-import { PublishMessageModule } from 'libs/queue/publish.module';
 import { envConfig } from 'libs/config/envConfig';
 import { User, UserSchema } from '../schemas/user.schema';
 
@@ -32,7 +30,7 @@ import { User, UserSchema } from '../schemas/user.schema';
     ]),
 
     // 🔹 Queue / event publishing
-    PublishMessageModule,
+   // PublishMessageModule,
   ],
 
   controllers: [ShippingAddressController],

@@ -9,10 +9,11 @@ import {
 } from './schemas/shipping-location.schema';
 import { envConfig } from 'libs/config/envConfig';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { PublishMessageModule } from 'libs/queue/publish.module';
-import { EventPublisherService } from './event-publisher.service';
 import { User, UserSchema } from './schemas/user.schema';
-import { OrderWorker } from './order.worker';
+//import { OrderWorker } from './order.worker';
+import { BrandMeta, BrandSchema, } from './schemas/brand.shema';
+import { ProductMeta, ProductSchema } from './schemas/product.schema';
+import { OrderUserWorker } from './worker/order-user.worker.service';
 
 @Module({
   imports: [
@@ -21,8 +22,10 @@ import { OrderWorker } from './order.worker';
       { name: Order.name, schema: OrderSchema },
       { name: ShippingLocation.name, schema: ShippingLocationSchema },
       { name: User.name, schema: UserSchema },
+      { name: ProductMeta.name, schema: ProductSchema },
+      { name: BrandMeta.name, schema: BrandSchema },
     ]),
-    PublishMessageModule,
+   // PublishMessageModule,
     ClientsModule.register([
       {
         name: 'NOTIFICATION_SERVICE',
@@ -35,6 +38,8 @@ import { OrderWorker } from './order.worker';
     ]),
   ],
   controllers: [OrderController],
-  providers: [OrderService, OrderWorker, EventPublisherService],
+  providers: [
+    OrderService
+    ],
 })
 export class OrderModule {}

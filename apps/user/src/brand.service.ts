@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
-import { PublishMessage } from 'libs/queue/publish';
 import { PRISMA } from '../prisma/prisma.service';
 import { FileUpload } from 'libs/utils/file-upload';
 import {
@@ -16,9 +15,9 @@ import {
 import * as XLSX from 'xlsx';
 import { UsersService } from './user.service';
 import { RoleEnum, CreateUserWithProfileDto } from '../dto/create-user.dto';
-import { EventPublisherService } from './event-publisher.service';
 import { BrandUserService } from './brand-user.service';
-import { QueueServices } from 'libs/queue/constant';
+import { CREATED_ORDER_SERVICE_QUEUE, CREATED_PRODUCT_SERVICE_QUEUE, EVENTS, QueueServices, TYPES } from 'libs/queue/constant';
+import { publishEvent } from 'libs/queue/redis/redis.producer';
 
 @Injectable()
 export class BrandService {
@@ -26,7 +25,6 @@ export class BrandService {
     private readonly uploadFile: FileUpload,
     @Inject(PRISMA) private readonly prisma,
     private readonly usersService: UsersService,
-    private readonly eventPublisherService: EventPublisherService,
     private readonly brandUserService: BrandUserService,
   ) {}
 
@@ -36,12 +34,12 @@ export class BrandService {
 
   // ===== CREATE BRAND =====
   async create(createBrandDto: CreateBrandDto, file: Express.Multer.File) {
-    const { name, code } = createBrandDto;
+    const { name, code, email } = createBrandDto;
     let photoUrl: string = '';
     // Check duplicate name or code
     const existingBrand = await this.prisma.brand.findFirst({
       where: {
-        OR: [{ name }, { code }],
+        OR: [{ name }, { code }, {email}],
       },
     });
 
@@ -73,19 +71,10 @@ export class BrandService {
           phone: createBrandDto.phone,
         } as CreateUserWithProfileDto);
 
-        console.log('user');
-        //write user to auth db
-        QueueServices.map(async (name) => {
-          await this.eventPublisherService.createUser(name, {
-            email: createBrandDto.email,
-            password: 'Brand123@',
-            role: RoleEnum.SALE,
-            brandId: brand.id,
-            firstName: createBrandDto.name,
-            phone: createBrandDto.phone,
-          });
-        });
+        // console.log('user');
+        
         console.log('end');
+
       } catch (error) {
         // Log error but don't fail the brand creation?
         // Or rethrow? If we rethrow, the client sees an error even though brand is created.
@@ -97,7 +86,14 @@ export class BrandService {
         // We could also throw a warning or return it in the message.
       }
     }
-
+    //write brand to product and order service
+      await publishEvent(EVENTS.BRAND_EVENT, {
+            type: TYPES.CREATED_BRAND,
+            brandId: brand.id,
+            email: brand.email ?? "",
+            imageUrl: brand.photoUrl ?? "",
+            name: brand.name
+         });
     return {
       success: true,
       message: 'CREATED_BRAND',
@@ -223,6 +219,41 @@ export class BrandService {
       data: { ...updateBrandDto, photoUrl },
     });
 
+    // Create User if email is provided
+    if (updatedBrand.email) {
+      try {
+        await this.usersService.create({
+          email: updatedBrand.email,
+          password: 'Brand123@',
+          role: RoleEnum.SALE,
+          brandId: updatedBrand.id,
+          firstName: updatedBrand.name,
+          phone: updatedBrand.phone,
+        } as CreateUserWithProfileDto);
+
+        console.log('user');
+        console.log('end');
+
+      } catch (error) {
+        // Log error but don't fail the brand creation?
+        // Or rethrow? If we rethrow, the client sees an error even though brand is created.
+        // Given the requirement is strict ("it should create user account"),
+        // failure to create user might be considered a failure of the operation.
+        // However, since we can't rollback brand creation easily here without transaction,
+        // we'll log it.
+        console.error('Failed to create user for brand:', error);
+        // We could also throw a warning or return it in the message.
+      }
+    }
+
+    //send to order and prodcut
+    await publishEvent(EVENTS.BRAND_EVENT, {
+            type: TYPES.UPDATED_BRAND,
+            brandId: updatedBrand.id,
+            email: updatedBrand.email ?? "",
+            imageUrl: updatedBrand.photoUrl ?? "",
+            name: updatedBrand.name
+    });
     return {
       success: true,
       message: 'UPDATED_BRAND',
@@ -238,6 +269,16 @@ export class BrandService {
     const deletedBrand = await this.prisma.brand.update({
       where: { id },
       data: { isDeleted: true },
+    });
+
+    //send to order and prodcut
+    
+    await publishEvent(EVENTS.BRAND_EVENT, {
+            type: TYPES.DELETED_BRAND,
+            brandId: deletedBrand.id,
+            email: deletedBrand.email ?? "",
+            imageUrl: deletedBrand.photoUrl ?? "",
+            name: deletedBrand.name
     });
 
     return {

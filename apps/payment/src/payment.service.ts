@@ -21,9 +21,9 @@ import {
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { envConfig } from 'libs/config/envConfig';
 import Stripe from 'stripe';
-import { ClientProxy } from '@nestjs/microservices';
-import { EventPublisherService } from './event-publisher.service';
 import { User, UserDocument } from './schemas/user.schema';
+import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @Injectable()
 export class PaymentService {
@@ -34,9 +34,7 @@ export class PaymentService {
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    @Inject('NOTIFICATION_SERVICE')
-    private readonly notificationClient: ClientProxy,
-    private readonly eventPublisher: EventPublisherService,
+   // @Inject('NOTIFICATION_SERVICE')private readonly notificationClient: ClientProxy
   ) {
     const stripeKey = envConfig().stripe_secret_key;
     if (stripeKey) {
@@ -128,12 +126,13 @@ export class PaymentService {
 
       // Emit notification
       const userData = await this.userModel.findOne({ userId: payment.userId });
-      this.eventPublisher.sendPaymentNotification({
-        orderId: payment.orderId,
-        userId: payment.userId,
-        amount: payment.amount,
-        status: payment.status,
-        email: userData?.email || null,
+      await publishEvent(EVENTS.NOTI_EVENT, {
+              type: TYPES.SEND_PAYMENT_NOTIFICATION,
+              orderId: payment.orderId,
+              userId: payment.userId,
+              amount: payment.amount,
+              status: payment.status,
+              email: userData?.email || null,
       });
       // this.notificationClient.emit('notify_payment', {
       //   orderId: payment.orderId,
@@ -151,12 +150,13 @@ export class PaymentService {
 
       // Emit notification for failure
       const userData = await this.userModel.findOne({ userId: payment.userId });
-      this.eventPublisher.sendPaymentNotification({
-        orderId: payment.orderId,
-        userId: payment.userId,
-        amount: payment.amount,
-        status: PaymentStatus.FAILED,
-        email: userData?.email || null,
+      await publishEvent(EVENTS.NOTI_EVENT, {
+              type: TYPES.SEND_PAYMENT_NOTIFICATION,
+              orderId: payment.orderId,
+              userId: payment.userId,
+              amount: payment.amount,
+              status: PaymentStatus.FAILED,
+              email: userData?.email || null,
       });
 
       throw new BadRequestException(`Stripe payment failed: ${error.message}`);

@@ -1,17 +1,22 @@
 import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
 import { RedisConsumer } from 'libs/queue/redis/redis.consumer';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { EmailService } from '../email.service';
+import { NotificationService } from '../notification.service';
+import { Noti_PRISMA } from '../../prisma/prisma.service';
 import { EVENTS, TYPES } from 'libs/queue/constant';
-import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
-export class PaymentUserWorker extends RedisConsumer implements OnModuleInit {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {
+export class NotificationUserWorker
+  extends RedisConsumer
+  implements OnModuleInit
+{
+  constructor(
+    @Inject(Noti_PRISMA) private readonly prisma,
+  ) {
     super(
       EVENTS.USER_EVENT,                  // stream key (shared)
-      'payment_user_group',               // group (unique per service)
-      `payment_user_${process.pid}`,      // consumer
+      'notification_user_group',           // group (unique per service)
+      `notification_user_${process.pid}`,  // consumer
     );
   }
 
@@ -21,9 +26,13 @@ export class PaymentUserWorker extends RedisConsumer implements OnModuleInit {
 
   // 🔥 This replaces BullMQ process() + handlers
   async handle(data: any): Promise<void> {
-    console.log('📩 Payment user event:', data);
+    console.log('📩 Notification event:', data);
 
     switch (data.type) {
+      /* =======================
+         USER EVENTS
+         ======================= */
+
       case TYPES.CREATED_USER:
         await this.saveUser(data);
         break;
@@ -42,45 +51,46 @@ export class PaymentUserWorker extends RedisConsumer implements OnModuleInit {
   }
 
   /* =======================
-     USER HANDLERS
+     USER HANDLERS (UNCHANGED LOGIC)
      ======================= */
 
   private async saveUser(data: any) {
-    console.log('Save user from payment:', data);
+    console.log('save user from notification:', data);
 
-    await this.userModel.findOneAndUpdate(
-      { userId: data.id }, // unique key
-      {
-        userId: data.id,
+    await this.prisma.user.upsert({
+      where: { userId: Number(data.id) },
+      update: {
+        userId: Number(data.id),
         email: data.email,
         phone: data.phone,
         role: data.role,
         isDeleted: false,
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
-    );
+      create: {
+        userId: Number(data.id),
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+      },
+    });
   }
 
   private async updateUser(data: any) {
-    console.log('Update user from payment:', data);
-
-    await this.userModel.updateOne(
-      { userId: data.id },
-      {
+    await this.prisma.user.updateMany({
+      where: { userId: Number(data.id) },
+      data: {
         userId: data.id,
         email: data.email,
         phone: data.phone,
         role: data.role,
       },
-    );
+    });
   }
 
   private async deleteUser(userId: number) {
-    console.log('Delete user from payment:', userId);
-
-    await this.userModel.updateOne(
-      { userId },
-      { isDeleted: true },
-    );
+    await this.prisma.user.update({
+      where: { userId: Number(userId) },
+      data: { isDeleted: true },
+    });
   }
 }

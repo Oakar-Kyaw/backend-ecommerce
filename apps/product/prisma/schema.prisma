@@ -168,6 +168,15 @@ model AddToCart {
   @@unique([userId, productId]) // Composite unique to prevent duplicates
 }
 
+model Brand {
+  id                      Int                    @id @default(autoincrement())
+  brandId                 Int                    @unique
+  email                   String?
+  name                    String                 
+  imageUrl                String?                 
+  isDeleted               Boolean                @default(false)
+}
+
 
 model User {
   id                      Int                    @id @default(autoincrement())

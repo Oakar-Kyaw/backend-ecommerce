@@ -19,27 +19,20 @@ import {
 } from '../dto/update-user.dto';
 import { hashedPassword } from '../../../libs/utils/hash';
 import {
-  CREATED_NOTIFICATION_SERVICE_QUEUE,
-  CREATED_ORDER_SERVICE_QUEUE,
-  CREATED_PAYMENT_SERVICE_QUEUE,
-  CREATED_USER_JOB,
-  CREATED_USER_SERVICE_QUEUE,
-  QueueServices,
-  UPDATED_USER_JOB,
+  EVENTS,
+  TYPES
 } from 'libs/queue/constant';
-import { PublishMessage } from 'libs/queue/publish';
 import { envConfig } from 'libs/config/envConfig';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import { PRISMA } from '../prisma/prisma.service';
 import { BrandUserService } from './brand-user.service';
-import { EventPublisherService } from './event-publisher.service';
 import * as XLSX from 'xlsx';
 import Redis from 'ioredis';
-import createAPI from 'libs/utils/axio.instance';
 
 import { SyncAction, SyncDeviceTokenDto } from '../dto/sync-device-token.dto';
 import { FileUpload } from 'libs/utils/file-upload';
+import { publishEvent } from 'libs/queue/redis/redis.producer';
 
 @Injectable()
 export class UsersService {
@@ -48,7 +41,6 @@ export class UsersService {
     @Inject(PRISMA) private readonly prisma,
     // @InjectQueue(CREATED_USER_QUEUE) private readonly queue: Queue,
     private readonly brandUserService: BrandUserService,
-    private readonly eventPublisher: EventPublisherService,
   ) {}
 
   private redis: Redis = envConfig().redis_url
@@ -146,10 +138,6 @@ export class UsersService {
     // 4️link brand if provided
     if (brandId) await this.brandUserService.linkUserToBrand(user.id, brandId);
 
-    QueueServices.map((name) => {
-      console.log('sending data to ', name);
-      this.eventPublisher.createUser(name, user);
-    });
     //send welcome message
     let subject = 'Welcome to Our Platform!';
     let htmlContent = '';
@@ -172,7 +160,7 @@ export class UsersService {
             <li>Review your dashboard</li>
           </ul>
           <p>We look forward to a successful partnership!</p>
-          <p style="margin-top: 20px;">— The Team</p>
+          <p style="margin-top: 20px;">— Megasmart Team</p>
         </div>
       `;
     } else {
@@ -190,8 +178,17 @@ export class UsersService {
         </div>
       `;
     }
+    await publishEvent(EVENTS.USER_EVENT, {
+          type: TYPES.CREATED_USER,
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          password: hashPassword
+    });
 
-    await this.eventPublisher.sendEmail({
+    await publishEvent(EVENTS.NOTI_EVENT, {
+      type: TYPES.SEND_EMAIL,
       to: email,
       subject: subject,
       html: htmlContent,
@@ -367,7 +364,8 @@ export class UsersService {
     const key = `otp:${mode || 'signup'}:${email}`;
     await this.redis.set(key, otp, 'EX', 300);
     try {
-      this.eventPublisher.sendEmail({
+      await publishEvent(EVENTS.NOTI_EVENT, {
+        type: TYPES.SEND_EMAIL,
         to: email,
         subject: 'Your verification code',
         html: `<p>Your verification code is <strong>${otp}</strong>. It expires in 5 minutes.</p>`,
@@ -539,19 +537,15 @@ export class UsersService {
       include: { brandUserRelationship: { include: { brand: true } } },
     });
     console.log('updated user :', updateUser, dto, imageUrl);
-
-    //publish event update user to all server
-    QueueServices.map((name) => {
-      console.log('name', name);
-      this.eventPublisher.userUpdated(name, {
-        id: updateUser.id,
-        email: updateUser.email,
-        phone: updateUser.phone ?? null,
-        password: updateUser.password ?? null,
-        role: updateUser.role ?? 'CUSTOMER',
-      });
+    await publishEvent(EVENTS.USER_EVENT, {
+          type: TYPES.UPDATED_USER,
+          id: updateUser.id,
+          email: updateUser.email,
+          phone: updateUser.phone,
+          role: updateUser.role ?? 'CUSTOMER',
+          password: updateUser.password ?? null
     });
-
+    
     return {
       success: true,
       message: 'UPDATED_USER',
@@ -583,14 +577,14 @@ export class UsersService {
         where: { id },
         data: { isDeleted: true },
       });
-
-      //publish event delete user to all server
-      // await Promise.all(
-      QueueServices.map(async (name) => {
-        console.log('sending data to', name);
-        await this.eventPublisher.userDeleted(name, id);
-      });
-      // );
+      await publishEvent(EVENTS.USER_EVENT, {
+          type: TYPES.DELETED_USER,
+          id: deletedUser.id,
+          email: deletedUser.email,
+          phone: deletedUser.phone,
+          role: deletedUser.role ?? 'CUSTOMER',
+          password: deletedUser.password ?? null
+    });
 
       return {
         success: true,
@@ -679,7 +673,6 @@ export class UsersService {
         photoUrl: picture,
       },
     });
-    //  this.eventPublisher.createUser(,user);
     return {
       success: true,
       message: 'User has been created successfully.',
@@ -709,7 +702,6 @@ export class UsersService {
       },
     });
     console.log('user: ', user);
-    //this.eventPublisher.createUser(user);
     return {
       success: true,
       message: 'CREATED_USER',
@@ -820,12 +812,13 @@ export class UsersService {
     });
 
     //publish to auth server
-    this.eventPublisher.userUpdated(CREATED_USER_SERVICE_QUEUE, {
-      id: updateUser.id,
-      email: updateUser.email,
-      phone: updateUser.phone ?? null,
-      password: hashPassword ?? null,
-      role: updateUser.role ?? 'CUSTOMER',
+    await publishEvent(EVENTS.USER_EVENT, {
+          type: TYPES.UPDATED_USER,
+          id: updateUser.id,
+          email: updateUser.email,
+          phone: updateUser.phone ?? null,
+          password: hashPassword ?? null,
+          role: updateUser.role ?? 'CUSTOMER',
     });
     return {
       success: true,

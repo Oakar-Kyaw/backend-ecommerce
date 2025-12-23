@@ -3,20 +3,17 @@ import { UsersController } from './user.controller';
 import { OtpController } from './otp.controller';
 import { UsersService } from './user.service';
 import { GlobalConfigModule, envConfig } from 'libs/config/envConfig';
-import { PublishMessageModule } from 'libs/queue/publish.module';
 import { PassportModule } from '@nestjs/passport';
 import { FacebookStrategy } from 'libs/strategy/facebook.strategy';
 import { GoogleStrategy } from 'libs/strategy/google.strategy';
 import { PrismaService } from '../prisma/prisma.service';
 import { BrandUserService } from './brand-user.service';
-import { EventPublisherService } from './event-publisher.service';
 import { FileUpload } from 'libs/utils/file-upload';
 import * as admin from 'firebase-admin';
 
 @Module({
   imports: [
     GlobalConfigModule,
-    PublishMessageModule,
     PassportModule.register({ defaultStrategy: 'facebook' }),
   ],
   controllers: [UsersController, OtpController],
@@ -24,7 +21,6 @@ import * as admin from 'firebase-admin';
     UsersService,
     PrismaService,
     BrandUserService,
-    EventPublisherService,
     FacebookStrategy,
     GoogleStrategy,
     FileUpload,

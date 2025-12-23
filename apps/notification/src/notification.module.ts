@@ -3,29 +3,13 @@ import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
 import * as admin from 'firebase-admin';
 import { envConfig } from 'libs/config/envConfig';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { EmailModule } from './email.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { PublishMessageModule } from 'libs/queue/publish.module';
-import { NotificationWorker } from './notification.worker';
-import { BullModule } from '@nestjs/bullmq';
-import { CREATED_NOTIFICATION_SERVICE_QUEUE } from 'libs/queue/constant';
 
 @Module({
   imports: [
     EmailModule,
-    PublishMessageModule,
-    BullModule.forRoot({
-      connection: {
-        host: envConfig().redis_host,
-        port: envConfig().redis_port,
-        password: envConfig().redis_password,
-      },
-    }),
-    BullModule.registerQueue({
-      name: CREATED_NOTIFICATION_SERVICE_QUEUE,
-    }),
-    // ClientsModule.register([
+    // // ClientsModule.register([
     //   {
     //     name: 'USER',
     //     transport: Transport.TCP,
@@ -35,7 +19,9 @@ import { CREATED_NOTIFICATION_SERVICE_QUEUE } from 'libs/queue/constant';
     // ]),
   ],
   controllers: [NotificationController],
-  providers: [NotificationService, PrismaService, NotificationWorker],
+  providers: [NotificationService, 
+    PrismaService
+  ],
   exports: [NotificationService],
 })
 export class NotificationModule {

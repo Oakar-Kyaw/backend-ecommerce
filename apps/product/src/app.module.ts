@@ -6,9 +6,8 @@ import { SubCategoryModule } from './subcategories/subcategory.module';
 import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
 import { ShippingFeeModule } from './shipping/shipping-fee.module';
 import { CurrencyModule } from './currency/currency.module';
-import { PublishMessageModule } from 'libs/queue/publish.module';
-import { ProductWorker } from './product.worker';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProductWorkerModule } from './worker/product-worker.module';
 
 @Module({
   imports: [
@@ -17,9 +16,9 @@ import { PrismaService } from '../prisma/prisma.service';
     SubCategoryModule,
     ShippingFeeModule,
     CurrencyModule,
-    PublishMessageModule
+    ProductWorkerModule
   ],
-  providers:[ProductWorker, PrismaService]
+  providers:[PrismaService]
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

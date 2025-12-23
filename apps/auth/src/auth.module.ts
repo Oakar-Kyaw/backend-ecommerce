@@ -4,15 +4,14 @@ import { SessionController } from './session.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { envConfig } from 'libs/config/envConfig';
-import { AuthWorker } from './auth.worker';
-import { PublishMessageModule } from 'libs/queue/publish.module';
 import { AuthPrismaService } from '../prisma/auth.prisma.service';
 import { RequestLoggerMiddleware } from '../../../libs/loggers/logs-implementation';
 import * as admin from 'firebase-admin';
+import { AuthWorker } from './auth.worker.service';
 
 @Module({
   imports: [
-    PublishMessageModule,
+   // PublishMessageModule,
     JwtModule.register({
       global: true,
       secret: envConfig().JWTSecret,
@@ -21,7 +20,9 @@ import * as admin from 'firebase-admin';
     }),
   ],
   controllers: [AuthController, SessionController],
-  providers: [AuthService, AuthWorker, AuthPrismaService],
+  providers: [AuthService, 
+    AuthWorker, 
+    AuthPrismaService],
 })
 export class AuthModule {
   constructor() {

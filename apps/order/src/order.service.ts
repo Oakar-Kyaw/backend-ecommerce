@@ -16,11 +16,13 @@ import {
 } from '../../../libs/utils/pagination';
 import { EventPublisherService } from './event-publisher.service';
 import { User, UserDocument } from './schemas/user.schema';
+import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @Injectable()
 export class OrderService {
   constructor(
-    private readonly eventPublisher: EventPublisherService,
+  //  private readonly eventPublisher: EventPublisherService,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(ShippingLocation.name)
@@ -29,7 +31,8 @@ export class OrderService {
     private readonly notificationClient: ClientProxy,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto): Promise<Order> {
+  async create(createOrderDto: CreateOrderDto) :Promise<Order> 
+  {
     const {
       items,
       shippingFee = 0,
@@ -37,6 +40,10 @@ export class OrderService {
       shippingAddress,
       ...orderData
     } = createOrderDto;
+
+    console.log("create order dto is: ", createOrderDto)
+
+   // return {};
 
     // Populate brandId for items if missing and fetch product names
     const enrichedItems = await Promise.all(
@@ -125,15 +132,15 @@ export class OrderService {
         userId: savedOrder.userId,
       });
 
-      await this.eventPublisher.sendOrderNotification({
-        orderId: String(savedOrder._id),
-        userId: savedOrder.userId,
-        totalAmount: savedOrder.totalAmount,
-        status: savedOrder.status,
-        email: userData?.email || null,
-        items: enrichedItems,
-        shippingAddress: savedLocation,
-      });
+      // await this.eventPublisher.sendOrderNotification({
+      //   orderId: String(savedOrder._id),
+      //   userId: savedOrder.userId,
+      //   totalAmount: savedOrder.totalAmount,
+      //   status: savedOrder.status,
+      //   email: userData?.email || null,
+      //   items: enrichedItems,
+      //   shippingAddress: savedLocation,
+      // });
 
       // Notify brands
       const brandItems = enrichedItems.reduce((acc, item) => {
@@ -215,15 +222,27 @@ export class OrderService {
 
     // Emit notification
     const userData = await this.userModel.findOne({ userId: order.userId });
-    this.eventPublisher.sendOrderNotification({
-      orderId: String(order._id),
-      userId: order.userId,
-      totalAmount: order.totalAmount,
-      status: order.status,
-      email: userData?.email || null,
-      items: order.items,
-      shippingAddress: order.shippingLocationId,
+
+    await publishEvent(EVENTS.NOTI_EVENT, {
+        type: TYPES.SEND_ORDER_NOTIFICATION,
+        orderId: String(order._id),
+        userId: order.userId,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        email: userData?.email || null,
+        items: order.items,
+        shippingAddress: order.shippingLocationId,
     });
+
+    // this.eventPublisher.sendOrderNotification({
+    //   orderId: String(order._id),
+    //   userId: order.userId,
+    //   totalAmount: order.totalAmount,
+    //   status: order.status,
+    //   email: userData?.email || null,
+    //   items: order.items,
+    //   shippingAddress: order.shippingLocationId,
+    // });
 
     return order;
   }
@@ -282,15 +301,27 @@ export class OrderService {
 
     const brandItems = order.items.filter((item) => item.brandId === brandId);
 
-    await this.eventPublisher.sendBrandStatusUpdateNotification({
-      orderId: String(savedOrder._id),
-      userId: savedOrder.userId,
-      brandId: brandId,
-      status: status,
-      email: userData?.email || null,
-      items: brandItems,
-      shippingAddress: savedOrder.shippingLocationId, // Assuming this is populated or available
+    await publishEvent(EVENTS.NOTI_EVENT, {
+        type: TYPES.SEND_BRAND_STATUS_UPDATE_NOTIFICATION,
+        orderId: String(savedOrder._id),
+        userId: savedOrder.userId,
+        brandId: brandId,
+        status: status,
+        email: userData?.email || null,
+        items: brandItems,
+        shippingAddress: savedOrder.shippingLocationId, // Assuming this is populated or available
     });
+
+
+    // await this.eventPublisher.sendBrandStatusUpdateNotification({
+    //   orderId: String(savedOrder._id),
+    //   userId: savedOrder.userId,
+    //   brandId: brandId,
+    //   status: status,
+    //   email: userData?.email || null,
+    //   items: brandItems,
+    //   shippingAddress: savedOrder.shippingLocationId, // Assuming this is populated or available
+    // });
 
     return savedOrder;
   }
