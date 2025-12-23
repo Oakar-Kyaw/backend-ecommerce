@@ -59,6 +59,10 @@ export class NotificationWorker
       case TYPES.SEND_BRAND_STATUS_UPDATE_NOTIFICATION:
         await this.notificationService.sendBrandStatusUpdateNotification(data);
         break;
+      
+      case TYPES.SEND_BRAND_ORDER_NOTIFICATION:
+        await this.notificationService.sendBrandOrderNotification(data);
+        break;
 
       default:
         console.warn('⚠️ Unknown event type:', data.type);

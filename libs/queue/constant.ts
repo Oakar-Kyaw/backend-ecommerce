@@ -64,7 +64,8 @@ export const TYPES = {
   SEND_EMAIL : 'send_email',
   SEND_ORDER_NOTIFICATION: 'send_order_notification',
   SEND_PAYMENT_NOTIFICATION: 'send_payment_notification',
-  SEND_BRAND_STATUS_UPDATE_NOTIFICATION: "send_brand_status_update_notification"
+  SEND_BRAND_STATUS_UPDATE_NOTIFICATION: "send_brand_status_update_notification",
+  SEND_BRAND_ORDER_NOTIFICATION: "notify_brand_order"
 }
 
 export const GROUPS = {

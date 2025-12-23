@@ -44,6 +44,15 @@ model User {
   isDeleted  Boolean                @default(false)
 }
 
+model Brand {
+  id                      Int                    @id @default(autoincrement())
+  brandId                 Int                    @unique
+  email                   String?
+  name                    String                 
+  imageUrl                String?                 
+  isDeleted               Boolean                @default(false)
+}
+
 enum Role {
   CUSTOMER
   ADMIN

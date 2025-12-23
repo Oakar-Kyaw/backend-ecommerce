@@ -433,14 +433,15 @@ export class NotificationService {
     );
 
     // 1. Fetch Brand Details (Email)
-    const brand = await this.fetchBrandDetails(brandId);
-
+    //const brand = await this.fetchBrandDetails(brandId);
+    const brand  = await this.prisma.brand.findUnique({ where: { brandId } })
+    console.log("notification brand: ",brand)
     if (brand && brand.email) {
       // 2. Send Email to Brand
       const itemsListHtml = items
         .map(
           (item: any) =>
-            `<li>
+            `<li style="padding-bottom: 10px;">
               ${item.image ? `<img src="${item.image}" alt="${item.name}" width="30" style="vertical-align: middle; margin-right: 5px;">` : ''}
               ${item.quantity}x ${item.name || item.productId} - $${item.price}
             </li>`,

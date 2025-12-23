@@ -217,21 +217,41 @@ export class BrandService {
     const updatedBrand = await this.prisma.brand.update({
       where: { id },
       data: { ...updateBrandDto, photoUrl },
+      include: {
+         brandUserRelationships: true
+      }
     });
 
+    const relation = await this.prisma.brandUserRelationship.findFirst({
+      where: { brandId: updatedBrand.id },
+    });
+
+    if (!relation) throw new NotFoundException('User not found');
+
+
+    console.log("update brand: ",  "user", relation)
     // Create User if email is provided
     if (updatedBrand.email) {
       try {
-        await this.usersService.create({
-          email: updatedBrand.email,
-          password: 'Brand123@',
-          role: RoleEnum.SALE,
-          brandId: updatedBrand.id,
-          firstName: updatedBrand.name,
-          phone: updatedBrand.phone,
-        } as CreateUserWithProfileDto);
+         const user = await this.prisma.user.update({
+            where: { id: relation.userId },
+            data: {
+              email: updatedBrand.email,
+              firstName: updatedBrand.name,
+              phone: updatedBrand.phone,
+            },
+          });
 
-        console.log('user');
+        console.log('user', user);
+        await publishEvent(EVENTS.USER_EVENT, {
+          type: TYPES.UPDATED_USER,
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          role: user.role ?? 'SALE',
+          password: user.password ?? null
+        })
+
         console.log('end');
 
       } catch (error) {

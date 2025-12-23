@@ -46,7 +46,7 @@ export class OrderService {
       shippingId,
       ...orderData
     } = createOrderDto;
-   let ShippingInfoId: string | Types.ObjectId | undefined = shippingId
+   let ShippingInfoId
    let savedLocation
     console.log("create order dto is: ", createOrderDto)
 
@@ -106,12 +106,13 @@ export class OrderService {
         return { ...item, name: productName, image: productImage };
       }),
     );
-    console.log("enrich item is: ", enrichedItems)
     // Create and save shipping location
     if(!existShippingAddress){
       const createdLocation = new this.shippingLocationModel(shippingAddress);
       savedLocation = await createdLocation.save();
       ShippingInfoId = savedLocation._id
+    }else{
+       ShippingInfoId = new Types.ObjectId(shippingId)
     }
     
     // Calculate subtotal from items
@@ -130,7 +131,7 @@ export class OrderService {
       status: 'PENDING',
     }));
     
-    console.log("brandIds , brandStatuses: ", brandIds, brandStatuses)
+    console.log("brandIds , brandStatuses: ", brandIds, brandStatuses, ShippingInfoId)
     // return 
     const createdOrder = new this.orderModel({
       ...orderData,
@@ -144,31 +145,26 @@ export class OrderService {
     });
     const savedOrder = await createdOrder.save();
 
+    
+    const shippingAddressInfo = await this.shippingLocationModel.findById(savedOrder.shippingLocationId)
+    console.log("savedOrder", shippingAddressInfo)
     // Emit notification
     try {
-      const userData = await this.userModel.findOne({
-        userId: savedOrder.userId,
-      });
-
+      // const userData = await this.userModel.findOne({
+      //   userId: savedOrder.userId,
+      // });
+       const email = shippingAddressInfo?.email
        await publishEvent(EVENTS.NOTI_EVENT,{
         type: TYPES.SEND_ORDER_NOTIFICATION,
         orderId: String(savedOrder._id),
         userId: savedOrder.userId,
         totalAmount: savedOrder.totalAmount,
         status: savedOrder.status,
-        email: userData?.email || null,
+        email: email || null,
         items: enrichedItems,
-        shippingAddress: savedLocation,
+        shippingAddress: shippingAddressInfo
+       // shippingAddress: savedLocation,
       });
-      // await this.eventPublisher.sendOrderNotification({
-      //   orderId: String(savedOrder._id),
-      //   userId: savedOrder.userId,
-      //   totalAmount: savedOrder.totalAmount,
-      //   status: savedOrder.status,
-      //   email: userData?.email || null,
-      //   items: enrichedItems,
-      //   shippingAddress: savedLocation,
-      // });
 
       // Notify brands
       const brandItems = enrichedItems.reduce((acc, item) => {
@@ -178,15 +174,26 @@ export class OrderService {
         acc[item.brandId].push(item);
         return acc;
       }, {});
-
+      
+      console.log(brandItems, "brandItems")
       for (const [brandId, items] of Object.entries(brandItems)) {
-        this.notificationClient.emit('notify_brand_order', {
-          brandId,
-          orderId: savedOrder._id,
-          items,
-          status: savedOrder.status,
-          shippingAddress: savedLocation,
-        });
+        await publishEvent(
+          EVENTS.NOTI_EVENT, {
+            type: TYPES.SEND_BRAND_ORDER_NOTIFICATION,
+            brandId,
+            orderId: savedOrder._id,
+            items,
+            status: savedOrder.status,
+            shippingAddress: createdOrder.shippingLocationId,
+          }
+        )
+        // this.notificationClient.emit('notify_brand_order', {
+        //   brandId,
+        //   orderId: savedOrder._id,
+        //   items,
+        //   status: savedOrder.status,
+        //   shippingAddress: savedLocation,
+        // });
       }
     } catch (error) {
       console.error('Failed to emit notify_order event:', error);

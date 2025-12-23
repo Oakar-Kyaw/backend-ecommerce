@@ -5,6 +5,7 @@ import { NotificationUserWorker } from './notification-user.worker.service';
 import { NotificationModule } from '../notification.module';
 import { EmailModule } from '../email.module';
 import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationBrandWorker } from './notification-brand.worker.service';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PrismaService } from '../../prisma/prisma.service';
   providers: [
     NotificationWorker,
     NotificationUserWorker,
+    NotificationBrandWorker,
     PrismaService,
   ],
 })
