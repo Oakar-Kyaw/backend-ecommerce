@@ -6,12 +6,12 @@ import {
 } from '@nestjs/common';
 import { CreateCategoryDto } from 'apps/product/dto/create-category.dto';
 import { UpdateCategoryDto } from 'apps/product/dto/update-category.dto';
-import { PRISMA } from 'apps/product/prisma/prisma.service';
 import {
   getPagination,
   buildPaginationResponse,
 } from '../../../../libs/utils/pagination';
 import { FileUpload } from 'libs/utils/file-upload';
+import { PRISMA } from 'apps/product/prisma/prisma.service';
 
 @Injectable()
 export class CategoryService {

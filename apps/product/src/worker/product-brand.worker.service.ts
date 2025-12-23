@@ -21,7 +21,13 @@ export class ProductBrandWorker extends RedisConsumer implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.start();
+    try {
+        this.start();
+        console.log('✅ Product Brand Worker started');
+      } catch (err) {
+        console.error('❌ Product Brand Worker failed to start:', err);
+        throw err; // Re-throw to prevent silent failures
+      }
   }
 
   async handle(data: any): Promise<void> {

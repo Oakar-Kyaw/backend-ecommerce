@@ -16,7 +16,13 @@ export class OrderUserWorker extends RedisConsumer implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.start();
+    try {
+        this.start();
+        console.log('✅ Ordker User Worker started');
+      } catch (err) {
+        console.error('❌ Order User Worker failed to start:', err);
+        throw err; // Re-throw to prevent silent failures
+      }
   }
 
   async handle(data: any): Promise<void> {

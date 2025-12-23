@@ -8,6 +8,8 @@ import { FileUpload } from 'libs/utils/file-upload';
 @Module({
   imports: [GlobalConfigModule],
   controllers: [CategoryController],
-  providers: [CategoryService, PrismaService, FileUpload],
+  providers: [CategoryService,
+     PrismaService, 
+     FileUpload],
 })
 export class CategoryModule {}

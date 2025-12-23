@@ -18,7 +18,9 @@ import { ProductWorkerModule } from './worker/product-worker.module';
     CurrencyModule,
     ProductWorkerModule
   ],
-  providers:[PrismaService]
+  providers:[
+    PrismaService
+  ]
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

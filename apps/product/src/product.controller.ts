@@ -9,6 +9,7 @@ import {
   Delete,
   ParseIntPipe,
   Query,
+  Put,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from '../dto/create-product.dto';
@@ -30,6 +31,8 @@ import { Serialize } from 'libs/interceptor/response.interceptor';
 import { CreateAddToCartDto, CreateUserFavoriteDto } from '../dto/user-data.dto';
 import { UserData } from './user/user.data';
 import { AddToCartListResponseDto, CreatedAddToCartResponseDto, CreatedUserFavoriteResponseDto, DeletedAddToCartResponseDto, DeletedUserFavoriteResponseDto, UserFavoriteListResponseDto } from '../dto/user-data-response.dto';
+import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @ApiTags('Items')
 @Controller(['api/products', 'api/v1/products', 'api/v1/items', 'api/v1/product'])
@@ -177,4 +180,27 @@ export class ProductController {
     return this.userData.deleteAddToCart(id);
   }
   
+  @Post('testing')
+ async testing(
+    @Body('brandId') brandId: number,
+    @Body('productId') productId: string,
+    @Body('productMainImage') mainImage: number,
+    @Body('productName') name: string,
+  ) {
+    console.log("test",  {
+      type: TYPES.CREATED_PRODUCT,
+      brandId: brandId,
+      productId: productId,
+      productMainImage: mainImage,
+      productName: name
+    })
+    await publishEvent(EVENTS.PRODUCT_EVENT, {
+      type: TYPES.CREATED_PRODUCT,
+      brandId: brandId,
+      productId: productId,
+      productMainImage: mainImage,
+      productName: name
+    })
+    return {}
+  }
 }

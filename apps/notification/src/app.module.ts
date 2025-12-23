@@ -1,18 +1,15 @@
 import { Module } from '@nestjs/common';
 import { NotificationModule } from './notification.module';
 import { EmailModule } from './email.module';
-import { PrismaService } from '../prisma/prisma.service';
-import { NotificationUserWorker } from './worker/notification-user.worker.service';
-import { NotificationWorker } from './worker/notification.worker.service';
+import { NotificationWorkerModule } from './worker/notification.worker.module';
 
 @Module({
   imports: [
     NotificationModule, 
-    EmailModule],
-  controllers: [],
-  providers: [
-     NotificationWorker,
-    NotificationUserWorker, 
-    PrismaService],
+    EmailModule,
+    NotificationWorkerModule, // ← Add this
+  ],
+  controllers: [], // Controllers are in child modules
+  providers: [],   // Clean!
 })
 export class AppModule {}

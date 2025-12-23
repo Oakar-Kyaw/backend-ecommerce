@@ -3,7 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionFilter } from 'libs/exception/http.exception';
 
 export default function serversetup(app, port) {
-  console.log('app and port: ', port);
+//  console.log('app and port: ', port);
   app.enableCors({
     origin: '*',
     methods: 'GET,POST,PUT,DELETE,OPTIONS',

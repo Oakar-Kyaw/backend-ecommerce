@@ -20,7 +20,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  serversetup(app, envConfig().notification_service_port);
   // Enable REST API on port 3000 (or any you want)
   await app.listen(envConfig().notification_service_port);
   //serversetup(app, envConfig().notification_service_port)
@@ -28,5 +27,6 @@ async function bootstrap() {
     `🚀 Noti HTTP running on ${envConfig().notification_service_port}`,
   );
   console.log(`🚀 Noti TCP running on ${envConfig().notification_service_tcp}`);
+  serversetup(app, envConfig().notification_service_port);
 }
 bootstrap();

@@ -14,7 +14,6 @@ import {
   getPagination,
   buildPaginationResponse,
 } from '../../../libs/utils/pagination';
-import { EventPublisherService } from './event-publisher.service';
 import { User, UserDocument } from './schemas/user.schema';
 import { publishEvent } from 'libs/queue/redis/redis.producer';
 import { EVENTS, TYPES } from 'libs/queue/constant';

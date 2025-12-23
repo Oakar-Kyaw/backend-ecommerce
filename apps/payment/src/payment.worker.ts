@@ -16,7 +16,13 @@ export class PaymentUserWorker extends RedisConsumer implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.start();
+    try {
+        this.start();
+        console.log('✅ Payment Worker started');
+      } catch (err) {
+        console.error('❌ Payment Worker failed to start:', err);
+        throw err; // Re-throw to prevent silent failures
+      }
   }
 
   // 🔥 This replaces BullMQ process() + handlers

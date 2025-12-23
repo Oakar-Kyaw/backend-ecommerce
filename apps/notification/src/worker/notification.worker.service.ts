@@ -21,8 +21,17 @@ export class NotificationWorker
     );
   }
 
+  // async onModuleInit() {
+  //   await this.start();
+  // }
   async onModuleInit() {
-    await this.start();
+     try {
+      this.start();
+      console.log('✅ Notification Worker started');
+    } catch (err) {
+      console.error('❌ Notification Worker failed to start:', err);
+      throw err; // Re-throw to prevent silent failures
+    }
   }
 
   // 🔥 This replaces BullMQ process() + handlers
