@@ -39,6 +39,7 @@ export class Order {
         productId: String,
         brandId: Number,
         quantity: Number,
+        brandName: String,
         price: Number,
         color: String,
         size: String,
@@ -50,6 +51,7 @@ export class Order {
   items: {
     productId: string;
     brandId: number;
+    brandName: string;
     quantity: number;
     price: number;
     color?: string;

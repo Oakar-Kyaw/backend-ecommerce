@@ -56,6 +56,7 @@ export class OrderService {
       items.map(async (item) => {
         let productName = 'Product';
         let productImage = '';
+        let brandName = "";
         if (!item.brandId || true) {
           // Always fetch for name
           try {
@@ -70,6 +71,7 @@ export class OrderService {
               if(!product) throw new NotFoundException(`Product not found. productId=${item.productId}`)
               productName = product.productName || 'Product';
               productImage = product.productMainImage || '';
+              brandName = product.brandId["name"] ;
             //  const productBrandId = product.brandId
             //  console.log("product brand id is: ", productBrandId)
               // if (!item.brandId) {
@@ -102,9 +104,11 @@ export class OrderService {
               );
           }
         }
-        return { ...item, name: productName, image: productImage };
+        return { ...item, name: productName, image: productImage, brandName };
       }),
     );
+
+    //console.log("enrich item ", enrichedItems)
     // Create and save shipping location
     if(!existShippingAddress){
       const createdLocation = new this.shippingLocationModel(shippingAddress);
