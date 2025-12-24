@@ -96,8 +96,8 @@ export class Order {
   })
   brandStatuses: { brandId: number; status: OrderStatus }[];
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ShippingLocation' })
-  shippingLocationId: ShippingLocation;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'ShippingLocation',  required: true })
+  shippingLocationId: MongooseSchema.Types.ObjectId;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

@@ -105,7 +105,7 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  shippingId?: string;
+  shippingAddressId?: string;
 
   @IsOptional()
   @IsEnum(PaymentType)

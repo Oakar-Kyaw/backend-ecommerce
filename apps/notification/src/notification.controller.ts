@@ -17,11 +17,11 @@ export class NotificationController {
     await this.pushNotificationService.sendOrderNotification(data);
   }
 
-  // @EventPattern('notify_brand_status_update')
-  // async handleBrandStatusUpdateNotification(@Payload() data: any) {
-  //   console.log('Received notify_brand_status_update event', data);
-  //   await this.pushNotificationService.sendBrandStatusUpdateNotification(data);
-  // }
+  @EventPattern('notify_brand_status_update')
+  async handleBrandStatusUpdateNotification(@Payload() data: any) {
+    console.log('Received notify_brand_status_update event', data);
+    await this.pushNotificationService.sendBrandStatusUpdateNotification(data);
+  }
 
   @EventPattern('notify_brand_order')
   async handleBrandOrderNotification(@Payload() data: any) {

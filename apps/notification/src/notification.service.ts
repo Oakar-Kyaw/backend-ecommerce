@@ -435,7 +435,7 @@ export class NotificationService {
     // 1. Fetch Brand Details (Email)
     //const brand = await this.fetchBrandDetails(brandId);
     const brand  = await this.prisma.brand.findUnique({ where: { brandId } })
-    console.log("notification brand: ",brand)
+    console.log("notification brand: ",payload)
     if (brand && brand.email) {
       // 2. Send Email to Brand
       const itemsListHtml = items
@@ -454,7 +454,8 @@ export class NotificationService {
                 <h4 style="margin: 0 0 5px 0;">Shipping Details</h4>
                 <p style="margin: 0;">
                     ${shippingAddress.address}, ${shippingAddress.city}<br>
-                    Phone: ${shippingAddress.phone}
+                    Phone: ${shippingAddress.phone} <br>
+                    Email: ${shippingAddress.email}
                 </p>
             </div>
         `

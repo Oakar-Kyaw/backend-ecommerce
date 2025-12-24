@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, Types } from 'mongoose';
 import { Order, OrderDocument } from './schemas/order.schema';
@@ -43,7 +43,7 @@ export class OrderService {
       tax = 0,
       shippingAddress,
       existShippingAddress,
-      shippingId,
+      shippingAddressId,
       ...orderData
     } = createOrderDto;
    let ShippingInfoId
@@ -112,7 +112,14 @@ export class OrderService {
       savedLocation = await createdLocation.save();
       ShippingInfoId = savedLocation._id
     }else{
-       ShippingInfoId = new Types.ObjectId(shippingId)
+       const existingLocation = await this.shippingLocationModel.findById(shippingAddressId);
+
+        if (!existingLocation) {
+          throw new BadRequestException('Shipping address not found');
+        }
+
+        ShippingInfoId = existingLocation._id;
+
     }
     
     // Calculate subtotal from items
@@ -146,23 +153,29 @@ export class OrderService {
     const savedOrder = await createdOrder.save();
 
     
-    const shippingAddressInfo = await this.shippingLocationModel.findById(savedOrder.shippingLocationId)
-    console.log("savedOrder", shippingAddressInfo)
+  const populatedOrder = await this.orderModel
+      .findById(savedOrder._id)
+      .populate<{ shippingLocationId: ShippingLocation }>('shippingLocationId')
+      .exec();
+
     // Emit notification
     try {
       // const userData = await this.userModel.findOne({
       //   userId: savedOrder.userId,
       // });
-       const email = shippingAddressInfo?.email
+      const userEmail = populatedOrder?.shippingLocationId?.email
+      
+      //console.log("populated Order", populatedOrder?.shippingLocationId)
+
        await publishEvent(EVENTS.NOTI_EVENT,{
         type: TYPES.SEND_ORDER_NOTIFICATION,
         orderId: String(savedOrder._id),
         userId: savedOrder.userId,
         totalAmount: savedOrder.totalAmount,
         status: savedOrder.status,
-        email: email || null,
+        email: userEmail || null,
         items: enrichedItems,
-        shippingAddress: shippingAddressInfo
+        shippingAddress: populatedOrder?.shippingLocationId
        // shippingAddress: savedLocation,
       });
 
@@ -174,8 +187,6 @@ export class OrderService {
         acc[item.brandId].push(item);
         return acc;
       }, {});
-      
-      console.log(brandItems, "brandItems")
       for (const [brandId, items] of Object.entries(brandItems)) {
         await publishEvent(
           EVENTS.NOTI_EVENT, {
@@ -184,16 +195,9 @@ export class OrderService {
             orderId: savedOrder._id,
             items,
             status: savedOrder.status,
-            shippingAddress: createdOrder.shippingLocationId,
+            shippingAddress: populatedOrder?.shippingLocationId
           }
         )
-        // this.notificationClient.emit('notify_brand_order', {
-        //   brandId,
-        //   orderId: savedOrder._id,
-        //   items,
-        //   status: savedOrder.status,
-        //   shippingAddress: savedLocation,
-        // });
       }
     } catch (error) {
       console.error('Failed to emit notify_order event:', error);
