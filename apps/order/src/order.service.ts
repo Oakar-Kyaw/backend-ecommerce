@@ -48,7 +48,6 @@ export class OrderService {
     } = createOrderDto;
    let ShippingInfoId
    let savedLocation
-    console.log("create order dto is: ", createOrderDto)
 
    // return {};
 
@@ -203,7 +202,11 @@ export class OrderService {
       console.error('Failed to emit notify_order event:', error);
     }
 
-    return savedOrder;
+    return {
+      success: true,
+      data: populatedOrder,
+      message: "CREATED_ORDER_SUCCESSFULLY"
+    };
   }
 
   async findOne(id: string): Promise<any> {
@@ -636,12 +639,27 @@ export class OrderService {
 
   private async fetchUserDetails(userId: string) {
     try {
-      const baseUrl = envConfig().user_service_url;
-      const response = await axios.get(`${baseUrl}/users/${userId}`);
-      return response.data.data;
+      const user = await this.userModel.findOne({userId});
+      return;
     } catch (error) {
       console.error('Error fetching user details for:', userId, error.message);
       return null;
     }
+  }
+
+  async findDetail(id: string) {
+    const order = await this.orderModel
+      .findById(id)
+      .populate('shippingLocationId')
+      .lean();
+    if (!order) {
+      throw new NotFoundException(`Order #${id} not found`);
+    }
+    console.log(order)
+    return {
+      success: true,
+      data: order,
+      message: "ORDER_BY_ID"
+    };
   }
 }

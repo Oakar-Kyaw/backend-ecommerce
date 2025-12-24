@@ -37,6 +37,11 @@ export class OrderController {
     return this.orderService.findAll(page, pageSize);
   }
 
+  @Get("detail/:id")
+  findDetail(@Param('id') id: string) {
+    return this.orderService.findDetail(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.orderService.findOne(id);
