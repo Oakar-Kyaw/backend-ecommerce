@@ -655,11 +655,15 @@ export class OrderService {
     }
   }
 
-  async findDetails(userId: string) {
+  async findDetails(userId: string, startDate: Date, endDate: Date) {
+   
     const user = await this.userModel.findOne({userId: Number(userId)})
     if(!user) throw new NotFoundException(`User #${userId} not found`)
     const orders = await this.orderModel
-      .find({userId})
+      .find({
+        userId,
+      
+      })
       .populate('shippingLocationId')
       .sort({createdAt: "descending"})
       .lean();
