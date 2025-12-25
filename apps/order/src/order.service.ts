@@ -15,7 +15,7 @@ import {
   buildPaginationResponse,
 } from '../../../libs/utils/pagination';
 import { User, UserDocument } from './schemas/user.schema';
-import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { publishEvent } from 'libs/queue/redis.producer';
 import { EVENTS, TYPES } from 'libs/queue/constant';
 import { BrandDocument, BrandMeta } from './schemas/brand.shema';
 import { ProductDocument, ProductMeta } from './schemas/product.schema';

@@ -31,7 +31,7 @@ import { Serialize } from 'libs/interceptor/response.interceptor';
 import { CreateAddToCartDto, CreateUserFavoriteDto } from '../dto/user-data.dto';
 import { UserData } from './user/user.data';
 import { AddToCartListResponseDto, CreatedAddToCartResponseDto, CreatedUserFavoriteResponseDto, DeletedAddToCartResponseDto, DeletedUserFavoriteResponseDto, UserFavoriteListResponseDto } from '../dto/user-data-response.dto';
-import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { publishEvent } from 'libs/queue/redis.producer';
 import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @ApiTags('Items')

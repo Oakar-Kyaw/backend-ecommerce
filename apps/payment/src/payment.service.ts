@@ -22,7 +22,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { envConfig } from 'libs/config/envConfig';
 import Stripe from 'stripe';
 import { User, UserDocument } from './schemas/user.schema';
-import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { publishEvent } from 'libs/queue/redis.producer';
 import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @Injectable()

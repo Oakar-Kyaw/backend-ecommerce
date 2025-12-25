@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
-import { RedisConsumer } from 'libs/queue/redis/redis.consumer';
+import { RedisConsumer } from 'libs/queue/redis.consumer';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EVENTS, TYPES } from 'libs/queue/constant';

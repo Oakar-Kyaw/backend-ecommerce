@@ -17,7 +17,7 @@ import { UsersService } from './user.service';
 import { RoleEnum, CreateUserWithProfileDto } from '../dto/create-user.dto';
 import { BrandUserService } from './brand-user.service';
 import { CREATED_ORDER_SERVICE_QUEUE, CREATED_PRODUCT_SERVICE_QUEUE, EVENTS, QueueServices, TYPES } from 'libs/queue/constant';
-import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { publishEvent } from 'libs/queue/redis.producer';
 
 @Injectable()
 export class BrandService {

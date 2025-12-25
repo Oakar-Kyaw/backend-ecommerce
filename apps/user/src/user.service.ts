@@ -32,7 +32,7 @@ import Redis from 'ioredis';
 
 import { SyncAction, SyncDeviceTokenDto } from '../dto/sync-device-token.dto';
 import { FileUpload } from 'libs/utils/file-upload';
-import { publishEvent } from 'libs/queue/redis/redis.producer';
+import { publishEvent } from 'libs/queue/redis.producer';
 
 @Injectable()
 export class UsersService {

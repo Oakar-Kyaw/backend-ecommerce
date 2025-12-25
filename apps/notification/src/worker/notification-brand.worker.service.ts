@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, Inject } from '@nestjs/common';
-import { RedisConsumer } from 'libs/queue/redis/redis.consumer';
+import { RedisConsumer } from 'libs/queue/redis.consumer';
 import { EVENTS, TYPES } from 'libs/queue/constant';
 import { Noti_PRISMA } from 'apps/notification/prisma/prisma.service';
 
