@@ -84,6 +84,12 @@ export class Order {
   @Prop({ required: false, enum: PaymentType, default: PaymentType.COD })
   paymentType: PaymentType;
 
+  @Prop({ type: Date })
+  estimatedDeliveryDate: Date;
+
+  @Prop({ type: Date })
+  deliveryDate: Date;
+
   @Prop({
     type: [
       {

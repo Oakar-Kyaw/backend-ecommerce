@@ -140,6 +140,9 @@ export class OrderService {
       brandId,
       status: 'PENDING',
     }));
+
+    const estimatedDeliveryDate = new Date();
+    estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + 7);
     
     console.log("brandIds , brandStatuses: ", brandIds, brandStatuses, ShippingInfoId)
     // return 
@@ -152,6 +155,7 @@ export class OrderService {
       totalAmount,
       shippingLocationId: ShippingInfoId,
       brandStatuses,
+      estimatedDeliveryDate,
     });
     const savedOrder = await createdOrder.save();
 
@@ -651,7 +655,24 @@ export class OrderService {
     }
   }
 
-  async findDetail(id: string) {
+  async findDetails(userId: string) {
+    const user = await this.userModel.findOne({userId: Number(userId)})
+    if(!user) throw new NotFoundException(`User #${userId} not found`)
+    const orders = await this.orderModel
+      .find({userId})
+      .populate('shippingLocationId')
+      .sort({createdAt: "descending"})
+      .lean();
+
+    console.log(orders)
+    return {
+      success: true,
+      data: orders,
+      message: "ORDER_BY_User_ID"
+    };
+  }
+
+  async findDetailById(id: string) {
     const order = await this.orderModel
       .findById(id)
       .populate('shippingLocationId')

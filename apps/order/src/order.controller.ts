@@ -37,9 +37,18 @@ export class OrderController {
     return this.orderService.findAll(page, pageSize);
   }
 
+  @Get("details")
+  findDetails(
+    @Query('userId') userId: string,
+    @Query("startDate") startDate: Date,
+    @Query("endDate") endDate: Date,
+  ) {
+    return this.orderService.findDetails(userId, startDate, endDate);
+  }
+
   @Get("detail/:id")
-  findDetail(@Param('id') id: string) {
-    return this.orderService.findDetail(id);
+  findDetailById(@Param('id') id: string) {
+    return this.orderService.findDetailById(id);
   }
 
   @Get(':id')
