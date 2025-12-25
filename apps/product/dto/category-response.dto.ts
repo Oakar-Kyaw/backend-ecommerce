@@ -1,4 +1,5 @@
 import { Expose, Type } from 'class-transformer';
+import { SubCategoryResponseDto } from './subcategory-response.dto';
 
 // ===== CATEGORY ENTITY RESPONSE =====
 export class CategoryResponseDto {
@@ -19,6 +20,10 @@ export class CategoryResponseDto {
 
   @Expose()
   readonly updatedAt?: Date;
+
+  @Expose()
+  @Type(() => SubCategoryResponseDto)
+  readonly subCategories: SubCategoryResponseDto
 }
 
 // ===== BASE RESPONSE WRAPPER =====

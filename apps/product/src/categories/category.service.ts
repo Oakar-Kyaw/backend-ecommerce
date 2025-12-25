@@ -87,6 +87,9 @@ export class CategoryService {
     const [categories, total] = await Promise.all([
       this.prisma.category.findMany({
         where,
+        include: {
+          subCategories: true
+        },
         orderBy: { id: 'desc' },
         skip: meta.skip,
         take: meta.limit,
@@ -94,6 +97,7 @@ export class CategoryService {
       this.prisma.category.count({ where }),
     ]);
 
+    console.log("categories", categories)
     return buildPaginationResponse(
       categories,
       meta,
