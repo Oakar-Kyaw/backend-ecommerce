@@ -127,7 +127,7 @@ export class ProductController {
     return this.userData.createAddToCart(data);
   }
 
-  @Get(":id/favorite")
+  @Get("favorites/userId")
   @Serialize(UserFavoriteListResponseDto)
   @ApiResponse({
     status: 201,
@@ -135,7 +135,7 @@ export class ProductController {
     type: UserFavoriteListResponseDto,
   })
   async getFavorite(
-    @Body("userId") userId: number
+    @Query("userId") userId: number
   ) {
     return this.userData.getUserFavorite(userId);
   }

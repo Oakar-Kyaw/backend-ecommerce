@@ -24,24 +24,23 @@ export class UserData {
     const { userId, productId } = favorite;
     // 1️⃣ Check user
     const user = await this.prisma.user.findUnique({
-      where: { userId },
+      where: { userId: Number(userId) },
     });
     if (!user) throw new NotFoundException('User not found');
 
     // 2️⃣ Check product
     const product = await this.prisma.product.findUnique({
-      where: { id: productId },
+      where: { id: Number(productId) },
     });
     if (!product) throw new NotFoundException('Product not found');
 
     // 3️⃣ Prevent duplicate
     const exists = await this.prisma.userFavorite.findFirst({
-      where: { userId: user.id, productId },
+      where: { userId: Number(user.id), productId: Number(productId) },
     });
 
 
     if (exists) {
-      console.log("exist",exists)
       await this.prisma.userFavorite.delete({ where: { id: exists.id } });
       return { success: true, message: 'USER_CLEAR_FAVORITE' };
       }
@@ -50,13 +49,13 @@ export class UserData {
     const data = await this.prisma.userFavorite.create(
       {
         data: {
-          user: { connect: { id: user.id } },
-          product: { connect: { id: productId } },
+          user: { connect: { id: Number(user.id) } },
+          product: { connect: { id: Number(productId) } },
         }
       }
     )
     //increment user count 
-    await this.prisma.product.update({where: {id: product.id}, data: { userCount: {
+    await this.prisma.product.update({where: {id: Number(product.id)}, data: { userCount: {
       increment: 1
     }}})
 
