@@ -1,6 +1,33 @@
 import { Expose, Type, Transform } from 'class-transformer';
 import { UserFavoriteResponseDto } from './user-data-response.dto';
 
+export class ProductSizeResponseDto {
+  @Expose()
+  id: string;
+
+  @Expose()
+  name: string;
+
+  @Expose()
+  price: number;
+
+  @Expose()
+  @Transform(({ obj }) => obj.quantities)
+  quantities: Record<string, number>;
+}
+
+export class ProductVariant {
+    @Expose()
+    id: string | number;
+
+    @Expose()
+    quantity: string | number;
+
+    @Expose()
+    @Type(()=> ProductResponseDto)
+    productSize: ProductSizeResponseDto
+}
+
 export class ProductColorImagesDto {
   @Expose()
   front: string | null;
@@ -26,23 +53,12 @@ export class ProductColorResponseDto {
   hex: string;
 
   @Expose()
+  @Type(()=> ProductVariant)
+  sizes: ProductVariant
+
+  @Expose()
   @Type(() => ProductColorImagesDto)
   images: ProductColorImagesDto;
-}
-
-export class ProductSizeResponseDto {
-  @Expose()
-  id: string;
-
-  @Expose()
-  name: string;
-
-  @Expose()
-  price: number;
-
-  @Expose()
-  @Transform(({ obj }) => obj.quantities)
-  quantities: Record<string, number>;
 }
 
 export class BrandDto {
@@ -96,6 +112,9 @@ export class ProductResponseDto {
 
   @Expose()
   description: string;
+
+  @Expose()
+  mainPrice: number;
 
   @Expose()
   mainImage: string;

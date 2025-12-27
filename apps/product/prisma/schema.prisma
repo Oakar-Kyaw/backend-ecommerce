@@ -56,6 +56,7 @@ model Product {
   discountPercent Float
   description     String
   mainImage       String
+  mainPrice       Int       @default(0)
   userCount       Int?      @default(0)
   
   brandId         Int       @default(1) // Default for existing items, or make it optional? Let's make it Int but we might need a default or nullable for migration. Let's try just Int and see if migration complains, or make it optional first? No, user wants it to be part of creation. I'll make it Int.

@@ -58,7 +58,7 @@ export class ProductController {
   }
 
   @Get()
-  @Serialize(ProductListResponseDto)
+  //@Serialize(ProductListResponseDto)
   @ApiOperation({ summary: 'Get list of products' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'pageSize', required: false, description: 'Page size' })
@@ -85,7 +85,7 @@ export class ProductController {
   }
 
   @Get(':id')
-  @Serialize(ProductItemResponseDto)
+  //@Serialize(ProductItemResponseDto)
   @ApiResponse({
     status: 200,
     description: 'Product details',

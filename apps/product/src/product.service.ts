@@ -55,6 +55,7 @@ export class ProductService {
         discountPercent: parseFloat(createProductDto.discountPercent),
         description: createProductDto.description,
         mainImage: mainImageUrl,
+        mainPrice: createProductDto.mainPrice,
         brandId: parseInt(createProductDto.brandId),
         categoryId: parseInt(createProductDto.categoryId),
         subCategoryId: createProductDto.subcategoryId
@@ -154,7 +155,16 @@ export class ProductService {
       this.prisma.product.findMany({
         where,
         include: {
-          colors: true,
+           category: true,
+           colors: {
+          include:{
+            variants: {
+              include: {
+                productSize: true
+              }
+            }
+          }
+          },
           sizes: true,
           variants: true,
           userFavorites: {
@@ -170,16 +180,15 @@ export class ProductService {
         where,
       }),
     ]);
-
     const totalPages = Math.ceil(total / pageSize);
     const enrichedProducts = await Promise.all(
       products.map(async (product) => {
         const mapped = this.mapToResponse(product).data;
-        const brand = await this.fetchBrandDetails(product.brandId);
+        const brand = await this.prisma.brand.findFirst({where: { brandId: product.brandId }})
         return { ...mapped, brand };
       }),
     );
-
+    console.log("enrich: ",enrichedProducts)
     return {
       success: true,
       message: 'LIST_OF_ITEMS',
@@ -197,15 +206,28 @@ export class ProductService {
     const product = await this.prisma.product.findUnique({
       where: { id, isDeleted: false },
       include: {
-        colors: true,
-        sizes: true,
+        category: true,
+        subCategory: true,
+        colors: {
+          include:{
+            variants: {
+              include: {
+                productSize: true
+              }
+            }
+          }
+        },
         variants: true,
+        sizes: true
       },
     });
     if (!product)
       throw new NotFoundException(`Product with ID ${id} not found`);
 
-    const brand = await this.fetchBrandDetails(product.brandId);
+    console.log("product is: ",product)
+
+    const brand = await this.prisma.brand.findFirst({where: { brandId: product.brandId }})
+   // const brand = await this.fetchBrandDetails(product.brandId);
     
     //add user count 
     await this.prisma.product.update({where: { id }, data: { userCount: {
@@ -214,6 +236,7 @@ export class ProductService {
 
     // Map to response format
     const mapped = this.mapToResponse(product).data;
+    console.log("mapped: ", mapped)
     return {
       success: true,
       message: 'ITEM_BY_ID',
@@ -258,17 +281,20 @@ export class ProductService {
   }
 
   private mapToResponse(product: any) {
-    const colors = product.colors.map((c) => ({
+    const colors = product.colors.map((c) => {
+      return {
       id: c.id.toString(),
       name: c.name,
       hex: c.hex,
+      sizes: c.variants,
       images: {
         front: c.imageFront,
         back: c.imageBack,
         sideL: c.imageSideL,
         sideR: c.imageSideR,
       },
-    }));
+      }
+    });
 
     const sizes = product.sizes.map((s) => {
       const quantities: Record<string, number> = {};
@@ -276,7 +302,6 @@ export class ProductService {
       variants.forEach((v) => {
         quantities[v.productColorId.toString()] = v.quantity;
       });
-
       return {
         id: s.id.toString(),
         name: s.name,
@@ -295,8 +320,10 @@ export class ProductService {
         discountPercent: product.discountPercent,
         brandId: product.brandId,
         categoryId: product.categoryId.toString(),
+        category: product.category,
         subcategoryId: product.subCategoryId?.toString(),
         description: product.description,
+        mainPrice: product.mainPrice,
         mainImage: product.mainImage,
         colors,
         sizes,
