@@ -12,6 +12,8 @@ import {
 import { FileUpload } from 'libs/utils/file-upload';
 import axios from 'axios';
 import { envConfig } from 'libs/config/envConfig';
+import { publishEvent } from 'libs/queue/redis.producer';
+import { EVENTS, TYPES } from 'libs/queue/constant';
 
 @Injectable()
 export class ProductService {
@@ -130,7 +132,13 @@ export class ProductService {
         }
       }
     }
-
+    await publishEvent(EVENTS.PRODUCT_EVENT, {
+        type: TYPES.CREATED_PRODUCT,
+        id: product.id,
+        productName: product.name,
+        productMainImage: product.mainImage,
+        brandId: product.brandId
+    });
     return this.findOne(product.id);
   }
 
@@ -237,13 +245,13 @@ export class ProductService {
     // Map to response format
     const mapped = this.mapToResponse(product).data;
     console.log("mapped: ", mapped)
+
     return {
       success: true,
       message: 'ITEM_BY_ID',
       data: { ...mapped, brand },
     };
   }
-
   async remove(id: number) {
     const product = await this.prisma.product.findUnique({ where: { id } });
     if (!product)
